@@ -11,6 +11,7 @@ import {
 } from "./renderer.js";
 import { initGitRepo } from "./git.js";
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
+import { formatFileTree } from "./tree.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -50,11 +51,12 @@ function printHelp(): void {
       "Usage: lom <command> [options]",
       "",
       "Commands:",
-      "  init          Scaffold a new structured project",
+      "  init              Scaffold a new structured project",
+      "  init --dry-run    Preview files without writing to disk",
       "",
       "Options:",
-      "  --help, -h    Show this help message",
-      "  --version, -v Show the installed version",
+      "  --help, -h        Show this help message",
+      "  --version, -v     Show the installed version",
     ].join("\n"),
     "Help",
   );
@@ -77,6 +79,8 @@ async function main(): Promise<void> {
   }
 
   if (arg === "init") {
+    const dryRun = process.argv.includes("--dry-run");
+
     p.intro("lom -- methodology-first project scaffolding");
 
     const brief = await collectProjectBrief();
@@ -98,12 +102,25 @@ async function main(): Promise<void> {
     );
 
     const s = p.spinner();
-    s.start("Generating project scaffold...");
+    s.start("Rendering templates...");
 
     try {
       const templatesDir = resolveTemplatesDir();
       const tokens = buildTokenMap(brief);
       const renderedFiles = await renderTemplates(templatesDir, tokens);
+
+      if (dryRun) {
+        s.stop("Templates rendered (dry run).");
+
+        const filePaths = renderedFiles.map((f) => f.relativePath);
+        const tree = formatFileTree(filePaths);
+
+        p.note(tree, "Files that would be created");
+        p.log.info(`Total files: ${renderedFiles.length}`);
+        p.outro("Dry run complete. No files were written.");
+        return;
+      }
+
       await writeScaffold(brief.outputDirectory, renderedFiles);
 
       s.stop("Scaffold generated.");
