@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { getStackDescription } from "./stacks.js";
 import type { ProjectBrief } from "./types.js";
 
 /**
@@ -25,15 +26,10 @@ export interface RenderedFile {
  * for the PM agent to populate later.
  */
 export function buildTokenMap(brief: ProjectBrief): TokenMap {
-  const stackLabel =
-    brief.techStack === "custom"
-      ? (brief.customStack ?? "Custom stack")
-      : brief.techStack;
-
   return {
     PROJECT_NAME: brief.projectName,
     PRODUCT_VISION: brief.description,
-    TECH_STACK: stackLabel,
+    TECH_STACK: getStackDescription(brief.techStack, brief.customStack),
     TARGET_USERS: brief.targetUsers,
     PROBLEM_STATEMENT: brief.problemStatement,
     SUCCESS_CRITERIA: brief.successCriteria,
