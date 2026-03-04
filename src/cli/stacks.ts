@@ -56,6 +56,76 @@ const STACK_DESCRIPTIONS: Record<Exclude<TechStack, "custom">, string> = {
 };
 
 /**
+ * Definition of Done criteria for the Next.js + Supabase stack.
+ */
+const NEXTJS_SUPABASE_DOD = `## Universal Checks
+- [ ] TypeScript compiles with no errors (\`npx tsc --noEmit\`)
+- [ ] No \`any\` types in changed files
+- [ ] No \`console.log\` in committed code
+- [ ] No commented-out code in committed files
+- [ ] Error states handled (loading, empty, error UI)
+
+## Stack-Specific Checks
+- [ ] Supabase migrations applied and tested locally
+- [ ] Environment variables documented in \`.env.example\`
+- [ ] Responsive on mobile (tested at 375px width minimum)
+- [ ] API routes return proper HTTP status codes
+- [ ] Row-level security policies reviewed for new tables`;
+
+/**
+ * Definition of Done criteria for the React Native stack.
+ */
+const REACT_NATIVE_DOD = `## Universal Checks
+- [ ] TypeScript compiles with no errors (\`npx tsc --noEmit\`)
+- [ ] No \`any\` types in changed files
+- [ ] No \`console.log\` in committed code
+- [ ] No commented-out code in committed files
+- [ ] Error states handled (loading, empty, error UI)
+
+## Stack-Specific Checks
+- [ ] Runs on iOS simulator without crash
+- [ ] Runs on Android emulator without crash
+- [ ] Navigation works (forward, back, deep links if applicable)
+- [ ] No hardcoded dimensions (use responsive units)
+- [ ] Keyboard does not obscure input fields`;
+
+/**
+ * Definition of Done criteria for the Node.js CLI stack.
+ */
+const NODEJS_CLI_DOD = `## Universal Checks
+- [ ] TypeScript compiles with no errors (\`npx tsc --noEmit\`)
+- [ ] No \`any\` types in changed files
+- [ ] No \`console.log\` in committed code
+- [ ] No commented-out code in committed files
+- [ ] Error states handled (graceful error messages, no stack traces for users)
+
+## Stack-Specific Checks
+- [ ] Help text present and accurate (\`--help\`)
+- [ ] Exit codes correct (0 for success, 1 for errors)
+- [ ] Unit tests pass (\`npm test\`)
+- [ ] CLI runs without crash on a clean install (\`npx\`)
+- [ ] No hardcoded file paths (use platform-agnostic path resolution)`;
+
+/**
+ * Definition of Done criteria for a custom stack.
+ */
+const CUSTOM_STACK_DOD = `## Universal Checks
+- [ ] TypeScript compiles with no errors (\`npx tsc --noEmit\`)
+- [ ] No \`any\` types in changed files
+- [ ] No \`console.log\` in committed code
+- [ ] No commented-out code in committed files
+- [ ] Error states handled
+
+## Stack-Specific Checks
+*Add stack-specific checks here based on your chosen technology.*`;
+
+const STACK_DODS: Record<Exclude<TechStack, "custom">, string> = {
+  "nextjs-supabase": NEXTJS_SUPABASE_DOD,
+  "react-native": REACT_NATIVE_DOD,
+  "nodejs-cli": NODEJS_CLI_DOD,
+};
+
+/**
  * Returns a structured markdown description for the selected tech stack.
  *
  * For preset stacks, returns a detailed table-formatted description with
@@ -76,4 +146,28 @@ export function getStackDescription(
   }
 
   return STACK_DESCRIPTIONS[stack];
+}
+
+/**
+ * Returns the Definition of Done criteria for the selected tech stack.
+ *
+ * For preset stacks, returns stack-specific criteria including universal
+ * checks and technology-specific quality gates. For custom stacks,
+ * returns universal checks with a placeholder for stack-specific items.
+ *
+ * @param stack - The selected tech stack preset
+ * @param customStack - The user's free-text stack description (when stack is "custom")
+ * @returns Formatted markdown string with Definition of Done checklist
+ */
+export function getDefinitionOfDone(
+  stack: TechStack,
+  customStack?: string,
+): string {
+  if (stack === "custom") {
+    return customStack !== undefined
+      ? `${CUSTOM_STACK_DOD}\n\n> Custom stack: ${customStack}`
+      : CUSTOM_STACK_DOD;
+  }
+
+  return STACK_DODS[stack];
 }

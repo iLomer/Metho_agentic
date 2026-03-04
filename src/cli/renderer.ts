@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
-import { getStackDescription } from "./stacks.js";
+import { getDefinitionOfDone, getStackDescription } from "./stacks.js";
 import type { ProjectBrief } from "./types.js";
 
 /**
@@ -36,6 +36,7 @@ export function buildTokenMap(brief: ProjectBrief): TokenMap {
     VALUE_PROPOSITION: brief.valueProposition,
     OUT_OF_SCOPE: brief.outOfScope,
     CODE_CONVENTIONS: brief.codeConventions,
+    DEFINITION_OF_DONE: getDefinitionOfDone(brief.techStack, brief.customStack),
   };
 }
 

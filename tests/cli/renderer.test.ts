@@ -133,6 +133,47 @@ describe("buildTokenMap", () => {
 
     expect(tokens.TECH_STACK).toContain("Node.js");
   });
+
+  it("maps DEFINITION_OF_DONE token for nextjs-supabase stack", () => {
+    const brief = createBrief({ techStack: "nextjs-supabase" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.DEFINITION_OF_DONE).toContain("TypeScript compiles");
+    expect(tokens.DEFINITION_OF_DONE).toContain("No `any` types");
+    expect(tokens.DEFINITION_OF_DONE).toContain("No `console.log`");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Supabase migrations");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Responsive on mobile");
+  });
+
+  it("maps DEFINITION_OF_DONE token for react-native stack", () => {
+    const brief = createBrief({ techStack: "react-native" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.DEFINITION_OF_DONE).toContain("iOS simulator");
+    expect(tokens.DEFINITION_OF_DONE).toContain("No hardcoded dimensions");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Navigation works");
+  });
+
+  it("maps DEFINITION_OF_DONE token for nodejs-cli stack", () => {
+    const brief = createBrief({ techStack: "nodejs-cli" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.DEFINITION_OF_DONE).toContain("Help text present");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Exit codes correct");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Unit tests pass");
+  });
+
+  it("maps DEFINITION_OF_DONE token for custom stack with universal checks", () => {
+    const brief = createBrief({
+      techStack: "custom",
+      customStack: "Django + PostgreSQL",
+    });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.DEFINITION_OF_DONE).toContain("TypeScript compiles");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Add stack-specific checks here");
+    expect(tokens.DEFINITION_OF_DONE).toContain("Django + PostgreSQL");
+  });
 });
 
 describe("renderTemplates", () => {
