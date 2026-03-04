@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { collectProjectBrief } from "./prompts.js";
+import { InterruptionHandler } from "./interruption.js";
 import {
   buildTokenMap,
   renderTemplates,
@@ -85,6 +86,8 @@ async function main(): Promise<void> {
 
   if (arg === "init") {
     const dryRun = process.argv.includes("--dry-run");
+    const interruption = new InterruptionHandler();
+    interruption.install();
 
     p.intro("lom -- methodology-first project scaffolding");
 
@@ -99,6 +102,7 @@ async function main(): Promise<void> {
       } else {
         p.log.error("An unexpected error occurred during pre-flight checks.");
       }
+      interruption.uninstall();
       process.exit(1);
     }
 
@@ -113,6 +117,7 @@ async function main(): Promise<void> {
     const writeError = await checkWritePermission(brief.outputDirectory);
     if (writeError !== undefined) {
       p.log.error(writeError);
+      interruption.uninstall();
       process.exit(1);
     }
 
@@ -149,10 +154,13 @@ async function main(): Promise<void> {
         p.note(tree, "Files that would be created");
         p.log.info(`Total files: ${renderedFiles.length}`);
         p.outro("Dry run complete. No files were written.");
+        interruption.uninstall();
         return;
       }
 
+      interruption.arm(brief.outputDirectory);
       await writeScaffold(brief.outputDirectory, renderedFiles);
+      interruption.disarm();
 
       s.stop("Scaffold generated.");
 
@@ -168,17 +176,26 @@ async function main(): Promise<void> {
         }
       }
 
-      p.note(
-        [
-          `cd ${brief.outputDirectory}`,
-          "Open in VS Code and call @lom-pm set up the project",
-        ].join("\n"),
-        "Next Steps",
+      const nextSteps: string[] = [
+        `cd ${brief.outputDirectory}`,
+        "Open in your editor",
+      ];
+
+      if (!preflight.gitAvailable) {
+        nextSteps.push("Run `git init` when git is available");
+      }
+
+      nextSteps.push(
+        "Install Claude Code if you haven't: https://docs.anthropic.com/en/docs/claude-code",
+        "Start a Claude Code session and call @lom-pm to populate your backlog",
       );
+
+      p.note(nextSteps.join("\n"), "Next Steps");
 
       p.outro("Done. Happy building!");
     } catch (error: unknown) {
       s.stop("Failed.");
+      interruption.disarm();
 
       if (error instanceof DirectoryNotEmptyError) {
         p.log.error(error.message);
@@ -188,9 +205,11 @@ async function main(): Promise<void> {
         p.log.error("An unexpected error occurred during scaffold generation.");
       }
 
+      interruption.uninstall();
       process.exit(1);
     }
 
+    interruption.uninstall();
     return;
   }
 
