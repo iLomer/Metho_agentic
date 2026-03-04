@@ -4,3 +4,9 @@ dist/
 .DS_Store
 .env
 .env.local
+
+# Internal AI orchestration — not shipped
+.claude/
+ai/
+CLAUDE.md
+README.md
