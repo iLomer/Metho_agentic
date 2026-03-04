@@ -1,0 +1,11 @@
+src/
+ai/
+.claude/
+tests/
+vitest.config.ts
+tsconfig.json
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+CLAUDE.md
