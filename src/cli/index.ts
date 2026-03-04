@@ -10,6 +10,11 @@ import {
   resolveTemplatesDir,
 } from "./renderer.js";
 import { initGitRepo } from "./git.js";
+import {
+  checkWritePermission,
+  PreflightError,
+  runPreflightChecks,
+} from "./preflight.js";
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 import { formatFileTree } from "./tree.js";
 
@@ -83,7 +88,33 @@ async function main(): Promise<void> {
 
     p.intro("lom -- methodology-first project scaffolding");
 
+    let preflight;
+    try {
+      preflight = await runPreflightChecks();
+    } catch (error: unknown) {
+      if (error instanceof PreflightError) {
+        p.log.error(error.message);
+      } else if (error instanceof Error) {
+        p.log.error(`Pre-flight check failed: ${error.message}`);
+      } else {
+        p.log.error("An unexpected error occurred during pre-flight checks.");
+      }
+      process.exit(1);
+    }
+
+    if (!preflight.gitAvailable) {
+      p.log.warning(
+        "git not found -- the scaffolded project will not be initialized as a git repository.",
+      );
+    }
+
     const brief = await collectProjectBrief();
+
+    const writeError = await checkWritePermission(brief.outputDirectory);
+    if (writeError !== undefined) {
+      p.log.error(writeError);
+      process.exit(1);
+    }
 
     const stackLabel =
       brief.techStack === "custom"
@@ -125,14 +156,16 @@ async function main(): Promise<void> {
 
       s.stop("Scaffold generated.");
 
-      const gitSpinner = p.spinner();
-      gitSpinner.start("Initializing git repository...");
+      if (preflight.gitAvailable) {
+        const gitSpinner = p.spinner();
+        gitSpinner.start("Initializing git repository...");
 
-      try {
-        await initGitRepo(brief.outputDirectory);
-        gitSpinner.stop("Git repository initialized.");
-      } catch {
-        gitSpinner.stop("Git initialization skipped (git may not be installed).");
+        try {
+          await initGitRepo(brief.outputDirectory);
+          gitSpinner.stop("Git repository initialized.");
+        } catch {
+          gitSpinner.stop("Git initialization failed -- skipping.");
+        }
       }
 
       p.note(
