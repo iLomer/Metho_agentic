@@ -207,4 +207,29 @@ describe("renderTemplates", () => {
 
     expect(rendered[0].content).toBe("replaced and {{UNKNOWN}}");
   });
+
+  it("renames 'gitignore' to '.gitignore' in output path", async () => {
+    await writeFile(
+      join(tempDir, "gitignore"),
+      "node_modules/\ndist/",
+      "utf-8",
+    );
+
+    const rendered = await renderTemplates(tempDir, {});
+
+    expect(rendered).toHaveLength(1);
+    expect(rendered[0].relativePath).toBe(".gitignore");
+    expect(rendered[0].content).toBe("node_modules/\ndist/");
+  });
+
+  it("renames nested 'gitignore' files to '.gitignore'", async () => {
+    const subDir = join(tempDir, "subdir");
+    await mkdir(subDir, { recursive: true });
+    await writeFile(join(subDir, "gitignore"), "*.log", "utf-8");
+
+    const rendered = await renderTemplates(tempDir, {});
+
+    expect(rendered).toHaveLength(1);
+    expect(rendered[0].relativePath).toBe(join("subdir", ".gitignore"));
+  });
 });

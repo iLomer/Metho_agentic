@@ -1,5 +1,5 @@
-import { readdir, readFile, stat } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { basename, dirname, join, relative } from "node:path";
 import { getStackDescription } from "./stacks.js";
 import type { ProjectBrief } from "./types.js";
 
@@ -50,6 +50,32 @@ export function replaceTokens(content: string, tokens: TokenMap): string {
     }
     return match;
   });
+}
+
+/**
+ * Renames used in templates to work around npm pack exclusions.
+ * npm strips `.gitignore` files from tarballs, so we store them
+ * without the dot prefix and restore it at render time.
+ *
+ * Key: filename as stored in templates/ (no dot)
+ * Value: filename as written to the output directory (with dot)
+ */
+const TEMPLATE_RENAMES: Record<string, string> = {
+  gitignore: ".gitignore",
+};
+
+/**
+ * Applies template filename renames to a relative path.
+ * Only the basename is checked — directory components are left untouched.
+ */
+function applyTemplateRenames(relativePath: string): string {
+  const name = basename(relativePath);
+  if (name in TEMPLATE_RENAMES) {
+    const dir = dirname(relativePath);
+    const renamed = TEMPLATE_RENAMES[name];
+    return dir === "." ? renamed : join(dir, renamed);
+  }
+  return relativePath;
 }
 
 /**
@@ -112,7 +138,7 @@ export async function renderTemplates(
     const renderedContent = replaceTokens(content, tokens);
 
     rendered.push({
-      relativePath,
+      relativePath: applyTemplateRenames(relativePath),
       content: renderedContent,
     });
   }
