@@ -22,6 +22,16 @@ export interface ProjectBrief {
   techStack: TechStack;
   /** Free-text stack description when techStack is "custom" */
   customStack: string | undefined;
+  /** What problem this project solves */
+  problemStatement: string;
+  /** How success is measured */
+  successCriteria: string;
+  /** Core value proposition in one line */
+  valueProposition: string;
+  /** What is explicitly out of scope for v1 */
+  outOfScope: string;
+  /** Project-specific code conventions and standards */
+  codeConventions: string;
   /** Absolute or relative path where the scaffold will be written */
   outputDirectory: string;
 }

@@ -102,6 +102,46 @@ export async function collectProjectBrief(): Promise<ProjectBrief> {
     customStack = customStackInput.trim();
   }
 
+  const defaultDeferred = "To be defined by @lom-pm";
+
+  const problemStatement = await p.text({
+    message: "What problem does this project solve?",
+    placeholder: "Users struggle with X because Y, leading to Z",
+    defaultValue: defaultDeferred,
+  });
+  handleCancel(problemStatement);
+
+  const successCriteria = await p.text({
+    message: "How will you measure success?",
+    placeholder: "User can do X in under Y minutes, Z% adoption in first month",
+    defaultValue: defaultDeferred,
+  });
+  handleCancel(successCriteria);
+
+  const valueProposition = await p.text({
+    message: "What is the core value proposition? (one line)",
+    placeholder: "The fastest way to do X without compromising on Y",
+    defaultValue: defaultDeferred,
+  });
+  handleCancel(valueProposition);
+
+  const outOfScope = await p.text({
+    message: "What is out of scope for v1?",
+    placeholder: "Multi-tenancy, mobile app, internationalization",
+    defaultValue: defaultDeferred,
+  });
+  handleCancel(outOfScope);
+
+  const defaultConventions =
+    "TypeScript strict mode, no any types, no console.log in production code";
+
+  const codeConventions = await p.text({
+    message: "Any code conventions or standards?",
+    placeholder: "TypeScript strict, ESLint, Prettier, conventional commits",
+    defaultValue: defaultConventions,
+  });
+  handleCancel(codeConventions);
+
   const outputDirectory = await p.text({
     message: "Output directory?",
     defaultValue: `./${projectName}`,
@@ -116,6 +156,11 @@ export async function collectProjectBrief(): Promise<ProjectBrief> {
     targetUsers: targetUsers.trim(),
     techStack,
     customStack,
+    problemStatement: problemStatement.trim(),
+    successCriteria: successCriteria.trim(),
+    valueProposition: valueProposition.trim(),
+    outOfScope: outOfScope.trim(),
+    codeConventions: codeConventions.trim(),
     outputDirectory: outputDirectory.trim(),
   };
 }

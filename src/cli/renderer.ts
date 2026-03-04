@@ -35,6 +35,11 @@ export function buildTokenMap(brief: ProjectBrief): TokenMap {
     PRODUCT_VISION: brief.description,
     TECH_STACK: stackLabel,
     TARGET_USERS: brief.targetUsers,
+    PROBLEM_STATEMENT: brief.problemStatement,
+    SUCCESS_CRITERIA: brief.successCriteria,
+    VALUE_PROPOSITION: brief.valueProposition,
+    OUT_OF_SCOPE: brief.outOfScope,
+    CODE_CONVENTIONS: brief.codeConventions,
   };
 }
 
