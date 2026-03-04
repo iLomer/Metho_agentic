@@ -1,15 +1,33 @@
 #!/usr/bin/env node
 
 import * as p from "@clack/prompts";
+import { collectProjectBrief } from "./prompts.js";
 
-function main(): void {
+async function main(): Promise<void> {
   const command = process.argv[2];
 
   p.intro("lom -- methodology-first project scaffolding");
 
   if (command === "init") {
-    p.log.info("Ready to scaffold your project.");
-    p.log.step("Prompts and file generation coming in future slices.");
+    const brief = await collectProjectBrief();
+
+    const stackLabel =
+      brief.techStack === "custom"
+        ? brief.customStack
+        : brief.techStack;
+
+    p.note(
+      [
+        `Project:    ${brief.projectName}`,
+        `Desc:       ${brief.description}`,
+        `Users:      ${brief.targetUsers}`,
+        `Stack:      ${stackLabel}`,
+        `Output:     ${brief.outputDirectory}`,
+      ].join("\n"),
+      "Project Brief"
+    );
+
+    p.log.step("File generation coming in a future slice.");
     p.outro("Done.");
   } else {
     p.log.warning(
