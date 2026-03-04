@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { collectProjectBrief } from "./prompts.js";
 import {
@@ -10,12 +12,73 @@ import {
 import { initGitRepo } from "./git.js";
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 
-async function main(): Promise<void> {
-  const command = process.argv[2];
+/**
+ * Resolves the absolute path to the package root directory.
+ * At runtime: dist/cli/index.js -> package root is ../../
+ */
+function resolvePackageRoot(): string {
+  const currentFileUrl = new URL(import.meta.url);
+  const packageRoot = new URL("../../", currentFileUrl);
+  return decodeURIComponent(packageRoot.pathname);
+}
 
+/**
+ * Reads the version string from package.json at the package root.
+ */
+async function readVersion(): Promise<string> {
+  const packageJsonPath = join(resolvePackageRoot(), "package.json");
+  const raw = await readFile(packageJsonPath, "utf-8");
+  const parsed: unknown = JSON.parse(raw);
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    "version" in parsed &&
+    typeof (parsed as Record<string, unknown>).version === "string"
+  ) {
+    return (parsed as Record<string, unknown>).version as string;
+  }
+  return "unknown";
+}
+
+/**
+ * Prints usage information for the CLI.
+ */
+function printHelp(): void {
   p.intro("lom -- methodology-first project scaffolding");
+  p.note(
+    [
+      "Usage: lom <command> [options]",
+      "",
+      "Commands:",
+      "  init          Scaffold a new structured project",
+      "",
+      "Options:",
+      "  --help, -h    Show this help message",
+      "  --version, -v Show the installed version",
+    ].join("\n"),
+    "Help",
+  );
+  p.outro("Run 'lom init' to get started.");
+}
 
-  if (command === "init") {
+async function main(): Promise<void> {
+  const arg = process.argv[2];
+
+  if (arg === "--help" || arg === "-h" || arg === undefined) {
+    printHelp();
+    return;
+  }
+
+  if (arg === "--version" || arg === "-v") {
+    const version = await readVersion();
+    p.intro(`lom v${version}`);
+    p.outro("");
+    return;
+  }
+
+  if (arg === "init") {
+    p.intro("lom -- methodology-first project scaffolding");
+
     const brief = await collectProjectBrief();
 
     const stackLabel =
@@ -77,15 +140,15 @@ async function main(): Promise<void> {
 
       process.exit(1);
     }
-  } else {
-    p.log.warning(
-      command
-        ? `Unknown command: ${command}`
-        : "No command provided.",
-    );
-    p.log.info("Usage: lom init");
-    p.outro("Run 'lom init' to get started.");
+
+    return;
   }
+
+  p.intro("lom -- methodology-first project scaffolding");
+  p.log.error(`Unknown command: ${arg}`);
+  p.log.info("Run 'lom --help' to see available commands.");
+  p.outro("");
+  process.exit(1);
 }
 
 main();
