@@ -7,6 +7,7 @@ import {
   renderTemplates,
   resolveTemplatesDir,
 } from "./renderer.js";
+import { initGitRepo } from "./git.js";
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 
 async function main(): Promise<void> {
@@ -43,6 +44,16 @@ async function main(): Promise<void> {
       await writeScaffold(brief.outputDirectory, renderedFiles);
 
       s.stop("Scaffold generated.");
+
+      const gitSpinner = p.spinner();
+      gitSpinner.start("Initializing git repository...");
+
+      try {
+        await initGitRepo(brief.outputDirectory);
+        gitSpinner.stop("Git repository initialized.");
+      } catch {
+        gitSpinner.stop("Git initialization skipped (git may not be installed).");
+      }
 
       p.note(
         [
