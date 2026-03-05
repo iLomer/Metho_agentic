@@ -158,6 +158,26 @@ export async function collectProjectBrief(
         hint: "Command-line tool distributed via npm",
       },
       {
+        value: "python-fastapi",
+        label: "Python (FastAPI)",
+        hint: "REST API with async support, auto-generated docs",
+      },
+      {
+        value: "go",
+        label: "Go",
+        hint: "Compiled backend service or CLI tool",
+      },
+      {
+        value: "vite-react",
+        label: "Vite + React",
+        hint: "Client-side SPA with fast dev server",
+      },
+      {
+        value: "flutter",
+        label: "Flutter",
+        hint: "Cross-platform mobile and web app with Dart",
+      },
+      {
         value: "custom",
         label: "Custom",
         hint: "Describe your own stack",

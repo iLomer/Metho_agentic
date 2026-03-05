@@ -5,6 +5,10 @@ export type TechStack =
   | "nextjs-supabase"
   | "react-native"
   | "nodejs-cli"
+  | "python-fastapi"
+  | "go"
+  | "vite-react"
+  | "flutter"
   | "custom";
 
 /**
