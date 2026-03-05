@@ -53,10 +53,10 @@ async function readVersion(): Promise<string> {
  * Prints usage information for the CLI.
  */
 function printHelp(): void {
-  p.intro("lom -- methodology-first project scaffolding");
+  p.intro("meto-cli -- methodology-first project scaffolding");
   p.note(
     [
-      "Usage: lom <command> [options]",
+      "Usage: meto-cli <command> [options]",
       "",
       "Commands:",
       "  init              Scaffold a new structured project",
@@ -68,7 +68,7 @@ function printHelp(): void {
     ].join("\n"),
     "Help",
   );
-  p.outro("Run 'lom init' to get started.");
+  p.outro("Run 'meto-cli init' to get started.");
 }
 
 async function main(): Promise<void> {
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
 
   if (arg === "--version" || arg === "-v") {
     const version = await readVersion();
-    p.intro(`lom v${version}`);
+    p.intro(`meto-cli v${version}`);
     p.outro("");
     return;
   }
@@ -91,7 +91,7 @@ async function main(): Promise<void> {
     const interruption = new InterruptionHandler();
     interruption.install();
 
-    p.intro("lom -- methodology-first project scaffolding");
+    p.intro("meto-cli -- methodology-first project scaffolding");
 
     let preflight;
     try {
@@ -196,7 +196,7 @@ async function main(): Promise<void> {
         "Open in your editor",
         "Type `claude` to start a session (if Claude Code is already installed)",
         "Install Claude Code if you haven't: https://docs.anthropic.com/en/docs/claude-code",
-        "Call @lom-pm to populate your backlog",
+        "Call @meto-pm to populate your backlog",
       ];
 
       if (githubResult.repoCreated && githubResult.repoUrl) {
@@ -237,9 +237,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  p.intro("lom -- methodology-first project scaffolding");
+  p.intro("meto-cli -- methodology-first project scaffolding");
   p.log.error(`Unknown command: ${arg}`);
-  p.log.info("Run 'lom --help' to see available commands.");
+  p.log.info("Run 'meto-cli --help' to see available commands.");
   p.outro("");
   process.exit(1);
 }

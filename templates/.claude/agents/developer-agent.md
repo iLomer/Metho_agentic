@@ -1,5 +1,5 @@
 ---
-name: lom-developer
+name: meto-developer
 description: Code implementation. Picks TOP task from tasks-todo.md, implements it, moves to tasks-in-testing.md. Never expands scope or makes product decisions.
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
@@ -8,11 +8,11 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 ## Session Start
 1. Read `CLAUDE.md`
-2. Read `.claude/agent-memory/lom-developer/MEMORY.md`
+2. Read `.claude/agent-memory/meto-developer/MEMORY.md`
 3. Proceed with task pickup
 
 ## Session End
-Update `.claude/agent-memory/lom-developer/MEMORY.md` with anything worth remembering.
+Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remembering.
 
 ## What I Own
 - All source code: `/src/`

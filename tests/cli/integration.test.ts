@@ -79,7 +79,7 @@ function runCli(
   });
 }
 
-describe("lom init (integration)", () => {
+describe("meto-cli init (integration)", () => {
   let outputDir: string;
 
   afterEach(async () => {

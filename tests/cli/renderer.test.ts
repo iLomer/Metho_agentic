@@ -190,7 +190,7 @@ describe("buildTokenMap", () => {
     expect(tokens.STARTER_EPICS).toContain("E4 -- Deploy");
     expect(tokens.STARTER_EPICS).toContain("Vercel");
     expect(tokens.STARTER_EPICS).toContain("Not started");
-    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @meto-pm");
   });
 
   it("maps STARTER_EPICS token for react-native stack", () => {
@@ -205,7 +205,7 @@ describe("buildTokenMap", () => {
     expect(tokens.STARTER_EPICS).toContain("E3 -- Core Feature");
     expect(tokens.STARTER_EPICS).toContain("E4 -- App Store Prep");
     expect(tokens.STARTER_EPICS).toContain("Not started");
-    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @meto-pm");
   });
 
   it("maps STARTER_EPICS token for nodejs-cli stack", () => {
@@ -221,7 +221,7 @@ describe("buildTokenMap", () => {
     expect(tokens.STARTER_EPICS).toContain("E3 -- Testing + CI");
     expect(tokens.STARTER_EPICS).toContain("E4 -- npm Publish");
     expect(tokens.STARTER_EPICS).toContain("Not started");
-    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @meto-pm");
   });
 
   it("maps STARTER_EPICS token for custom stack with generic epics", () => {
@@ -237,7 +237,7 @@ describe("buildTokenMap", () => {
     expect(tokens.STARTER_EPICS).toContain("E3 -- Testing");
     expect(tokens.STARTER_EPICS).toContain("E4 -- Deploy");
     expect(tokens.STARTER_EPICS).toContain("Not started");
-    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @meto-pm");
     expect(tokens.STARTER_EPICS).toContain("Django + PostgreSQL");
   });
 });
@@ -246,7 +246,7 @@ describe("renderTemplates", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = join(tmpdir(), `lom-test-${Date.now()}`);
+    tempDir = join(tmpdir(), `meto-test-${Date.now()}`);
     await mkdir(tempDir, { recursive: true });
   });
 

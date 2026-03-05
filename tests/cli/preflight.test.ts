@@ -43,14 +43,14 @@ describe("checkNodeVersion", () => {
   it("returns error message when version is below minimum", () => {
     const result = checkNodeVersion("v16.20.0", 18);
     expect(result).toBe(
-      "Lom requires Node.js 18 or later. You are running v16.20.0.",
+      "Meto requires Node.js 18 or later. You are running v16.20.0.",
     );
   });
 
   it("returns error message for unparseable version", () => {
     const result = checkNodeVersion("garbage", 18);
     expect(result).toBe(
-      "Lom requires Node.js 18 or later. You are running garbage.",
+      "Meto requires Node.js 18 or later. You are running garbage.",
     );
   });
 });
@@ -66,7 +66,7 @@ describe("checkWritePermission", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = join(tmpdir(), `lom-preflight-test-${Date.now()}`);
+    tempDir = join(tmpdir(), `meto-preflight-test-${Date.now()}`);
     await mkdir(tempDir, { recursive: true });
   });
 

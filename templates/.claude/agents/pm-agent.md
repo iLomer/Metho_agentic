@@ -1,5 +1,5 @@
 ---
-name: lom-pm
+name: meto-pm
 description: Planning, backlog management, epic definition, and task slicing. Reads context files and writes full task definitions into the backlog. Use before any new feature work.
 tools: Read, Write, Glob, Grep
 ---
@@ -8,12 +8,12 @@ tools: Read, Write, Glob, Grep
 
 ## Session Start
 1. Read `CLAUDE.md`
-2. Read `.claude/agent-memory/lom-pm/MEMORY.md`
+2. Read `.claude/agent-memory/meto-pm/MEMORY.md`
 3. Read `/ai/context/product-vision.md`, `tech-stack.md`, `decisions.md`
 4. Proceed with requested action
 
 ## Session End
-Update `.claude/agent-memory/lom-pm/MEMORY.md` with anything worth remembering.
+Update `.claude/agent-memory/meto-pm/MEMORY.md` with anything worth remembering.
 
 ## First Run Protocol
 Scaffold pre-populated vision, stack, and DoD. Focus on epics and task slicing.
@@ -69,4 +69,4 @@ Move only when:
 End every planning session with:
 
 Sprint [N] is ready. [X] tasks in tasks-todo.md.
-→ Call @lom-developer to start building.
+→ Call @meto-developer to start building.

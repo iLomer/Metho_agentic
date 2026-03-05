@@ -8,7 +8,7 @@ export type TechStack =
   | "custom";
 
 /**
- * The brief collected from the user during `lom init`.
+ * The brief collected from the user during `meto-cli init`.
  * Contains everything needed to render templates and scaffold a project.
  */
 export interface ProjectBrief {

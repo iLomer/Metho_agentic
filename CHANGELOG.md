@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- CLI scaffold command (`lom init`) that bootstraps a structured project with methodology built in
+- CLI scaffold command (`meto-cli init`) that bootstraps a structured project with methodology built in
 - 10 interactive prompts collecting project brief (name, description, target users, tech stack, problem statement, success criteria, value proposition, out of scope, code conventions, output directory)
 - 3 stack presets: Next.js + Supabase, React Native, Node.js CLI
 - Custom stack option with free-text input
 - Stack-aware Definition of Done generated per project
-- Dry-run mode (`lom init --dry-run`) to preview scaffold output without writing files
+- Dry-run mode (`meto-cli init --dry-run`) to preview scaffold output without writing files
 - Pre-flight checks: Node.js version validation (>= 18), git availability detection, write permission verification
 - Git repository initialization with initial commit after scaffold
 - SIGINT cleanup handler that removes partial scaffold on interruption

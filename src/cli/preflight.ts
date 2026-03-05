@@ -33,7 +33,7 @@ export function checkNodeVersion(
 ): string | undefined {
   const major = parseNodeMajorVersion(versionString);
   if (Number.isNaN(major) || major < minimumMajor) {
-    return `Lom requires Node.js ${minimumMajor} or later. You are running ${versionString}.`;
+    return `Meto requires Node.js ${minimumMajor} or later. You are running ${versionString}.`;
   }
   return undefined;
 }

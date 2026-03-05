@@ -1,8 +1,8 @@
-# Lom
+# Meto
 
-> Lovable gives you an app. Lom gives you a project -- built the right way, your way.
+> Lovable gives you an app. Meto gives you a project -- built the right way, your way.
 
-Lom scaffolds structured software projects with built-in methodology. You describe what you want to build, and Lom bootstraps a project with a kanban board, agent definitions, product context, and coding conventions -- ready for your first Claude Code session.
+Meto scaffolds structured software projects with built-in methodology. You describe what you want to build, and Meto bootstraps a project with a kanban board, agent definitions, product context, and coding conventions -- ready for your first Claude Code session.
 
 <!-- TODO: Record demo GIF and replace this -->
 ![demo](assets/demo.gif)
@@ -12,16 +12,16 @@ Lom scaffolds structured software projects with built-in methodology. You descri
 ## Quick Start
 
 ```bash
-npx lom init
+npx meto-cli init
 ```
 
-Answer a few questions about your project, and Lom generates a fully structured repository in seconds.
+Answer a few questions about your project, and Meto generates a fully structured repository in seconds.
 
 ---
 
 ## What Just Happened?
 
-After running `lom init`, your new project comes pre-loaded with everything you need to start building with discipline:
+After running `meto-cli init`, your new project comes pre-loaded with everything you need to start building with discipline:
 
 - **CLAUDE.md** -- a project instruction file that Claude Code reads every session, pre-filled with your vision, stack, and conventions
 - **Kanban board** -- a task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
@@ -44,9 +44,9 @@ your-project/
 │   │   ├── pm-agent.md
 │   │   └── tester-agent.md
 │   └── agent-memory/
-│       ├── lom-developer/MEMORY.md
-│       ├── lom-pm/MEMORY.md
-│       └── lom-tester/MEMORY.md
+│       ├── meto-developer/MEMORY.md
+│       ├── meto-pm/MEMORY.md
+│       └── meto-tester/MEMORY.md
 ├── ai/
 │   ├── backlog/
 │   │   └── epics.md
@@ -75,7 +75,7 @@ your-project/
 
 1. `cd your-project`
 2. Open the project in your editor
-3. Start a Claude Code session and call `@lom-pm` to populate your backlog
+3. Start a Claude Code session and call `@meto-pm` to populate your backlog
 4. Pick your first task and start building
 
 ---
@@ -85,7 +85,7 @@ your-project/
 | Requirement | Version | Notes |
 |---|---|---|
 | Node.js | >= 18 | Required to run the CLI |
-| git | any | Recommended -- Lom will initialize a repository if git is available |
+| git | any | Recommended -- Meto will initialize a repository if git is available |
 | Claude Code | latest | For the generated project to work with agents |
 
 ---
@@ -94,10 +94,10 @@ your-project/
 
 | Command | Description |
 |---|---|
-| `lom init` | Scaffold a new structured project |
-| `lom init --dry-run` | Preview the generated file tree without writing to disk |
-| `lom --help` | Show available commands and options |
-| `lom --version` | Show the installed version |
+| `meto-cli init` | Scaffold a new structured project |
+| `meto-cli init --dry-run` | Preview the generated file tree without writing to disk |
+| `meto-cli --help` | Show available commands and options |
+| `meto-cli --version` | Show the installed version |
 
 ---
 

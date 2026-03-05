@@ -102,7 +102,7 @@ export async function collectProjectBrief(): Promise<ProjectBrief> {
     customStack = customStackInput.trim();
   }
 
-  const defaultDeferred = "To be defined by @lom-pm";
+  const defaultDeferred = "To be defined by @meto-pm";
 
   const problemStatement = await p.text({
     message: "What problem does this project solve?",

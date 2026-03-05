@@ -1,10 +1,10 @@
 {
-  "name": "lom",
+  "name": "meto-cli",
   "version": "0.1.0",
   "description": "Scaffold structured software projects with built-in methodology",
   "type": "module",
   "bin": {
-    "lom": "./dist/cli/index.js"
+    "meto-cli": "./dist/cli/index.js"
   },
   "files": [
     "dist/",
