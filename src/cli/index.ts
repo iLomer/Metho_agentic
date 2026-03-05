@@ -12,6 +12,7 @@ import {
 } from "./renderer.js";
 import { runGitHubFlow } from "./github.js";
 import { initGitRepo } from "./git.js";
+import { runSupabaseFlow } from "./supabase.js";
 import {
   checkWritePermission,
   PreflightError,
@@ -185,6 +186,11 @@ async function main(): Promise<void> {
         gitInitSucceeded,
       );
 
+      const supabaseResult = await runSupabaseFlow(
+        brief.techStack,
+        brief.outputDirectory,
+      );
+
       const nextSteps: string[] = [
         `cd ${brief.outputDirectory}`,
         "Open in your editor",
@@ -195,6 +201,13 @@ async function main(): Promise<void> {
 
       if (githubResult.repoCreated && githubResult.repoUrl) {
         nextSteps.push(`GitHub repo: ${githubResult.repoUrl}`);
+      }
+
+      if (brief.techStack === "nextjs-supabase") {
+        if (supabaseResult.initialized) {
+          nextSteps.push("Run `supabase start` to launch the local development stack");
+        }
+        nextSteps.push("Copy the local credentials from `supabase status` into `.env.local`");
       }
 
       if (!preflight.gitAvailable) {
