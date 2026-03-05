@@ -146,5 +146,11 @@ describe("lom init (integration)", () => {
     // Verify no double-nesting: there should be no subfolder named after the project
     const topEntries = await readdir(outputDir);
     expect(topEntries).not.toContain(projectName);
+
+    // Verify src/ directory exists with .gitkeep inside
+    const srcDirStat = await stat(join(outputDir, "src"));
+    expect(srcDirStat.isDirectory()).toBe(true);
+    const gitkeepStat = await stat(join(outputDir, "src", ".gitkeep"));
+    expect(gitkeepStat.isFile()).toBe(true);
   });
 });
