@@ -10,6 +10,7 @@ import {
   renderTemplates,
   resolveTemplatesDir,
 } from "./renderer.js";
+import { runGitHubFlow } from "./github.js";
 import { initGitRepo } from "./git.js";
 import {
   checkWritePermission,
@@ -164,6 +165,7 @@ async function main(): Promise<void> {
 
       s.stop("Scaffold generated.");
 
+      let gitInitSucceeded = false;
       if (preflight.gitAvailable) {
         const gitSpinner = p.spinner();
         gitSpinner.start("Initializing git repository...");
@@ -171,10 +173,17 @@ async function main(): Promise<void> {
         try {
           await initGitRepo(brief.outputDirectory);
           gitSpinner.stop("Git repository initialized.");
+          gitInitSucceeded = true;
         } catch {
           gitSpinner.stop("Git initialization failed -- skipping.");
         }
       }
+
+      const githubResult = await runGitHubFlow(
+        brief.projectName,
+        brief.outputDirectory,
+        gitInitSucceeded,
+      );
 
       const nextSteps: string[] = [
         `cd ${brief.outputDirectory}`,
@@ -183,6 +192,10 @@ async function main(): Promise<void> {
         "Install Claude Code if you haven't: https://docs.anthropic.com/en/docs/claude-code",
         "Call @lom-pm to populate your backlog",
       ];
+
+      if (githubResult.repoCreated && githubResult.repoUrl) {
+        nextSteps.push(`GitHub repo: ${githubResult.repoUrl}`);
+      }
 
       if (!preflight.gitAvailable) {
         nextSteps.push("Run `git init` when git is available");
