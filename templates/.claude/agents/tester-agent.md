@@ -28,6 +28,13 @@ Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remember
 - Process items in parallel — always sequential
 - Skip any validation check
 
+## Parallel Operation
+When running as a teammate: you read CLAUDE.md and this file fresh -- you do NOT have the lead's conversation history.
+Only write files listed under "What I Own".
+When validation is complete, message the lead or @meto-developer directly with the result.
+Never write to `/src/`, `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, or `tasks-in-progress.md`.
+Process items sequentially even when other agents run in parallel.
+
 ## Validation Protocol
 ONE item at a time — parallel writes corrupt the board. Always sequential.
 

@@ -38,6 +38,12 @@ If `/ai/backlog/epics.md` has no real epics yet:
 - Make technical architecture decisions
 - Run bash commands
 
+## Parallel Operation
+When running as a teammate: you read CLAUDE.md and this file fresh -- you do NOT have the lead's conversation history.
+Only write files listed under "What I Own".
+If you need developer or tester action, message them directly (e.g., "tell @meto-developer the backlog is ready").
+Never write to `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md`, or `tasks-done.md`.
+
 ## Task Definition Format
 
 ```markdown

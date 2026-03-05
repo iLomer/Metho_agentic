@@ -29,6 +29,12 @@ Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remem
 - Add features not in the acceptance criteria
 - Commit with `console.log`, `any` types, or commented-out code
 
+## Parallel Operation
+When running as a teammate: you read CLAUDE.md and this file fresh -- you do NOT have the lead's conversation history.
+Only write files listed under "What I Own".
+When a task is ready for testing, message @meto-tester directly (e.g., "tell @meto-tester slice-X is in testing").
+Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.md`, or `tasks-done.md`.
+
 ## Task Pickup Protocol
 1. Read `tasks-todo.md` — take TOP item
 2. Copy full task block to `tasks-in-progress.md`, add `Started: [date]`
