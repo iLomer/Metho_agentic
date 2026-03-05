@@ -174,6 +174,72 @@ describe("buildTokenMap", () => {
     expect(tokens.DEFINITION_OF_DONE).toContain("Add stack-specific checks here");
     expect(tokens.DEFINITION_OF_DONE).toContain("Django + PostgreSQL");
   });
+
+  it("maps STARTER_EPICS token for nextjs-supabase stack", () => {
+    const brief = createBrief({ techStack: "nextjs-supabase" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.STARTER_EPICS).toContain("test-project");
+    expect(tokens.STARTER_EPICS).toContain("E1 -- Project Setup");
+    expect(tokens.STARTER_EPICS).toContain("Next.js");
+    expect(tokens.STARTER_EPICS).toContain("Tailwind");
+    expect(tokens.STARTER_EPICS).toContain("Supabase");
+    expect(tokens.STARTER_EPICS).toContain("E2 -- Auth");
+    expect(tokens.STARTER_EPICS).toContain("sign up");
+    expect(tokens.STARTER_EPICS).toContain("E3 -- Core Feature");
+    expect(tokens.STARTER_EPICS).toContain("E4 -- Deploy");
+    expect(tokens.STARTER_EPICS).toContain("Vercel");
+    expect(tokens.STARTER_EPICS).toContain("Not started");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+  });
+
+  it("maps STARTER_EPICS token for react-native stack", () => {
+    const brief = createBrief({ techStack: "react-native" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.STARTER_EPICS).toContain("test-project");
+    expect(tokens.STARTER_EPICS).toContain("E1 -- Project Setup");
+    expect(tokens.STARTER_EPICS).toContain("Expo");
+    expect(tokens.STARTER_EPICS).toContain("React Navigation");
+    expect(tokens.STARTER_EPICS).toContain("E2 -- Auth");
+    expect(tokens.STARTER_EPICS).toContain("E3 -- Core Feature");
+    expect(tokens.STARTER_EPICS).toContain("E4 -- App Store Prep");
+    expect(tokens.STARTER_EPICS).toContain("Not started");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+  });
+
+  it("maps STARTER_EPICS token for nodejs-cli stack", () => {
+    const brief = createBrief({ techStack: "nodejs-cli" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.STARTER_EPICS).toContain("test-project");
+    expect(tokens.STARTER_EPICS).toContain("E1 -- CLI Scaffold");
+    expect(tokens.STARTER_EPICS).toContain("entry point");
+    expect(tokens.STARTER_EPICS).toContain("help");
+    expect(tokens.STARTER_EPICS).toContain("version");
+    expect(tokens.STARTER_EPICS).toContain("E2 -- Core Command");
+    expect(tokens.STARTER_EPICS).toContain("E3 -- Testing + CI");
+    expect(tokens.STARTER_EPICS).toContain("E4 -- npm Publish");
+    expect(tokens.STARTER_EPICS).toContain("Not started");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+  });
+
+  it("maps STARTER_EPICS token for custom stack with generic epics", () => {
+    const brief = createBrief({
+      techStack: "custom",
+      customStack: "Django + PostgreSQL",
+    });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.STARTER_EPICS).toContain("test-project");
+    expect(tokens.STARTER_EPICS).toContain("E1 -- Project Setup");
+    expect(tokens.STARTER_EPICS).toContain("E2 -- Core Feature");
+    expect(tokens.STARTER_EPICS).toContain("E3 -- Testing");
+    expect(tokens.STARTER_EPICS).toContain("E4 -- Deploy");
+    expect(tokens.STARTER_EPICS).toContain("Not started");
+    expect(tokens.STARTER_EPICS).toContain("To be sliced by @lom-pm");
+    expect(tokens.STARTER_EPICS).toContain("Django + PostgreSQL");
+  });
 });
 
 describe("renderTemplates", () => {
