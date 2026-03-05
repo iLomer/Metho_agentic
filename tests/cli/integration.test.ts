@@ -120,6 +120,7 @@ describe("meto-cli init (integration)", () => {
       join("ai", "tasks", "tasks-backlog.md"),
       join("ai", "context", "product-vision.md"),
       ".gitignore",
+      join(".claude", "settings.json"),
     ];
 
     for (const filePath of expectedFiles) {
@@ -138,6 +139,18 @@ describe("meto-cli init (integration)", () => {
     );
     expect(claudeMd).toContain(projectName);
     expect(claudeMd).not.toContain("{{PROJECT_NAME}}");
+
+    // Verify .claude/settings.json contains the agent teams env key
+    const settingsJson = await readFile(
+      join(outputDir, ".claude", "settings.json"),
+      "utf-8",
+    );
+    const settings: unknown = JSON.parse(settingsJson);
+    expect(settings).toEqual({
+      env: {
+        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
+      },
+    });
 
     // Verify .git directory exists (git init ran)
     const gitDirStat = await stat(join(outputDir, ".git"));
