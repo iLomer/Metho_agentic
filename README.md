@@ -4,7 +4,6 @@
 
 Meto scaffolds structured software projects with built-in methodology. You describe what you want to build, and Meto bootstraps a project with a kanban board, agent definitions, product context, and coding conventions -- ready for your first Claude Code session.
 
-<!-- TODO: Record demo GIF and replace this -->
 ![demo](assets/demo.gif)
 
 ---
