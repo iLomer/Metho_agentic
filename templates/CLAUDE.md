@@ -44,6 +44,26 @@ See `/ai/workflows/definition-of-done.md` for done criteria.
 
 ---
 
+## Agent Teams
+
+This project supports Agent Teams. The lead agent can spawn teammates using `@meto-pm`, `@meto-developer`, `@meto-tester`.
+
+**Coordination model:** Agent Teams has its own task system, but this project uses the kanban board (`tasks-backlog` through `tasks-done`) as the single source of truth for task state. Teammates must read and update the board files, not rely on Agent Teams' internal task tracking.
+
+**File ownership is exclusive -- two teammates editing the same file causes overwrites.**
+
+| Agent | Writes |
+|---|---|
+| `@meto-pm` | `/ai/` files, `tasks-backlog.md`, `tasks-todo.md` |
+| `@meto-developer` | `/src/`, config files, `tasks-in-progress.md`, `tasks-in-testing.md` |
+| `@meto-tester` | `tasks-in-testing.md`, `tasks-done.md`, `tasks-todo.md` (failed items) |
+
+Each agent writes only its own memory file in `.claude/agent-memory/` -- never another agent's.
+
+Teammates do NOT inherit the lead's conversation history. Each teammate reads CLAUDE.md and its agent definition fresh.
+
+---
+
 ## Commit Format
 
 ```
