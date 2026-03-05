@@ -1,6 +1,6 @@
 {
   "name": "meto-cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Scaffold structured software projects with built-in methodology",
   "type": "module",
   "bin": {
