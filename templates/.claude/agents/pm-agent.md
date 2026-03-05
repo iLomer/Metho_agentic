@@ -44,6 +44,12 @@ Only write files listed under "What I Own".
 If you need developer or tester action, message them directly (e.g., "tell @meto-developer the backlog is ready").
 Never write to `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md`, or `tasks-done.md`.
 
+## Context Budget
+- Grep before reading — only open files you need
+- Use targeted line ranges for long files
+- Max 3 files open before acting — note key info in memory
+- Read each epic once, then work from memory — don't re-read `/ai/backlog/epics.md` every task
+
 ## Task Definition Format
 
 ```markdown

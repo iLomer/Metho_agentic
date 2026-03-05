@@ -64,6 +64,16 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 
 ---
 
+## Context Management
+
+- **Session cadence:** Start a new session every 3-5 slices or when context feels sluggish
+- **Session start:** Read CLAUDE.md, your agent memory file, and the board — then act
+- **Session end:** Update your memory file with decisions, patterns, and what to pick up next
+- **Context budget:** Grep before reading full files; read targeted line ranges; max 3 files open before acting
+- **Red flag:** If you re-read a file you already read this session, note key info in memory instead
+
+---
+
 ## Commit Format
 
 ```

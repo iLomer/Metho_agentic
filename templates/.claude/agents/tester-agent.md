@@ -35,6 +35,12 @@ When validation is complete, message the lead or @meto-developer directly with t
 Never write to `/src/`, `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, or `tasks-in-progress.md`.
 Process items sequentially even when other agents run in parallel.
 
+## Context Budget
+- Grep before reading — only open files you need
+- Use targeted line ranges for long files
+- Max 3 files open before acting — note key info in memory
+- Only read files listed in "Files changed" on the task block — don't explore the whole codebase
+
 ## Validation Protocol
 ONE item at a time — parallel writes corrupt the board. Always sequential.
 

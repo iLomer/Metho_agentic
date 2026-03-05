@@ -1,22 +1,17 @@
 # PM Agent Memory — {{PROJECT_NAME}}
 
-*Read at session start. Update at session end. Keep it concise.*
+*Read at session start. Update at session end.*
 
 ---
 
-## Product Context
-[Key things learned about the product that aren't obvious from the vision doc]
+## Active Decisions
+<!-- Decisions in progress — move to decisions.md once finalized -->
 
-## Backlog State
-- Total tasks defined: 0
-- Last slice added: —
-- Current epic focus: —
+## Patterns Found
+<!-- How the user likes tasks sliced, naming preferences, detail level that works -->
 
-## Decisions Made
-[Decisions made during PM sessions — move to decisions.md once settled]
+## Watch Out
+<!-- Things that caused problems, edge cases, constraints discovered -->
 
-## Patterns & Preferences
-[How the user likes tasks sliced, what level of detail works]
-
-## Watch Out For
-[Things that caused problems, edge cases to keep in mind]
+## Session Log
+<!-- Reverse-chronological: date, what was done, what was left incomplete, key decisions -->

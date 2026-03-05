@@ -1,20 +1,20 @@
 # Developer Agent Memory — {{PROJECT_NAME}}
 
-*Read at session start. Update at session end. Keep it concise.*
+*Read at session start. Update at session end.*
 
 ---
 
+## Active Decisions
+<!-- Architecture or implementation decisions in progress -->
+
 ## Codebase Map
-[Key files, components, and where things live — built up over time]
+<!-- Key files and where things live — build this incrementally as you work -->
 
-## Patterns Established
-[Naming conventions, component patterns, API patterns in this codebase]
+## Patterns Found
+<!-- Naming conventions, component patterns, API patterns established here -->
 
-## Known Issues
-[Bugs or tech debt flagged but not yet sliced — don't fix inline, note here]
+## Watch Out
+<!-- Bugs caused, gotchas, things that break easily in this codebase -->
 
-## Watch Out For
-[Things that caused bugs, gotchas in this codebase]
-
-## Last Session
-[What was built, what state was left in, anything in-flight]
+## Session Log
+<!-- Reverse-chronological: date, slices worked on, files changed, state left in -->

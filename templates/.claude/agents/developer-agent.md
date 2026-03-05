@@ -35,6 +35,12 @@ Only write files listed under "What I Own".
 When a task is ready for testing, message @meto-tester directly (e.g., "tell @meto-tester slice-X is in testing").
 Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.md`, or `tasks-done.md`.
 
+## Context Budget
+- Grep before reading — only open files you need
+- Use targeted line ranges for long files
+- Max 3 files open before acting — note key info in memory
+- Check Codebase Map in your memory file before reading files — it may already have what you need
+
 ## Task Pickup Protocol
 1. Read `tasks-todo.md` — take TOP item
 2. Copy full task block to `tasks-in-progress.md`, add `Started: [date]`

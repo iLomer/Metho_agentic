@@ -1,18 +1,17 @@
 # Tester Agent Memory — {{PROJECT_NAME}}
 
-*Read at session start. Update at session end. Keep it concise.*
+*Read at session start. Update at session end.*
 
 ---
 
-## Recurring Failures
-[Checks that keep failing — worth flagging to the developer]
+## Active Decisions
+<!-- Testing approach decisions in progress -->
 
-## Codebase Quirks
-[Project-specific things that affect validation]
+## Patterns Found
+<!-- Recurring check patterns, project-specific DoD quirks -->
 
-## Test Log Summary
-- Total passed: 0
-- Total failed: 0
+## Watch Out
+<!-- Checks that keep failing, things developers keep getting wrong -->
 
-## Watch Out For
-[Edge cases in this project's DoD]
+## Session Log
+<!-- Reverse-chronological: date, slices validated, pass/fail results, issues found -->
