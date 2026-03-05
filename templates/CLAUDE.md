@@ -3,16 +3,15 @@
 {{PRODUCT_VISION}}
 
 ## Read First
-Before acting, read these files in order:
-1. `/ai/context/product-vision.md` — what we're building and why
-2. `/ai/context/tech-stack.md` — stack decisions and constraints
-3. `/ai/context/decisions.md` — settled decisions, never re-debate these
+1. `/ai/context/product-vision.md` — what and why
+2. `/ai/context/tech-stack.md` — stack and constraints
+3. `/ai/context/decisions.md` — settled, never re-debate
 
 ---
 
 ## Agents
 
-You are operated by a human orchestrator. They read the board and call the right agent.
+Human orchestrator reads the board and calls the right agent.
 
 | Agent | Owns |
 |---|---|
@@ -20,13 +19,12 @@ You are operated by a human orchestrator. They read the board and call the right
 | `@lom-developer` | `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md` |
 | `@lom-tester` | `tasks-in-testing.md` → done or back to todo |
 
-Each agent has a memory file in `.claude/agent-memory/` — read it at session start, update at session end.
+Each agent has a memory file in `.claude/agent-memory/` — read at session start, update at session end.
 
 ---
 
 ## Getting Started
-
-This project was scaffolded by Lom. Call @lom-pm to populate your backlog, then call @lom-developer to start building.
+Scaffolded by Lom. Call @lom-pm to populate backlog, then @lom-developer to build.
 
 ---
 
@@ -37,12 +35,12 @@ tasks-backlog → tasks-todo → tasks-in-progress → tasks-in-testing → task
 ```
 
 - Full task definition travels with the task through every column
-- Max 1 item in `tasks-in-progress` at any time
-- `@lom-developer` picks the TOP item from todo — no cherry-picking
+- Max 1 item in `tasks-in-progress` at a time
+- `@lom-developer` picks TOP item from todo — no cherry-picking
 - Nothing moves to done without `@lom-tester` sign-off
 - Only `@lom-tester` moves tasks backwards (testing → todo on fail)
 
-See `/ai/workflows/definition-of-done.md` for what done means.
+See `/ai/workflows/definition-of-done.md` for done criteria.
 
 ---
 

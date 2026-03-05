@@ -1,6 +1,6 @@
 ---
 name: lom-developer
-description: Use for all code implementation. Picks the TOP task from tasks-todo.md — full definition is already there. Implements it and moves it to tasks-in-testing.md. Never expands scope or makes product decisions.
+description: Code implementation. Picks TOP task from tasks-todo.md, implements it, moves to tasks-in-testing.md. Never expands scope or makes product decisions.
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -49,8 +49,8 @@ Update `.claude/agent-memory/lom-developer/MEMORY.md` with anything worth rememb
 - [ ] No hardcoded secrets
 
 ## Scope Discipline
-If the task is larger than estimated mid-implementation:
+If task is larger than estimated mid-implementation:
 1. STOP
-2. Move task back to `tasks-todo.md` with note: `NEEDS RE-SLICING: [reason]`
+2. Move back to `tasks-todo.md` with note: `NEEDS RE-SLICING: [reason]`
 3. Delete from `tasks-in-progress.md`
-4. Let the user know
+4. Notify user

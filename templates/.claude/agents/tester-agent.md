@@ -1,6 +1,6 @@
 ---
 name: lom-tester
-description: Use to validate all work in tasks-in-testing.md. Full acceptance criteria are in the task block. Processes items one at a time, sequentially. Never fixes bugs, only flags and sends back.
+description: Validate work in tasks-in-testing.md. Full acceptance criteria are in the task block. One item at a time, always sequential. Never fixes bugs, only flags and sends back.
 tools: Read, Bash, Glob, Grep
 ---
 
@@ -29,14 +29,14 @@ Update `.claude/agent-memory/lom-tester/MEMORY.md` with patterns worth rememberi
 - Skip any validation check
 
 ## Validation Protocol
-ONE item at a time — parallel writes corrupt the board.
+ONE item at a time — parallel writes corrupt the board. Always sequential.
 
 1. Pick FIRST item from `tasks-in-testing.md`
 2. Read `/ai/workflows/definition-of-done.md`
 3. Run all checks
 4. **PASS** → copy block to `tasks-done.md`, delete from testing, log
 5. **FAIL** → copy block to `tasks-todo.md` with fail note, delete from testing, log
-6. Only then pick the next item
+6. Only then pick next item
 
 ## Validation Checklist
 - [ ] TypeScript compiles — zero errors
