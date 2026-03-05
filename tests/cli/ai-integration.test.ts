@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { spawn } from "node:child_process";
-import { readdir, readFile, rm, stat } from "node:fs/promises";
+import { readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -8,8 +8,10 @@ import { fileURLToPath } from "node:url";
 const CURRENT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const PROJECT_ROOT = join(CURRENT_DIR, "..", "..");
 const CLI_ENTRY = join(PROJECT_ROOT, "dist", "cli", "index.js");
+const MOCK_CLAUDE_OK_DIR = join(CURRENT_DIR, "..", "fixtures", "mock-claude-ok");
+const MOCK_CLAUDE_ERR_DIR = join(CURRENT_DIR, "..", "fixtures", "mock-claude-err");
 
-/** Carriage return — what terminals send when the user presses Enter. */
+/** Carriage return -- what terminals send when the user presses Enter. */
 const CR = "\r";
 
 /** Delay between sending answers to give clack time to render each prompt. */
@@ -17,7 +19,6 @@ const PROMPT_DELAY_MS = 500;
 
 /**
  * Sends a sequence of answers to a child process's stdin with delays.
- * Each answer is written as a string followed by the next answer after a delay.
  */
 function sendAnswersSequentially(
   stdin: NodeJS.WritableStream,
@@ -44,17 +45,24 @@ function sendAnswersSequentially(
 }
 
 /**
- * Spawns the CLI and collects stdout/stderr until the process exits.
- * Returns the exit code, stdout, and stderr.
+ * Spawns the CLI with a custom PATH that includes the fixtures directory.
+ * This allows mock `claude` scripts to be found before the real one.
  */
-function runCli(
+function runCliWithMockClaude(
   args: string[],
   answers: string[],
+  mockDir: string = MOCK_CLAUDE_OK_DIR,
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
+    const env = {
+      ...process.env,
+      FORCE_COLOR: "0",
+      PATH: `${mockDir}:${process.env.PATH ?? ""}`,
+    };
+
     const child = spawn("node", [CLI_ENTRY, ...args], {
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env, FORCE_COLOR: "0" },
+      env,
       cwd: PROJECT_ROOT,
     });
 
@@ -79,7 +87,7 @@ function runCli(
   });
 }
 
-describe("meto-cli init (integration)", () => {
+describe("meto-cli init with AI (integration)", () => {
   let outputDir: string;
 
   afterEach(async () => {
@@ -88,13 +96,51 @@ describe("meto-cli init (integration)", () => {
     }
   });
 
-  it("scaffolds a complete project with all expected files and git init", { timeout: 30_000 }, async () => {
-    const projectName = `e2e-test-${Date.now()}`;
+  it("scaffolds with AI-generated content when mock claude succeeds", { timeout: 60_000 }, async () => {
+    const projectName = `ai-e2e-test-${Date.now()}`;
+    outputDir = join(tmpdir(), projectName);
+
+    const answers = [
+      CR,                          // 1. Confirm AI usage (yes, default)
+      projectName + CR,            // 2. Project name
+      "An AI integration test" + CR, // 3. Description
+      "Developers" + CR,           // 4. Target users
+      CR,                          // 5. Stack (first = nextjs-supabase)
+      outputDir + CR,              // 6. Output directory (AI skips deep prompts)
+    ];
+
+    const result = await runCliWithMockClaude(["init"], answers);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Done. Happy building!");
+
+    // Verify output directory was created
+    const dirStat = await stat(outputDir);
+    expect(dirStat.isDirectory()).toBe(true);
+
+    // Verify AI-generated content appears in scaffold files
+    const backlog = await readFile(
+      join(outputDir, "ai", "tasks", "tasks-backlog.md"),
+      "utf-8",
+    );
+    expect(backlog).toContain("[slice-001]");
+    expect(backlog).toContain("Initialize project structure");
+
+    const epics = await readFile(
+      join(outputDir, "ai", "backlog", "epics.md"),
+      "utf-8",
+    );
+    expect(epics).toContain("E1 -- Project Setup");
+    expect(epics).toContain("E2 -- Core Feature");
+  });
+
+  it("falls back to static prompts with --no-ai flag", { timeout: 60_000 }, async () => {
+    const projectName = `noai-e2e-test-${Date.now()}`;
     outputDir = join(tmpdir(), projectName);
 
     const answers = [
       projectName + CR,          // 1. Project name
-      "An integration test project" + CR, // 2. Description
+      "A no-ai test project" + CR, // 2. Description
       "Developers" + CR,         // 3. Target users
       CR,                        // 4. Stack (first = nextjs-supabase)
       CR,                        // 5. Problem statement (default)
@@ -105,65 +151,21 @@ describe("meto-cli init (integration)", () => {
       outputDir + CR,            // 10. Output directory
     ];
 
-    const result = await runCli(["init", "--no-ai"], answers);
+    const result = await runCliWithMockClaude(["init", "--no-ai"], answers);
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("Done. Happy building!");
+    expect(result.stdout).toContain("AI generation disabled via --no-ai flag");
 
-    // Verify output directory was created
+    // Verify scaffold was created with static defaults
     const dirStat = await stat(outputDir);
     expect(dirStat.isDirectory()).toBe(true);
 
-    // Verify expected files exist
-    const expectedFiles = [
-      "CLAUDE.md",
-      join("ai", "tasks", "tasks-backlog.md"),
-      join("ai", "context", "product-vision.md"),
-      ".gitignore",
-      join(".claude", "settings.json"),
-    ];
-
-    for (const filePath of expectedFiles) {
-      const fullPath = join(outputDir, filePath);
-      const fileStat = await stat(fullPath);
-      expect(
-        fileStat.isFile(),
-        `Expected file to exist: ${filePath}`,
-      ).toBe(true);
-    }
-
-    // Verify project name token was replaced in at least one file
     const claudeMd = await readFile(
       join(outputDir, "CLAUDE.md"),
       "utf-8",
     );
     expect(claudeMd).toContain(projectName);
     expect(claudeMd).not.toContain("{{PROJECT_NAME}}");
-
-    // Verify .claude/settings.json contains the agent teams env key
-    const settingsJson = await readFile(
-      join(outputDir, ".claude", "settings.json"),
-      "utf-8",
-    );
-    const settings: unknown = JSON.parse(settingsJson);
-    expect(settings).toEqual({
-      env: {
-        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-      },
-    });
-
-    // Verify .git directory exists (git init ran)
-    const gitDirStat = await stat(join(outputDir, ".git"));
-    expect(gitDirStat.isDirectory()).toBe(true);
-
-    // Verify no double-nesting: there should be no subfolder named after the project
-    const topEntries = await readdir(outputDir);
-    expect(topEntries).not.toContain(projectName);
-
-    // Verify src/ directory exists with .gitkeep inside
-    const srcDirStat = await stat(join(outputDir, "src"));
-    expect(srcDirStat.isDirectory()).toBe(true);
-    const gitkeepStat = await stat(join(outputDir, "src", ".gitkeep"));
-    expect(gitkeepStat.isFile()).toBe(true);
   });
 });

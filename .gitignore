@@ -6,6 +6,6 @@ dist/
 .env.local
 
 # Internal AI orchestration — not shipped
-.claude/
-ai/
-CLAUDE.md
+/.claude/
+/ai/
+/CLAUDE.md

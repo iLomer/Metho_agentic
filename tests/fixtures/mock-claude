@@ -1,0 +1,137 @@
+#!/bin/sh
+# Mock Claude Code binary for integration tests.
+# Handles --version (preflight check) and -p (AI generation).
+# Used by tests/cli/ai-integration.test.ts.
+
+# Handle --version check (used by preflight)
+if [ "$1" = "--version" ]; then
+  echo "mock-claude 1.0.0"
+  exit 0
+fi
+
+# Handle -p flag (AI generation prompt)
+if [ "$1" = "-p" ]; then
+  cat << 'MOCK_OUTPUT'
+---SECTION:PRODUCT_VISION---
+Mock AI Vision: This project enables rapid prototyping through intelligent scaffolding. It combines methodology-first thinking with automated project setup to deliver structured, maintainable codebases from day one.
+---END:PRODUCT_VISION---
+
+---SECTION:PROBLEM_STATEMENT---
+Developers waste hours on boilerplate setup before writing any meaningful code. Existing tools generate code but not structure, leaving projects without planning discipline.
+---END:PROBLEM_STATEMENT---
+
+---SECTION:SUCCESS_CRITERIA---
+- New project scaffolded in under 5 minutes
+- All template tokens replaced correctly
+- Backlog pre-populated with actionable tasks
+- CI pipeline configured and passing
+---END:SUCCESS_CRITERIA---
+
+---SECTION:VALUE_PROPOSITION---
+Structure before code -- the fastest path to a maintainable project.
+---END:VALUE_PROPOSITION---
+
+---SECTION:OUT_OF_SCOPE---
+- Multi-tenancy support
+- Mobile companion app
+- Real-time collaboration
+- Custom CI/CD integrations
+---END:OUT_OF_SCOPE---
+
+---SECTION:EPICS---
+## E1 -- Project Setup
+**Goal:** Initialize the project with all dependencies, configuration, and directory structure.
+**Status:** Not started
+**Tasks:** To be sliced by @meto-pm
+
+---
+
+## E2 -- Core Feature
+**Goal:** Implement the primary value-delivering feature of the application.
+**Status:** Not started
+**Tasks:** To be sliced by @meto-pm
+
+---
+
+## E3 -- Testing
+**Goal:** Establish comprehensive test coverage with unit and integration tests.
+**Status:** Not started
+**Tasks:** To be sliced by @meto-pm
+
+---
+
+## E4 -- Deploy
+**Goal:** Set up deployment pipeline and ship the first production release.
+**Status:** Not started
+**Tasks:** To be sliced by @meto-pm
+---END:EPICS---
+
+---SECTION:STARTER_TASKS---
+## [slice-001] -- Initialize project structure
+**Epic:** E1 | **Size:** S | **Depends on:** none
+
+**User Story**
+As a developer, I want a properly structured project directory so that I can begin development immediately.
+
+**Acceptance Criteria**
+- [ ] Package.json created with correct metadata
+- [ ] TypeScript configured with strict mode
+- [ ] Directory structure follows conventions
+
+**Out of Scope**
+CI/CD configuration -- that belongs in E4.
+
+---
+
+## [slice-002] -- Configure development environment
+**Epic:** E1 | **Size:** S | **Depends on:** slice-001
+
+**User Story**
+As a developer, I want linting and formatting configured so that code quality is enforced from the start.
+
+**Acceptance Criteria**
+- [ ] ESLint configured with TypeScript rules
+- [ ] Prettier configured with consistent style
+- [ ] Editor config present for cross-editor consistency
+
+**Out of Scope**
+Pre-commit hooks -- that is a separate task.
+
+---
+
+## [slice-003] -- Add test framework
+**Epic:** E1 | **Size:** S | **Depends on:** slice-001
+
+**User Story**
+As a developer, I want a test runner configured so that I can write tests as I build features.
+
+**Acceptance Criteria**
+- [ ] Vitest installed and configured
+- [ ] Sample test file runs successfully
+- [ ] Test script added to package.json
+
+**Out of Scope**
+Integration tests -- those come in E3.
+---END:STARTER_TASKS---
+
+---SECTION:DEFINITION_OF_DONE---
+## Universal Checks
+- [ ] TypeScript compiles with no errors
+- [ ] No any types in changed files
+- [ ] No console.log in committed code
+- [ ] No commented-out code in committed files
+- [ ] Error states handled gracefully
+
+## Stack-Specific Checks
+- [ ] Unit tests pass
+- [ ] Build succeeds without warnings
+- [ ] No runtime errors in development mode
+- [ ] API responses validated against types
+---END:DEFINITION_OF_DONE---
+MOCK_OUTPUT
+  exit 0
+fi
+
+# Unknown args -- exit with error
+echo "Unknown arguments: $@" >&2
+exit 1

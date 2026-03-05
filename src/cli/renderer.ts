@@ -6,6 +6,7 @@ import {
   getStarterEpics,
 } from "./stacks.js";
 import type { ProjectBrief } from "./types.js";
+import type { AIGeneratedContent } from "./ai-parser.js";
 
 /**
  * Map of template tokens to their replacement values.
@@ -25,11 +26,32 @@ export interface RenderedFile {
 
 /**
  * Builds a token replacement map from the project brief.
- * Only tokens that the brief can fill are included.
- * Remaining tokens (e.g. {{PROBLEM_STATEMENT}}) are left as-is
- * for the PM agent to populate later.
+ * When AI-generated content is provided, it overrides the brief's static fields
+ * for PRODUCT_VISION, PROBLEM_STATEMENT, SUCCESS_CRITERIA, VALUE_PROPOSITION,
+ * OUT_OF_SCOPE, DEFINITION_OF_DONE, STARTER_EPICS, and STARTER_TASKS.
+ * PROJECT_NAME, TARGET_USERS, TECH_STACK, and CODE_CONVENTIONS always come from the brief.
  */
-export function buildTokenMap(brief: ProjectBrief): TokenMap {
+export function buildTokenMap(
+  brief: ProjectBrief,
+  aiContent?: AIGeneratedContent,
+): TokenMap {
+  if (aiContent !== undefined) {
+    return {
+      PROJECT_NAME: brief.projectName,
+      PRODUCT_VISION: aiContent.productVision,
+      TECH_STACK: getStackDescription(brief.techStack, brief.customStack),
+      TARGET_USERS: brief.targetUsers,
+      PROBLEM_STATEMENT: aiContent.problemStatement,
+      SUCCESS_CRITERIA: aiContent.successCriteria,
+      VALUE_PROPOSITION: aiContent.valueProposition,
+      OUT_OF_SCOPE: aiContent.outOfScope,
+      CODE_CONVENTIONS: brief.codeConventions,
+      DEFINITION_OF_DONE: aiContent.definitionOfDone,
+      STARTER_EPICS: aiContent.epics,
+      STARTER_TASKS: aiContent.starterTasks,
+    };
+  }
+
   return {
     PROJECT_NAME: brief.projectName,
     PRODUCT_VISION: brief.description,
@@ -46,6 +68,7 @@ export function buildTokenMap(brief: ProjectBrief): TokenMap {
       brief.projectName,
       brief.customStack,
     ),
+    STARTER_TASKS: "",
   };
 }
 

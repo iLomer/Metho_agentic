@@ -8,6 +8,8 @@ import { dirname, resolve } from "node:path";
 export interface PreflightResult {
   /** Whether git is available on the system PATH. */
   gitAvailable: boolean;
+  /** Whether Claude Code CLI is available on the system PATH. */
+  claudeCodeAvailable: boolean;
 }
 
 /**
@@ -51,6 +53,18 @@ export function checkGitAvailable(): Promise<boolean> {
 }
 
 /**
+ * Checks whether Claude Code CLI is available by running `claude --version`.
+ * Resolves to true if Claude Code is found, false otherwise.
+ */
+export function checkClaudeCodeAvailable(): Promise<boolean> {
+  return new Promise((promiseResolve) => {
+    execFile("claude", ["--version"], (error) => {
+      promiseResolve(error === null);
+    });
+  });
+}
+
+/**
  * Checks whether the parent directory of the given output path exists and is writable.
  * Returns an error message string if the check fails, or undefined if OK.
  */
@@ -84,9 +98,12 @@ export async function runPreflightChecks(): Promise<PreflightResult> {
     throw new PreflightError(nodeError);
   }
 
-  const gitAvailable = await checkGitAvailable();
+  const [gitAvailable, claudeCodeAvailable] = await Promise.all([
+    checkGitAvailable(),
+    checkClaudeCodeAvailable(),
+  ]);
 
-  return { gitAvailable };
+  return { gitAvailable, claudeCodeAvailable };
 }
 
 /**

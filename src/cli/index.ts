@@ -3,7 +3,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
-import { collectProjectBrief } from "./prompts.js";
+import { collectDeepContent, collectProjectBrief } from "./prompts.js";
 import { InterruptionHandler } from "./interruption.js";
 import {
   buildTokenMap,
@@ -20,6 +20,9 @@ import {
 } from "./preflight.js";
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 import { formatFileTree } from "./tree.js";
+import { generateWithAI, AIGenerationTimeoutError } from "./ai-generator.js";
+import { parseAIOutput, validateAIContent } from "./ai-parser.js";
+import type { AIGeneratedContent } from "./ai-parser.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -61,6 +64,7 @@ function printHelp(): void {
       "Commands:",
       "  init              Scaffold a new structured project",
       "  init --dry-run    Preview files without writing to disk",
+      "  init --no-ai      Skip AI generation, use standard prompts",
       "",
       "Options:",
       "  --help, -h        Show this help message",
@@ -114,7 +118,33 @@ async function main(): Promise<void> {
       );
     }
 
-    const brief = await collectProjectBrief();
+    const noAIFlag = process.argv.includes("--no-ai");
+    let useAI = preflight.claudeCodeAvailable && !noAIFlag;
+
+    if (noAIFlag) {
+      p.log.info("AI generation disabled via --no-ai flag");
+    } else if (preflight.claudeCodeAvailable) {
+      p.log.info("Claude Code detected -- AI-powered generation available");
+
+      const confirmAI = await p.confirm({
+        message: "Use AI to generate your project content?",
+        initialValue: true,
+      });
+      if (p.isCancel(confirmAI)) {
+        p.cancel("Project setup cancelled.");
+        interruption.uninstall();
+        process.exit(0);
+      }
+      useAI = confirmAI;
+
+      if (!useAI) {
+        p.log.info("Using standard prompts instead.");
+      }
+    } else {
+      p.log.info("Claude Code not found -- using standard prompts");
+    }
+
+    const brief = await collectProjectBrief({ useAI });
 
     const writeError = await checkWritePermission(brief.outputDirectory);
     if (writeError !== undefined) {
@@ -139,12 +169,87 @@ async function main(): Promise<void> {
       "Project Brief",
     );
 
+    let aiContent: AIGeneratedContent | undefined;
+
+    if (useAI) {
+      const aiSpinner = p.spinner();
+      aiSpinner.start("Generating project content with Claude Code...");
+
+      const startTime = Date.now();
+      let elapsedSeconds = 0;
+      const progressTimer = setInterval(() => {
+        elapsedSeconds += 10;
+        aiSpinner.message(`Generating project content with Claude Code... (${elapsedSeconds}s)`);
+      }, 10_000);
+
+      try {
+        const aiResult = await generateWithAI({
+          projectName: brief.projectName,
+          description: brief.description,
+          targetUsers: brief.targetUsers,
+          techStack: brief.techStack,
+          customStack: brief.customStack,
+        });
+
+        clearInterval(progressTimer);
+        const totalSeconds = Math.round((Date.now() - startTime) / 1000);
+
+        aiContent = parseAIOutput(aiResult.raw);
+        aiSpinner.stop(`Project content generated (${totalSeconds}s)`);
+
+        const validation = validateAIContent(aiContent);
+        if (validation.warnings.length > 0) {
+          for (const warning of validation.warnings) {
+            p.log.warning(warning);
+          }
+        }
+
+        const epicCount = (aiContent.epics.match(/## E\d+/g) ?? []).length;
+        const taskCount = (aiContent.starterTasks.match(/## \[slice-\d+\]/g) ?? []).length;
+        const dodCustomized = aiContent.definitionOfDone !== "To be defined by @meto-pm";
+
+        const visionFirstLine = aiContent.productVision.split("\n")[0].trim();
+        const visionPreview =
+          visionFirstLine.length > 80
+            ? visionFirstLine.slice(0, 77) + "..."
+            : visionFirstLine;
+
+        const summaryLines: string[] = [
+          `Vision: ${visionPreview}`,
+          `Epics: ${epicCount}`,
+          `Tasks: ${taskCount}`,
+          `DoD: ${dodCustomized ? "Customized for stack" : "Default"}`,
+        ];
+
+        p.note(summaryLines.join("\n"), "AI Generation Summary");
+      } catch (aiError: unknown) {
+        clearInterval(progressTimer);
+
+        if (aiError instanceof AIGenerationTimeoutError) {
+          aiSpinner.stop("AI generation failed -- falling back to standard prompts");
+          p.log.warning(`Timed out after ${Math.round(aiError.timeoutMs / 1000)} seconds. Falling back to standard prompts.`);
+        } else {
+          const reason =
+            aiError instanceof Error ? aiError.message : "Unknown error";
+          aiSpinner.stop("AI generation failed -- falling back to standard prompts");
+          p.log.warning(`AI generation failed: ${reason}. Falling back to standard prompts.`);
+        }
+
+        const deep = await collectDeepContent();
+        brief.problemStatement = deep.problemStatement;
+        brief.successCriteria = deep.successCriteria;
+        brief.valueProposition = deep.valueProposition;
+        brief.outOfScope = deep.outOfScope;
+        brief.codeConventions = deep.codeConventions;
+      }
+    }
+
     const s = p.spinner();
     s.start("Rendering templates...");
 
     try {
       const templatesDir = resolveTemplatesDir();
-      const tokens = buildTokenMap(brief);
+      const tokens = buildTokenMap(brief, aiContent);
       const renderedFiles = await renderTemplates(templatesDir, tokens);
 
       if (dryRun) {

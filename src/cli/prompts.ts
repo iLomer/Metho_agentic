@@ -36,10 +36,88 @@ function handleCancel(value: unknown): asserts value is string {
 }
 
 /**
+ * Options for controlling the prompt flow.
+ */
+export interface CollectBriefOptions {
+  /** When true, skips deep content prompts (AI will generate those). */
+  useAI?: boolean;
+}
+
+/**
+ * Deep content fields collected from the user when AI is not used.
+ */
+export interface DeepContentFields {
+  problemStatement: string;
+  successCriteria: string;
+  valueProposition: string;
+  outOfScope: string;
+  codeConventions: string;
+}
+
+const DEFAULT_DEFERRED = "To be defined by @meto-pm";
+const DEFAULT_CONVENTIONS =
+  "TypeScript strict mode, no any types, no console.log in production code";
+
+/**
+ * Collects the deep content prompts (problem statement, success criteria,
+ * value proposition, out of scope, code conventions).
+ * Called during the normal static flow, or as a fallback when AI generation fails.
+ */
+export async function collectDeepContent(): Promise<DeepContentFields> {
+  const problemInput = await p.text({
+    message: "What problem does this project solve?",
+    placeholder: "Users struggle with X because Y, leading to Z",
+    defaultValue: DEFAULT_DEFERRED,
+  });
+  handleCancel(problemInput);
+
+  const criteriaInput = await p.text({
+    message: "How will you measure success?",
+    placeholder: "User can do X in under Y minutes, Z% adoption in first month",
+    defaultValue: DEFAULT_DEFERRED,
+  });
+  handleCancel(criteriaInput);
+
+  const valueInput = await p.text({
+    message: "What is the core value proposition? (one line)",
+    placeholder: "The fastest way to do X without compromising on Y",
+    defaultValue: DEFAULT_DEFERRED,
+  });
+  handleCancel(valueInput);
+
+  const scopeInput = await p.text({
+    message: "What is out of scope for v1?",
+    placeholder: "Multi-tenancy, mobile app, internationalization",
+    defaultValue: DEFAULT_DEFERRED,
+  });
+  handleCancel(scopeInput);
+
+  const conventionsInput = await p.text({
+    message: "Any code conventions or standards?",
+    placeholder: "TypeScript strict, ESLint, Prettier, conventional commits",
+    defaultValue: DEFAULT_CONVENTIONS,
+  });
+  handleCancel(conventionsInput);
+
+  return {
+    problemStatement: problemInput.trim(),
+    successCriteria: criteriaInput.trim(),
+    valueProposition: valueInput.trim(),
+    outOfScope: scopeInput.trim(),
+    codeConventions: conventionsInput.trim(),
+  };
+}
+
+/**
  * Collects the project brief from the user via interactive prompts.
+ * When `options.useAI` is true, skips the deep content prompts (problem statement,
+ * success criteria, value proposition, out of scope, code conventions) because
+ * the AI generator will produce those.
  * Returns the completed brief. Exits the process if the user cancels.
  */
-export async function collectProjectBrief(): Promise<ProjectBrief> {
+export async function collectProjectBrief(
+  options: CollectBriefOptions = {},
+): Promise<ProjectBrief> {
   const projectName = await p.text({
     message: "What is your project name?",
     placeholder: "my-awesome-project",
@@ -102,45 +180,20 @@ export async function collectProjectBrief(): Promise<ProjectBrief> {
     customStack = customStackInput.trim();
   }
 
-  const defaultDeferred = "To be defined by @meto-pm";
+  let problemStatement = DEFAULT_DEFERRED;
+  let successCriteria = DEFAULT_DEFERRED;
+  let valueProposition = DEFAULT_DEFERRED;
+  let outOfScope = DEFAULT_DEFERRED;
+  let codeConventions = DEFAULT_CONVENTIONS;
 
-  const problemStatement = await p.text({
-    message: "What problem does this project solve?",
-    placeholder: "Users struggle with X because Y, leading to Z",
-    defaultValue: defaultDeferred,
-  });
-  handleCancel(problemStatement);
-
-  const successCriteria = await p.text({
-    message: "How will you measure success?",
-    placeholder: "User can do X in under Y minutes, Z% adoption in first month",
-    defaultValue: defaultDeferred,
-  });
-  handleCancel(successCriteria);
-
-  const valueProposition = await p.text({
-    message: "What is the core value proposition? (one line)",
-    placeholder: "The fastest way to do X without compromising on Y",
-    defaultValue: defaultDeferred,
-  });
-  handleCancel(valueProposition);
-
-  const outOfScope = await p.text({
-    message: "What is out of scope for v1?",
-    placeholder: "Multi-tenancy, mobile app, internationalization",
-    defaultValue: defaultDeferred,
-  });
-  handleCancel(outOfScope);
-
-  const defaultConventions =
-    "TypeScript strict mode, no any types, no console.log in production code";
-
-  const codeConventions = await p.text({
-    message: "Any code conventions or standards?",
-    placeholder: "TypeScript strict, ESLint, Prettier, conventional commits",
-    defaultValue: defaultConventions,
-  });
-  handleCancel(codeConventions);
+  if (!options.useAI) {
+    const deep = await collectDeepContent();
+    problemStatement = deep.problemStatement;
+    successCriteria = deep.successCriteria;
+    valueProposition = deep.valueProposition;
+    outOfScope = deep.outOfScope;
+    codeConventions = deep.codeConventions;
+  }
 
   const outputDirectory = await p.text({
     message: "Output directory?",
@@ -156,11 +209,11 @@ export async function collectProjectBrief(): Promise<ProjectBrief> {
     targetUsers: targetUsers.trim(),
     techStack,
     customStack,
-    problemStatement: problemStatement.trim(),
-    successCriteria: successCriteria.trim(),
-    valueProposition: valueProposition.trim(),
-    outOfScope: outOfScope.trim(),
-    codeConventions: codeConventions.trim(),
+    problemStatement,
+    successCriteria,
+    valueProposition,
+    outOfScope,
+    codeConventions,
     outputDirectory: outputDirectory.trim(),
   };
 }
