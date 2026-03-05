@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { spawn } from "node:child_process";
-import { readFile, rm, stat } from "node:fs/promises";
+import { readdir, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -142,5 +142,9 @@ describe("lom init (integration)", () => {
     // Verify .git directory exists (git init ran)
     const gitDirStat = await stat(join(outputDir, ".git"));
     expect(gitDirStat.isDirectory()).toBe(true);
+
+    // Verify no double-nesting: there should be no subfolder named after the project
+    const topEntries = await readdir(outputDir);
+    expect(topEntries).not.toContain(projectName);
   });
 });
