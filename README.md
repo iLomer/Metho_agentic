@@ -28,7 +28,6 @@ After running `lom init`, your new project comes pre-loaded with everything you 
 - **Agent definitions** -- PM, developer, and tester agents configured to follow your methodology from day one
 - **Product context** -- your vision, tech stack, and decisions captured in structured files so every session starts with shared context
 - **Epics and workflows** -- definition of done, commit conventions, and an epic backlog to plan against
-- **Token optimized** -- agent instructions and workflow files are deduplicated and concise, so Claude Code sessions consume fewer tokens and produce more useful output per dollar
 
 No more hours of manual setup. No more "I forgot to write the CLAUDE.md." It is all there from the start.
 
