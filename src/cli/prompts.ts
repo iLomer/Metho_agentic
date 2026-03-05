@@ -54,7 +54,7 @@ export interface DeepContentFields {
   codeConventions: string;
 }
 
-const DEFAULT_DEFERRED = "To be defined by @meto-pm";
+const DEFAULT_DEFERRED = "To be filled in later";
 const DEFAULT_CONVENTIONS =
   "TypeScript strict mode, no any types, no console.log in production code";
 
@@ -65,36 +65,36 @@ const DEFAULT_CONVENTIONS =
  */
 export async function collectDeepContent(): Promise<DeepContentFields> {
   const problemInput = await p.text({
-    message: "What problem does this project solve?",
-    placeholder: "Users struggle with X because Y, leading to Z",
+    message: "What pain point does this solve for your users?",
+    placeholder: "Managing tasks across multiple tools is chaotic",
     defaultValue: DEFAULT_DEFERRED,
   });
   handleCancel(problemInput);
 
   const criteriaInput = await p.text({
-    message: "How will you measure success?",
-    placeholder: "User can do X in under Y minutes, Z% adoption in first month",
+    message: "What does success look like for your users?",
+    placeholder: "They can manage a full sprint in under 10 minutes a day",
     defaultValue: DEFAULT_DEFERRED,
   });
   handleCancel(criteriaInput);
 
   const valueInput = await p.text({
-    message: "What is the core value proposition? (one line)",
-    placeholder: "The fastest way to do X without compromising on Y",
+    message: "Why would someone use this over alternatives?",
+    placeholder: "Simpler than Jira, more structured than a spreadsheet",
     defaultValue: DEFAULT_DEFERRED,
   });
   handleCancel(valueInput);
 
   const scopeInput = await p.text({
-    message: "What is out of scope for v1?",
-    placeholder: "Multi-tenancy, mobile app, internationalization",
+    message: "What are you NOT building in the first version?",
+    placeholder: "Mobile app, billing, admin dashboard",
     defaultValue: DEFAULT_DEFERRED,
   });
   handleCancel(scopeInput);
 
   const conventionsInput = await p.text({
-    message: "Any code conventions or standards?",
-    placeholder: "TypeScript strict, ESLint, Prettier, conventional commits",
+    message: "Any coding rules you want enforced?",
+    placeholder: "TypeScript strict, ESLint, Prettier",
     defaultValue: DEFAULT_CONVENTIONS,
   });
   handleCancel(conventionsInput);
@@ -119,28 +119,28 @@ export async function collectProjectBrief(
   options: CollectBriefOptions = {},
 ): Promise<ProjectBrief> {
   const projectName = await p.text({
-    message: "What is your project name?",
-    placeholder: "my-awesome-project",
+    message: "Name your project",
+    placeholder: "my-saas-app",
     validate: validateProjectName,
   });
   handleCancel(projectName);
 
   const description = await p.text({
-    message: "Describe your project in one line.",
-    placeholder: "A task management app for remote teams",
+    message: "What are you building? (one line)",
+    placeholder: "A project management tool for remote teams",
     validate: requireNonEmpty,
   });
   handleCancel(description);
 
   const targetUsers = await p.text({
-    message: "Who are the target users?",
+    message: "Who is this for?",
     placeholder: "Developers, small teams, freelancers",
     validate: requireNonEmpty,
   });
   handleCancel(targetUsers);
 
   const techStack = await p.select<TechStack>({
-    message: "Choose a tech stack.",
+    message: "Pick your tech stack",
     options: [
       {
         value: "nextjs-supabase",
@@ -192,7 +192,7 @@ export async function collectProjectBrief(
   let customStack: string | undefined;
   if (techStack === "custom") {
     const customStackInput = await p.text({
-      message: "Describe your tech stack.",
+      message: "What tools and frameworks are you using?",
       placeholder: "Django + PostgreSQL + React frontend",
       validate: requireNonEmpty,
     });
@@ -216,10 +216,9 @@ export async function collectProjectBrief(
   }
 
   const outputDirectory = await p.text({
-    message: "Output directory?",
+    message: "Project folder",
     defaultValue: `./${projectName}`,
     placeholder: `./${projectName}`,
-    validate: requireNonEmpty,
   });
   handleCancel(outputDirectory);
 

@@ -99,10 +99,10 @@ describe("collectProjectBrief with useAI=true", () => {
     expect(brief.projectName).toBe("ai-project");
     expect(brief.description).toBe("AI-powered app");
     // Deep fields should have defaults
-    expect(brief.problemStatement).toBe("To be defined by @meto-pm");
-    expect(brief.successCriteria).toBe("To be defined by @meto-pm");
-    expect(brief.valueProposition).toBe("To be defined by @meto-pm");
-    expect(brief.outOfScope).toBe("To be defined by @meto-pm");
+    expect(brief.problemStatement).toBe("To be filled in later");
+    expect(brief.successCriteria).toBe("To be filled in later");
+    expect(brief.valueProposition).toBe("To be filled in later");
+    expect(brief.outOfScope).toBe("To be filled in later");
     expect(brief.codeConventions).toBe(
       "TypeScript strict mode, no any types, no console.log in production code",
     );
@@ -124,7 +124,7 @@ describe("fallback recovery after AI failure", () => {
     mockedSelect.mockResolvedValueOnce("nodejs-cli" as never);
 
     const brief = await collectProjectBrief({ useAI: true });
-    expect(brief.problemStatement).toBe("To be defined by @meto-pm");
+    expect(brief.problemStatement).toBe("To be filled in later");
 
     // Now simulate AI failure -> collect deep content as recovery
     mockedText

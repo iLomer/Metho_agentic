@@ -10,9 +10,7 @@ import {
   renderTemplates,
   resolveTemplatesDir,
 } from "./renderer.js";
-import { runGitHubFlow } from "./github.js";
 import { initGitRepo } from "./git.js";
-import { runSupabaseFlow } from "./supabase.js";
 import {
   checkWritePermission,
   PreflightError,
@@ -20,6 +18,7 @@ import {
 } from "./preflight.js";
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 import { formatFileTree } from "./tree.js";
+import { runDoctor } from "./doctor.js";
 import { generateWithAI, AIGenerationTimeoutError } from "./ai-generator.js";
 import { parseAIOutput, validateAIContent } from "./ai-parser.js";
 import type { AIGeneratedContent } from "./ai-parser.js";
@@ -65,6 +64,7 @@ function printHelp(): void {
       "  init              Scaffold a new structured project",
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
+      "  doctor            Check methodology health of the current project",
       "",
       "Options:",
       "  --help, -h        Show this help message",
@@ -285,41 +285,20 @@ async function main(): Promise<void> {
         }
       }
 
-      const githubResult = await runGitHubFlow(
-        brief.projectName,
-        brief.outputDirectory,
-        gitInitSucceeded,
-      );
-
-      const supabaseResult = await runSupabaseFlow(
-        brief.techStack,
-        brief.outputDirectory,
-      );
-
       const nextSteps: string[] = [
-        `cd ${brief.outputDirectory}`,
-        "Open in your editor",
-        "Type `claude` to start a session (if Claude Code is already installed)",
-        "Install Claude Code if you haven't: https://docs.anthropic.com/en/docs/claude-code",
-        "Call @meto-pm to populate your backlog",
+        `Your project is ready at ${brief.outputDirectory}`,
+        "",
+        "1. Open it in your editor",
+        `   code ${brief.outputDirectory}`,
+        "",
+        "2. Start Claude Code in the project folder",
+        `   cd ${brief.outputDirectory} && claude`,
+        "",
+        '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+        "   This kicks off the PM agent to create your first tasks.",
       ];
 
-      if (githubResult.repoCreated && githubResult.repoUrl) {
-        nextSteps.push(`GitHub repo: ${githubResult.repoUrl}`);
-      }
-
-      if (brief.techStack === "nextjs-supabase") {
-        if (supabaseResult.initialized) {
-          nextSteps.push("Run `supabase start` to launch the local development stack");
-        }
-        nextSteps.push("Copy the local credentials from `supabase status` into `.env.local`");
-      }
-
-      if (!preflight.gitAvailable) {
-        nextSteps.push("Run `git init` when git is available");
-      }
-
-      p.note(nextSteps.join("\n"), "Next Steps");
+      p.note(nextSteps.join("\n"), "What's Next");
 
       p.outro("Done. Happy building!");
     } catch (error: unknown) {
@@ -339,6 +318,11 @@ async function main(): Promise<void> {
     }
 
     interruption.uninstall();
+    return;
+  }
+
+  if (arg === "doctor") {
+    await runDoctor();
     return;
   }
 
