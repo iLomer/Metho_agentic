@@ -179,16 +179,14 @@ async function main(): Promise<void> {
       const nextSteps: string[] = [
         `cd ${brief.outputDirectory}`,
         "Open in your editor",
+        "Type `claude` to start a session (if Claude Code is already installed)",
+        "Install Claude Code if you haven't: https://docs.anthropic.com/en/docs/claude-code",
+        "Call @lom-pm to populate your backlog",
       ];
 
       if (!preflight.gitAvailable) {
         nextSteps.push("Run `git init` when git is available");
       }
-
-      nextSteps.push(
-        "Install Claude Code if you haven't: https://docs.anthropic.com/en/docs/claude-code",
-        "Start a Claude Code session and call @lom-pm to populate your backlog",
-      );
 
       p.note(nextSteps.join("\n"), "Next Steps");
 
