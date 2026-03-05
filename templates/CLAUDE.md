@@ -24,6 +24,12 @@ Each agent has a memory file in `.claude/agent-memory/` — read it at session s
 
 ---
 
+## Getting Started
+
+This project was scaffolded by Lom. Call @lom-pm to populate your backlog, then call @lom-developer to start building.
+
+---
+
 ## The Board
 
 ```
