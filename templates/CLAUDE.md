@@ -90,4 +90,5 @@ chore(scope): description [bootstrap]
 {{TECH_STACK}}
 
 ## Code Conventions
+<!-- Keep to 3-4 rules max. More rules = more ignored. Focus on what actually causes bugs. -->
 {{CODE_CONVENTIONS}}
