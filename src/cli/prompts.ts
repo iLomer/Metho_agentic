@@ -1,5 +1,21 @@
+import { readFile } from "node:fs/promises";
 import * as p from "@clack/prompts";
 import type { ProjectBrief, TechStack } from "./types.js";
+
+/**
+ * If the input matches an existing file path, reads and returns its content.
+ * Otherwise returns the original string as-is.
+ */
+async function resolveFileOrString(input: string): Promise<string> {
+  const trimmed = input.trim();
+  try {
+    const content = await readFile(trimmed, "utf-8");
+    p.log.info(`Read content from ${trimmed}`);
+    return content.trim();
+  } catch {
+    return trimmed;
+  }
+}
 
 /**
  * Validates that a string is non-empty after trimming.
@@ -125,19 +141,21 @@ export async function collectProjectBrief(
   });
   handleCancel(projectName);
 
-  const description = await p.text({
-    message: "What are you building? (one line)",
+  const descriptionRaw = await p.text({
+    message: "What are you building? (one line, or path to a file)",
     placeholder: "A project management tool for remote teams",
     validate: requireNonEmpty,
   });
-  handleCancel(description);
+  handleCancel(descriptionRaw);
+  const description = await resolveFileOrString(descriptionRaw);
 
-  const targetUsers = await p.text({
-    message: "Who is this for?",
+  const targetUsersRaw = await p.text({
+    message: "Who is this for? (or path to a file)",
     placeholder: "Developers, small teams, freelancers",
     validate: requireNonEmpty,
   });
-  handleCancel(targetUsers);
+  handleCancel(targetUsersRaw);
+  const targetUsers = await resolveFileOrString(targetUsersRaw);
 
   const techStack = await p.select<TechStack>({
     message: "Pick your tech stack",
@@ -216,9 +234,9 @@ export async function collectProjectBrief(
   }
 
   const outputDirectory = await p.text({
-    message: "Project folder",
+    message: "Project folder (. for current directory)",
     defaultValue: `./${projectName}`,
-    placeholder: `./${projectName}`,
+    placeholder: ". for current folder, or ./my-app",
   });
   handleCancel(outputDirectory);
 

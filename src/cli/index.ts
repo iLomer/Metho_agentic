@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import * as p from "@clack/prompts";
 import { collectDeepContent, collectProjectBrief } from "./prompts.js";
 import { InterruptionHandler } from "./interruption.js";
@@ -265,11 +265,22 @@ async function main(): Promise<void> {
         return;
       }
 
+      const isCwd =
+        resolve(brief.outputDirectory) === resolve(".");
+
       interruption.arm(brief.outputDirectory);
-      await writeScaffold(brief.outputDirectory, renderedFiles);
+      const skipped = await writeScaffold(
+        brief.outputDirectory,
+        renderedFiles,
+        { merge: isCwd },
+      );
       interruption.disarm();
 
-      s.stop("Scaffold generated.");
+      if (skipped > 0) {
+        s.stop(`Scaffold generated (${skipped} existing file${skipped === 1 ? "" : "s"} preserved).`);
+      } else {
+        s.stop("Scaffold generated.");
+      }
 
       let gitInitSucceeded = false;
       if (preflight.gitAvailable) {
@@ -285,18 +296,34 @@ async function main(): Promise<void> {
         }
       }
 
-      const nextSteps: string[] = [
-        `Your project is ready at ${brief.outputDirectory}`,
-        "",
-        "1. Open it in your editor",
-        `   code ${brief.outputDirectory}`,
-        "",
-        "2. Start Claude Code in the project folder",
-        `   cd ${brief.outputDirectory} && claude`,
-        "",
-        '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
-        "   This kicks off the PM agent to create your first tasks.",
-      ];
+      let nextSteps: string[];
+      if (isCwd) {
+        nextSteps = [
+          "Your project is ready in the current directory.",
+          "",
+          "1. Open it in your editor",
+          "   code .",
+          "",
+          "2. Start Claude Code",
+          "   claude",
+          "",
+          '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+          "   This kicks off the PM agent to create your first tasks.",
+        ];
+      } else {
+        nextSteps = [
+          `Your project is ready at ${brief.outputDirectory}`,
+          "",
+          "1. Open it in your editor",
+          `   code ${brief.outputDirectory}`,
+          "",
+          "2. Start Claude Code in the project folder",
+          `   cd ${brief.outputDirectory} && claude`,
+          "",
+          '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+          "   This kicks off the PM agent to create your first tasks.",
+        ];
+      }
 
       p.note(nextSteps.join("\n"), "What's Next");
 
