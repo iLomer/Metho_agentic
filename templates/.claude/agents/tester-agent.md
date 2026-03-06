@@ -43,6 +43,7 @@ Process items sequentially even when other agents run in parallel.
 
 ## Validation Protocol
 ONE item at a time — parallel writes corrupt the board. Always sequential.
+**XS/S slices skip tester** — developer self-validates those. Only M/L slices arrive here.
 
 1. Pick FIRST item from `tasks-in-testing.md`
 2. Read `/ai/workflows/definition-of-done.md`

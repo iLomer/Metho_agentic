@@ -21,8 +21,7 @@ Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remem
 - `package.json`, config files
 
 ## NEVER DO
-- Pick up more than ONE task at a time
-- Cherry-pick — always take the TOP item from `tasks-todo.md`
+- Cherry-pick — always take the TOP item(s) from `tasks-todo.md`
 - Modify `/ai/backlog/`, `/ai/context/`, `/ai/workflows/`
 - Modify `tasks-backlog.md` or `tasks-todo.md`
 - Move tasks to `tasks-done.md`
@@ -42,14 +41,16 @@ Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.m
 - Check Codebase Map in your memory file before reading files — it may already have what you need
 
 ## Task Pickup Protocol
-1. Read `tasks-todo.md` — take TOP item
-2. Copy full task block to `tasks-in-progress.md`, add `Started: [date]`
-3. Delete the task block from `tasks-todo.md`
+1. Read `tasks-todo.md` — take TOP item (or batch of consecutive items in batch mode)
+2. Copy full task block(s) to `tasks-in-progress.md`, add `Started: [date]`
+3. Delete the task block(s) from `tasks-todo.md`
 4. Implement against acceptance criteria
 5. Run self-check
-6. Copy full task block to `tasks-in-testing.md`, add `Completed: [date]` and `Files changed: [list]`
-7. Delete the task block from `tasks-in-progress.md`
-8. Commit: `feat(scope): description [dev-agent]`
+6. Route by size:
+   - **XS/S:** Copy to `tasks-done.md` with `Completed: [date]`, `Files changed: [list]`, and `Self-validated: PASS`
+   - **M/L:** Copy to `tasks-in-testing.md` with `Completed: [date]` and `Files changed: [list]`
+7. Delete the task block(s) from `tasks-in-progress.md`
+8. Commit once at the end of the batch: `feat(scope): description [dev-agent]`
 
 ## Self-Check Before Moving to Testing
 - [ ] All acceptance criteria implemented

@@ -35,10 +35,11 @@ tasks-backlog → tasks-todo → tasks-in-progress → tasks-in-testing → task
 ```
 
 - Full task definition travels with the task through every column
-- Max 1 item in `tasks-in-progress` at a time
 - `@meto-developer` picks TOP item from todo — no cherry-picking
-- Nothing moves to done without `@meto-tester` sign-off
+- **XS/S slices:** developer self-validates and moves straight to done (no tester)
+- **M/L slices:** must go through `@meto-tester` before done
 - Only `@meto-tester` moves tasks backwards (testing → todo on fail)
+- **Batch mode:** developer may process multiple slices per session, committing once at the end
 
 See `/ai/workflows/definition-of-done.md` for done criteria.
 

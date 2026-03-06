@@ -234,9 +234,9 @@ export async function collectProjectBrief(
   }
 
   const outputDirectory = await p.text({
-    message: "Project folder (. for current directory)",
-    defaultValue: `./${projectName}`,
-    placeholder: ". for current folder, or ./my-app",
+    message: "Project folder",
+    defaultValue: ".",
+    placeholder: "Current folder (or type a path like ./my-app)",
   });
   handleCancel(outputDirectory);
 
