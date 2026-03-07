@@ -134,6 +134,44 @@ describe("meto-cli init with AI (integration)", () => {
     expect(epics).toContain("E2 -- Core Feature");
   });
 
+  it("falls back to static prompts when mock claude fails with exit code 1", { timeout: 60_000 }, async () => {
+    const projectName = `ai-fail-test-${Date.now()}`;
+    outputDir = join(tmpdir(), projectName);
+
+    const answers = [
+      CR,                          // 1. Confirm AI usage (yes, default)
+      projectName + CR,            // 2. Project name
+      "A fallback test project" + CR, // 3. Description
+      "Developers" + CR,           // 4. Target users
+      CR,                          // 5. Stack (first = nextjs-supabase)
+      outputDir + CR,              // 6. Output directory (AI skips deep prompts)
+      // AI generation fails, fallback to deep content prompts:
+      CR,                          // 7. Problem statement (default)
+      CR,                          // 8. Success criteria (default)
+      CR,                          // 9. Value proposition (default)
+      CR,                          // 10. Out of scope (default)
+      CR,                          // 11. Code conventions (default)
+    ];
+
+    const result = await runCliWithMockClaude(["init"], answers, MOCK_CLAUDE_ERR_DIR);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Done. Happy building!");
+    expect(result.stdout).toContain("AI generation failed");
+    expect(result.stdout).toContain("Falling back to standard prompts");
+
+    // Verify scaffold was created with static fallback content
+    const dirStat = await stat(outputDir);
+    expect(dirStat.isDirectory()).toBe(true);
+
+    const claudeMd = await readFile(
+      join(outputDir, "CLAUDE.md"),
+      "utf-8",
+    );
+    expect(claudeMd).toContain(projectName);
+    expect(claudeMd).not.toContain("{{PROJECT_NAME}}");
+  });
+
   it("falls back to static prompts with --no-ai flag", { timeout: 60_000 }, async () => {
     const projectName = `noai-e2e-test-${Date.now()}`;
     outputDir = join(tmpdir(), projectName);
