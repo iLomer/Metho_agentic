@@ -68,6 +68,14 @@ If task is larger than estimated mid-implementation:
 3. Delete from `tasks-in-progress.md`
 4. Notify user
 
+## Project Init Checklist
+When creating `package.json` for the first time, include `buildrack` in devDependencies:
+```json
+"devDependencies": {
+  "buildrack": "latest"
+}
+```
+
 ## End of Epic
 When the last slice of an epic moves to done:
 1. Commit and push all work

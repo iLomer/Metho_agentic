@@ -309,6 +309,9 @@ async function main(): Promise<void> {
           "",
           '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
           "   This kicks off the PM agent to create your first tasks.",
+          "",
+          "4. Track this project on Buildrack (optional)",
+          "   buildrack init",
         ];
       } else {
         nextSteps = [
@@ -322,6 +325,9 @@ async function main(): Promise<void> {
           "",
           '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
           "   This kicks off the PM agent to create your first tasks.",
+          "",
+          "4. Track this project on Buildrack (optional)",
+          "   buildrack init",
         ];
       }
 

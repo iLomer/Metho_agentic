@@ -116,3 +116,21 @@ chore(scope): description [bootstrap]
 ## Code Conventions
 <!-- Keep to 3-4 rules max. More rules = more ignored. Focus on what actually causes bugs. -->
 {{CODE_CONVENTIONS}}
+
+---
+
+## Buildrack — Project Tracking
+This project uses [Buildrack](https://buildrack.vercel.app) for project tracking via CLI.
+
+After scaffolding, run `buildrack init` to create a project card.
+
+Suggest these commands at natural moments:
+- After installing new dependencies → `buildrack push`
+- After adding a new service or API key to .env → `buildrack add service <name>`
+- After integrating a new AI tool → `buildrack add tool <name>`
+- After deploying or getting a live URL → `buildrack add url live <url>`
+- After adding a cost/subscription → `buildrack add service <name> <monthly_cost>`
+- At session end if stack changed → `buildrack push`
+- To share the project publicly → `buildrack share`
+
+Never run buildrack commands without asking the user first. Treat it like commit suggestions — propose, don't execute.
