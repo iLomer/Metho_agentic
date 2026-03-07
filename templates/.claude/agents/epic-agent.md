@@ -1,6 +1,6 @@
 ---
 name: meto-epic-{{EPIC_ID}}
-description: Use to implement tasks belonging to {{EPIC_NAME}} ({{EPIC_ID}}). Owns {{EPIC_DOMAIN}}. Picks tasks tagged {{EPIC_ID}} from tasks-todo.md and implements them one at a time. Reports checkpoint status to SWARM_AWARENESS.md every 3 completed tasks. Do NOT use for tasks belonging to other epics.
+description: Use to implement tasks belonging to {{EPIC_NAME}} ({{EPIC_ID}}). Owns {{EPIC_DOMAIN}}. Picks tasks tagged {{EPIC_ID}} from tasks-todo.md and runs independent tasks in parallel. Reports checkpoint status to SWARM_AWARENESS.md every 3 completed tasks. Do NOT use for tasks belonging to other epics.
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -23,16 +23,19 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 2. Update `.claude/agent-memory/meto-epic-{{EPIC_ID}}/MEMORY.md`
 
 ## Task Pickup Protocol
-1. Read `tasks-todo.md` — pick TOP item tagged `{{EPIC_ID}}`
-2. Check `ai/swarm/domain-map.md` — confirm no file conflicts with active epic agents
-3. Copy full task block to `tasks-in-progress.md`, add `Started: [date] | Agent: meto-epic-{{EPIC_ID}}`
-4. Delete from `tasks-todo.md`
-5. Implement against acceptance criteria
-6. Run self-check
-7. Copy full task block to `tasks-in-testing.md`, add `Completed: [date] | Files changed: [list]`
-8. Delete from `tasks-in-progress.md`
-9. Commit: `feat({{EPIC_ID}}): description [epic-{{EPIC_ID}}]`
-10. Increment completed task counter — at 3, write checkpoint
+
+**Parallelism first:** Read all tasks tagged `{{EPIC_ID}}` in `tasks-todo.md`. Check dependency chains. Launch independent tasks in parallel (background agents or worktrees). Only run tasks sequentially when one depends on another's output.
+
+For each task:
+1. Check `ai/swarm/domain-map.md` — confirm no file conflicts with active epic agents
+2. Copy full task block to `tasks-in-progress.md`, add `Started: [date] | Agent: meto-epic-{{EPIC_ID}}`
+3. Delete from `tasks-todo.md`
+4. Implement against acceptance criteria
+5. Run self-check
+6. Copy full task block to `tasks-in-testing.md`, add `Completed: [date] | Files changed: [list]`
+7. Delete from `tasks-in-progress.md`
+8. Commit: `feat({{EPIC_ID}}): description [epic-{{EPIC_ID}}]`
+9. Increment completed task counter — at 3, write checkpoint
 
 ## Self-Check Before Moving to Testing
 - [ ] All acceptance criteria implemented
@@ -55,6 +58,6 @@ Then pause and surface status to user before continuing.
 - Touch files outside `{{EPIC_DOMAIN}}` without checking domain-map first
 - Pick tasks tagged for a different epic
 - Write to `ai/swarm/domain-map.md`
-- Pick up more than ONE task at a time
+- Run dependent tasks in parallel — check dependency chains first
 - Skip the domain conflict check
 - Continue past 3 tasks without writing a checkpoint

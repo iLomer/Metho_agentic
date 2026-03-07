@@ -31,14 +31,17 @@ Each epic runs its own agent in parallel. Epic agents are scoped to their domain
 ## Checkpoint Rhythm
 
 ```
-Epic agent picks task → implements → self-check → moves to testing
-Repeat × 3
-→ Write checkpoint to SWARM_AWARENESS.md
-→ Surface status to user
-→ User runs: npx meto-cli status
-→ User reviews: continue / intervene / reassign
-→ Repeat
+Epic agent reads todo -> identifies independent tasks -> launches in parallel
+Each task: implement -> self-check -> move to testing
+After 3 tasks complete (parallel or sequential):
+-> Write checkpoint to SWARM_AWARENESS.md
+-> Surface status to user
+-> User runs: npx meto-cli status
+-> User reviews: continue / intervene / reassign
+-> Repeat
 ```
+
+**Parallelism within an epic:** Independent tasks (no dependency chain) run in parallel using background agents or worktrees. Only tasks that depend on another's output run sequentially.
 
 A checkpoint is NOT a blocker — if status is `on-track` the agent continues automatically. Only `blocked` status requires user intervention.
 
