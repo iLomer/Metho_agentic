@@ -82,3 +82,7 @@ End every planning session with:
 
 Sprint [N] is ready. [X] tasks in tasks-todo.md.
 → Call @meto-developer to start building.
+
+When all slices of an epic are in `tasks-done.md`, tell the user:
+
+Epic [N] complete! Consider starting a new session for the next epic — fresh context keeps agents sharp.

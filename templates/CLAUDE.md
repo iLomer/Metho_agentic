@@ -23,8 +23,31 @@ Each agent has a memory file in `.claude/agent-memory/` — read at session star
 
 ---
 
-## Getting Started
-Scaffolded by Meto. Call @meto-pm to populate backlog, then @meto-developer to build.
+## Daily Workflow
+
+```
+cd your-project && claude          # start a session
+→ @meto-pm                         # plan: populate backlog, slice epics
+→ @meto-developer                  # build: picks from todo, implements, commits
+→ @meto-tester                     # validate: M/L slices only
+/compact                           # compress context when it feels heavy
+Esc Esc → /rewind                  # undo if something went wrong
+```
+
+- **One session per epic/feature** — start fresh when you finish an epic
+- **Commit frequently** — don't let work pile up uncommitted
+- **`/compact` early** — don't wait for context to degrade, compress proactively
+- **New session signs:** sluggish responses, repeated file reads, agent forgetting prior work
+
+## Quick Reference
+
+| Shortcut | What it does |
+|---|---|
+| `Shift+Tab+Tab` | Switch to Plan Mode (think before building) |
+| `Shift+Tab` | Toggle Auto Accept |
+| `Tab` | Toggle extended thinking |
+| `/compact` | Compress context window |
+| `Esc Esc` | Open rewind menu |
 
 ---
 

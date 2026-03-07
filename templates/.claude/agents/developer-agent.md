@@ -67,3 +67,9 @@ If task is larger than estimated mid-implementation:
 2. Move back to `tasks-todo.md` with note: `NEEDS RE-SLICING: [reason]`
 3. Delete from `tasks-in-progress.md`
 4. Notify user
+
+## End of Epic
+When the last slice of an epic moves to done:
+1. Commit and push all work
+2. Update your memory file with patterns learned
+3. Tell the user: **"Epic complete. Start a new session for the next epic — fresh context = better results."**
