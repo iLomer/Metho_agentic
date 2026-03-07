@@ -107,6 +107,7 @@ describe("meto-cli init with AI (integration)", () => {
       "Developers" + CR,           // 4. Target users
       CR,                          // 5. Stack (first = nextjs-supabase)
       outputDir + CR,              // 6. Output directory (AI skips deep prompts)
+      CR,                          // 7. Workflow mode (first = sprint)
     ];
 
     const result = await runCliWithMockClaude(["init"], answers);
@@ -145,12 +146,13 @@ describe("meto-cli init with AI (integration)", () => {
       "Developers" + CR,           // 4. Target users
       CR,                          // 5. Stack (first = nextjs-supabase)
       outputDir + CR,              // 6. Output directory (AI skips deep prompts)
+      CR,                          // 7. Workflow mode (first = sprint)
       // AI generation fails, fallback to deep content prompts:
-      CR,                          // 7. Problem statement (default)
-      CR,                          // 8. Success criteria (default)
-      CR,                          // 9. Value proposition (default)
-      CR,                          // 10. Out of scope (default)
-      CR,                          // 11. Code conventions (default)
+      CR,                          // 8. Problem statement (default)
+      CR,                          // 9. Success criteria (default)
+      CR,                          // 10. Value proposition (default)
+      CR,                          // 11. Out of scope (default)
+      CR,                          // 12. Code conventions (default)
     ];
 
     const result = await runCliWithMockClaude(["init"], answers, MOCK_CLAUDE_ERR_DIR);
@@ -187,6 +189,7 @@ describe("meto-cli init with AI (integration)", () => {
       CR,                        // 8. Out of scope (default)
       CR,                        // 9. Code conventions (default)
       outputDir + CR,            // 10. Output directory
+      CR,                        // 11. Workflow mode (first = sprint)
     ];
 
     const result = await runCliWithMockClaude(["init", "--no-ai"], answers);

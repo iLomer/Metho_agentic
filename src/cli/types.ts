@@ -12,6 +12,11 @@ export type TechStack =
   | "custom";
 
 /**
+ * Workflow mode: sprint (sequential) or swarm (parallel epic agents).
+ */
+export type WorkflowMode = "sprint" | "swarm";
+
+/**
  * The brief collected from the user during `meto-cli init`.
  * Contains everything needed to render templates and scaffold a project.
  */
@@ -38,4 +43,6 @@ export interface ProjectBrief {
   codeConventions: string;
   /** Absolute or relative path where the scaffold will be written */
   outputDirectory: string;
+  /** Workflow mode: sprint (sequential) or swarm (parallel epic agents) */
+  workflowMode: WorkflowMode;
 }

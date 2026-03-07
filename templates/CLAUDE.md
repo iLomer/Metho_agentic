@@ -9,17 +9,7 @@
 
 ---
 
-## Agents
-
-Human orchestrator reads the board and calls the right agent.
-
-| Agent | Owns |
-|---|---|
-| `@meto-pm` | `/ai/backlog/`, `tasks-backlog.md`, `tasks-todo.md` |
-| `@meto-developer` | `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md` |
-| `@meto-tester` | `tasks-in-testing.md` → done or back to todo |
-
-Each agent has a memory file in `.claude/agent-memory/` — read at session start, update at session end.
+{{WORKFLOW_AGENTS_SECTION}}
 
 ---
 

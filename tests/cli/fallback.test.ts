@@ -54,7 +54,7 @@ describe("collectDeepContent", () => {
 describe("collectProjectBrief with useAI=false", () => {
   it("collects all 10 prompts in the static flow", async () => {
     // 5 basic prompts: name, desc, users, custom stack (if custom), output dir
-    // + stack select + 5 deep content prompts
+    // + stack select + 5 deep content prompts + workflow mode select
     mockedText
       .mockResolvedValueOnce("my-project")       // projectName
       .mockResolvedValueOnce("A cool project")    // description
@@ -67,7 +67,9 @@ describe("collectProjectBrief with useAI=false", () => {
       .mockResolvedValueOnce("Strict mode")       // codeConventions
       .mockResolvedValueOnce("./my-project");     // outputDirectory
 
-    mockedSelect.mockResolvedValueOnce("nodejs-cli" as never);
+    mockedSelect
+      .mockResolvedValueOnce("nodejs-cli" as never)  // techStack
+      .mockResolvedValueOnce("sprint" as never);     // workflowMode
 
     const brief = await collectProjectBrief({ useAI: false });
 
@@ -77,9 +79,10 @@ describe("collectProjectBrief with useAI=false", () => {
     expect(brief.valueProposition).toBe("Value Z");
     expect(brief.outOfScope).toBe("Not doing W");
     expect(brief.codeConventions).toBe("Strict mode");
+    expect(brief.workflowMode).toBe("sprint");
     // 3 basic text + 5 deep + 1 output = 9 text calls
     expect(mockedText).toHaveBeenCalledTimes(9);
-    expect(mockedSelect).toHaveBeenCalledTimes(1);
+    expect(mockedSelect).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -92,7 +95,9 @@ describe("collectProjectBrief with useAI=true", () => {
       // stack select via p.select
       .mockResolvedValueOnce("./ai-project");      // outputDirectory
 
-    mockedSelect.mockResolvedValueOnce("nextjs-supabase" as never);
+    mockedSelect
+      .mockResolvedValueOnce("nextjs-supabase" as never)  // techStack
+      .mockResolvedValueOnce("sprint" as never);          // workflowMode
 
     const brief = await collectProjectBrief({ useAI: true });
 
@@ -108,7 +113,7 @@ describe("collectProjectBrief with useAI=true", () => {
     );
     // 3 basic text + 1 output = 4 text calls (no deep content)
     expect(mockedText).toHaveBeenCalledTimes(4);
-    expect(mockedSelect).toHaveBeenCalledTimes(1);
+    expect(mockedSelect).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -121,7 +126,9 @@ describe("fallback recovery after AI failure", () => {
       .mockResolvedValueOnce("Testers")
       .mockResolvedValueOnce("./fallback-project");
 
-    mockedSelect.mockResolvedValueOnce("nodejs-cli" as never);
+    mockedSelect
+      .mockResolvedValueOnce("nodejs-cli" as never)  // techStack
+      .mockResolvedValueOnce("sprint" as never);     // workflowMode
 
     const brief = await collectProjectBrief({ useAI: true });
     expect(brief.problemStatement).toBe("To be filled in later");

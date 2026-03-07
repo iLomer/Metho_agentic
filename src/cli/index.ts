@@ -19,9 +19,16 @@ import {
 import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 import { formatFileTree } from "./tree.js";
 import { runDoctor } from "./doctor.js";
+import { runStatus } from "./status.js";
 import { generateWithAI, AIGenerationTimeoutError } from "./ai-generator.js";
 import { parseAIOutput, validateAIContent } from "./ai-parser.js";
 import type { AIGeneratedContent } from "./ai-parser.js";
+import {
+  generateEpicAgents,
+  readEpicAgentTemplate,
+  generateSwarmSettings,
+  parseEpics,
+} from "./swarm.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -65,6 +72,7 @@ function printHelp(): void {
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
       "  doctor            Check methodology health of the current project",
+      "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
       "",
       "Options:",
       "  --help, -h        Show this help message",
@@ -250,7 +258,35 @@ async function main(): Promise<void> {
     try {
       const templatesDir = resolveTemplatesDir();
       const tokens = buildTokenMap(brief, aiContent);
-      const renderedFiles = await renderTemplates(templatesDir, tokens);
+      const renderedFiles = await renderTemplates(
+        templatesDir,
+        tokens,
+        brief.workflowMode,
+      );
+
+      if (brief.workflowMode === "swarm") {
+        const epicsContent = tokens.STARTER_EPICS;
+        const epicAgentTemplate = await readEpicAgentTemplate(templatesDir);
+        const epicAgentFiles = generateEpicAgents(
+          epicsContent,
+          epicAgentTemplate,
+        );
+        renderedFiles.push(...epicAgentFiles);
+
+        const epicIds = parseEpics(epicsContent).map((e) => e.id);
+        if (epicIds.length > 0) {
+          const swarmSettings = generateSwarmSettings(epicIds);
+          const settingsIndex = renderedFiles.findIndex(
+            (f) => f.relativePath.replace(/\\/g, "/") === ".claude/settings.json",
+          );
+          if (settingsIndex !== -1) {
+            renderedFiles[settingsIndex] = {
+              relativePath: ".claude/settings.json",
+              content: swarmSettings,
+            };
+          }
+        }
+      }
 
       if (dryRun) {
         s.stop("Templates rendered (dry run).");
@@ -356,6 +392,11 @@ async function main(): Promise<void> {
 
   if (arg === "doctor") {
     await runDoctor();
+    return;
+  }
+
+  if (arg === "status") {
+    await runStatus();
     return;
   }
 

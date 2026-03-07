@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import {
   replaceTokens,
   buildTokenMap,
+  buildWorkflowAgentsSection,
   renderTemplates,
 } from "../../src/cli/renderer.js";
 import type { ProjectBrief } from "../../src/cli/types.js";
@@ -71,6 +72,7 @@ function createBrief(overrides: Partial<ProjectBrief> = {}): ProjectBrief {
     outOfScope: "Nothing",
     codeConventions: "TypeScript strict",
     outputDirectory: "./test-output",
+    workflowMode: "sprint",
     ...overrides,
   };
 }
@@ -224,6 +226,25 @@ describe("buildTokenMap", () => {
     expect(tokens.STARTER_EPICS).toContain("To be sliced by @meto-pm");
   });
 
+  it("maps WORKFLOW_AGENTS_SECTION token for sprint mode", () => {
+    const brief = createBrief({ workflowMode: "sprint" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("@meto-pm");
+    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("@meto-developer");
+    expect(tokens.WORKFLOW_AGENTS_SECTION.toLowerCase()).not.toContain("swarm");
+  });
+
+  it("maps WORKFLOW_AGENTS_SECTION token for swarm mode", () => {
+    const brief = createBrief({ workflowMode: "swarm" });
+    const tokens = buildTokenMap(brief);
+
+    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("@meto-pm");
+    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("@meto-epic-[id]");
+    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("domain-map");
+    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("meto-cli status");
+  });
+
   it("maps STARTER_EPICS token for custom stack with generic epics", () => {
     const brief = createBrief({
       techStack: "custom",
@@ -338,5 +359,92 @@ describe("renderTemplates", () => {
 
     expect(rendered).toHaveLength(1);
     expect(rendered[0].relativePath).toBe(join("subdir", ".gitignore"));
+  });
+
+  it("excludes swarm files when workflow mode is sprint", async () => {
+    const swarmDir = join(tempDir, "ai", "swarm");
+    const workflowDir = join(tempDir, "ai", "workflows");
+    await mkdir(swarmDir, { recursive: true });
+    await mkdir(workflowDir, { recursive: true });
+    await writeFile(join(tempDir, "CLAUDE.md"), "# Project", "utf-8");
+    await writeFile(join(swarmDir, "SWARM_AWARENESS.md"), "swarm", "utf-8");
+    await writeFile(join(swarmDir, "domain-map.md"), "domains", "utf-8");
+    await writeFile(join(workflowDir, "swarm-workflow.md"), "workflow", "utf-8");
+    await writeFile(join(workflowDir, "commit-conventions.md"), "commits", "utf-8");
+
+    const rendered = await renderTemplates(tempDir, {}, "sprint");
+
+    const paths = rendered.map((f) => f.relativePath.replace(/\\/g, "/"));
+    expect(paths).toContain("CLAUDE.md");
+    expect(paths).toContain("ai/workflows/commit-conventions.md");
+    expect(paths).not.toContain("ai/swarm/SWARM_AWARENESS.md");
+    expect(paths).not.toContain("ai/swarm/domain-map.md");
+    expect(paths).not.toContain("ai/workflows/swarm-workflow.md");
+  });
+
+  it("includes swarm files when workflow mode is swarm", async () => {
+    const swarmDir = join(tempDir, "ai", "swarm");
+    const workflowDir = join(tempDir, "ai", "workflows");
+    await mkdir(swarmDir, { recursive: true });
+    await mkdir(workflowDir, { recursive: true });
+    await writeFile(join(tempDir, "CLAUDE.md"), "# Project", "utf-8");
+    await writeFile(join(swarmDir, "SWARM_AWARENESS.md"), "swarm", "utf-8");
+    await writeFile(join(swarmDir, "domain-map.md"), "domains", "utf-8");
+    await writeFile(join(workflowDir, "swarm-workflow.md"), "workflow", "utf-8");
+
+    const rendered = await renderTemplates(tempDir, {}, "swarm");
+
+    const paths = rendered.map((f) => f.relativePath.replace(/\\/g, "/"));
+    expect(paths).toContain("CLAUDE.md");
+    expect(paths).toContain("ai/swarm/SWARM_AWARENESS.md");
+    expect(paths).toContain("ai/swarm/domain-map.md");
+    expect(paths).toContain("ai/workflows/swarm-workflow.md");
+  });
+
+  it("excludes epic-agent.md base template in both modes", async () => {
+    const agentsDir = join(tempDir, ".claude", "agents");
+    await mkdir(agentsDir, { recursive: true });
+    await writeFile(join(agentsDir, "epic-agent.md"), "template", "utf-8");
+    await writeFile(join(agentsDir, "developer-agent.md"), "dev", "utf-8");
+
+    const renderedSprint = await renderTemplates(tempDir, {}, "sprint");
+    const pathsSprint = renderedSprint.map((f) => f.relativePath.replace(/\\/g, "/"));
+    expect(pathsSprint).not.toContain(".claude/agents/epic-agent.md");
+    expect(pathsSprint).toContain(".claude/agents/developer-agent.md");
+
+    const renderedSwarm = await renderTemplates(tempDir, {}, "swarm");
+    const pathsSwarm = renderedSwarm.map((f) => f.relativePath.replace(/\\/g, "/"));
+    expect(pathsSwarm).not.toContain(".claude/agents/epic-agent.md");
+    expect(pathsSwarm).toContain(".claude/agents/developer-agent.md");
+  });
+});
+
+describe("buildWorkflowAgentsSection", () => {
+  it("sprint mode does not contain swarm references", () => {
+    const section = buildWorkflowAgentsSection("sprint");
+
+    expect(section).toContain("@meto-pm");
+    expect(section).toContain("@meto-developer");
+    expect(section).toContain("@meto-tester");
+    expect(section.toLowerCase()).not.toContain("swarm");
+    expect(section).not.toContain("domain-map");
+    expect(section).not.toContain("meto-cli status");
+  });
+
+  it("swarm mode contains both agent tables and swarm references", () => {
+    const section = buildWorkflowAgentsSection("swarm");
+
+    // Sprint agents still present
+    expect(section).toContain("@meto-pm");
+    expect(section).toContain("@meto-developer");
+    expect(section).toContain("@meto-tester");
+
+    // Swarm agent table
+    expect(section).toContain("@meto-epic-[id]");
+
+    // Swarm references
+    expect(section).toContain("ai/swarm/domain-map.md");
+    expect(section).toContain("ai/workflows/swarm-workflow.md");
+    expect(section).toContain("npx meto-cli status");
   });
 });

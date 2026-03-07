@@ -5,7 +5,7 @@ import {
   getStackDescription,
   getStarterEpics,
 } from "./stacks.js";
-import type { ProjectBrief } from "./types.js";
+import type { ProjectBrief, WorkflowMode } from "./types.js";
 import type { AIGeneratedContent } from "./ai-parser.js";
 
 /**
@@ -25,16 +25,70 @@ export interface RenderedFile {
 }
 
 /**
+ * Generates the Agents section for CLAUDE.md based on workflow mode.
+ * Sprint mode includes the standard 3-agent table.
+ * Swarm mode adds a swarm agent table with epic-agent references and swarm file references.
+ */
+export function buildWorkflowAgentsSection(
+  workflowMode: WorkflowMode,
+): string {
+  const sprintSection = [
+    "## Agents",
+    "",
+    "Human orchestrator reads the board and calls the right agent.",
+    "",
+    "| Agent | Owns |",
+    "|---|---|",
+    "| `@meto-pm` | `/ai/backlog/`, `tasks-backlog.md`, `tasks-todo.md` |",
+    "| `@meto-developer` | `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md` |",
+    "| `@meto-tester` | `tasks-in-testing.md` → done or back to todo |",
+    "",
+    "Each agent has a memory file in `.claude/agent-memory/` — read at session start, update at session end.",
+  ];
+
+  if (workflowMode === "sprint") {
+    return sprintSection.join("\n");
+  }
+
+  const swarmSection = [
+    ...sprintSection,
+    "",
+    "### Swarm Mode Agents",
+    "",
+    "This project uses **swarm mode** -- parallel epic agents working on independent domains.",
+    "",
+    "| Agent | Owns |",
+    "|---|---|",
+    "| `@meto-pm` | Planning, epics, swarm init, `ai/swarm/domain-map.md` |",
+    "| `@meto-epic-[id]` | One per epic, scoped to its domain |",
+    "| `@meto-tester` | Validates all epics sequentially |",
+    "",
+    "See `ai/swarm/domain-map.md` for epic ownership.",
+    "",
+    "See `ai/workflows/swarm-workflow.md` for rhythm.",
+    "",
+    "Run `npx meto-cli status` at any time to see swarm progress in the terminal.",
+  ];
+
+  return swarmSection.join("\n");
+}
+
+/**
  * Builds a token replacement map from the project brief.
  * When AI-generated content is provided, it overrides the brief's static fields
  * for PRODUCT_VISION, PROBLEM_STATEMENT, SUCCESS_CRITERIA, VALUE_PROPOSITION,
  * OUT_OF_SCOPE, DEFINITION_OF_DONE, STARTER_EPICS, and STARTER_TASKS.
  * PROJECT_NAME, TARGET_USERS, TECH_STACK, and CODE_CONVENTIONS always come from the brief.
+ * WORKFLOW_AGENTS_SECTION is generated based on the brief's workflowMode.
  */
 export function buildTokenMap(
   brief: ProjectBrief,
   aiContent?: AIGeneratedContent,
 ): TokenMap {
+  const workflowAgentsSection = buildWorkflowAgentsSection(
+    brief.workflowMode ?? "sprint",
+  );
+
   if (aiContent !== undefined) {
     return {
       PROJECT_NAME: brief.projectName,
@@ -49,6 +103,7 @@ export function buildTokenMap(
       DEFINITION_OF_DONE: aiContent.definitionOfDone,
       STARTER_EPICS: aiContent.epics,
       STARTER_TASKS: aiContent.starterTasks,
+      WORKFLOW_AGENTS_SECTION: workflowAgentsSection,
     };
   }
 
@@ -69,6 +124,7 @@ export function buildTokenMap(
       brief.customStack,
     ),
     STARTER_TASKS: "",
+    WORKFLOW_AGENTS_SECTION: workflowAgentsSection,
   };
 }
 
@@ -148,24 +204,69 @@ export function resolveTemplatesDir(): string {
 }
 
 /**
+ * Paths that are only included when workflow mode is "swarm".
+ * These are the swarm-specific template directories/files.
+ */
+const SWARM_ONLY_PATHS = [
+  "ai/swarm/",
+  "ai/workflows/swarm-workflow.md",
+];
+
+/**
+ * The epic-agent template is used as a base for dynamic generation
+ * (one per epic), never rendered directly into the scaffold.
+ */
+const EPIC_AGENT_TEMPLATE_PATH = ".claude/agents/epic-agent.md";
+
+/**
+ * Checks whether a relative path belongs to swarm-only content.
+ */
+function isSwarmOnlyPath(relativePath: string): boolean {
+  const normalized = relativePath.replace(/\\/g, "/");
+  return SWARM_ONLY_PATHS.some((prefix) => normalized.startsWith(prefix));
+}
+
+/**
+ * Checks whether a relative path is the epic-agent base template.
+ */
+function isEpicAgentTemplate(relativePath: string): boolean {
+  const normalized = relativePath.replace(/\\/g, "/");
+  return normalized === EPIC_AGENT_TEMPLATE_PATH;
+}
+
+/**
  * Renders all template files by replacing tokens with values from the brief.
  *
  * Reads every file under the templates directory, performs token replacement,
  * and returns an array of RenderedFile objects with their relative paths
  * and rendered content.
  *
+ * When workflowMode is "sprint", swarm-specific files (ai/swarm/, swarm-workflow.md)
+ * are excluded. The epic-agent template is always excluded (used as a base for
+ * dynamic generation in swarm.ts, not rendered directly).
+ *
  * @param templatesDir - Absolute path to the templates directory
  * @param tokens - Token map for replacements
+ * @param workflowMode - "sprint" or "swarm" (defaults to "sprint")
  * @returns Array of rendered files ready to be written to disk
  */
 export async function renderTemplates(
   templatesDir: string,
   tokens: TokenMap,
+  workflowMode: WorkflowMode = "sprint",
 ): Promise<RenderedFile[]> {
   const filePaths = await collectFiles(templatesDir);
   const rendered: RenderedFile[] = [];
 
   for (const relativePath of filePaths) {
+    if (isEpicAgentTemplate(relativePath)) {
+      continue;
+    }
+
+    if (workflowMode === "sprint" && isSwarmOnlyPath(relativePath)) {
+      continue;
+    }
+
     const absolutePath = join(templatesDir, relativePath);
     const content = await readFile(absolutePath, "utf-8");
     const renderedContent = replaceTokens(content, tokens);

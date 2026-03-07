@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import * as p from "@clack/prompts";
-import type { ProjectBrief, TechStack } from "./types.js";
+import type { ProjectBrief, TechStack, WorkflowMode } from "./types.js";
 
 /**
  * If the input matches an existing file path, reads and returns its content.
@@ -240,6 +240,26 @@ export async function collectProjectBrief(
   });
   handleCancel(outputDirectory);
 
+  const workflowMode = await p.select<WorkflowMode>({
+    message: "Workflow mode",
+    options: [
+      {
+        value: "sprint",
+        label: "Sprint",
+        hint: "One task at a time, sequential",
+      },
+      {
+        value: "swarm",
+        label: "Swarm",
+        hint: "Parallel agents per epic, faster on independent work",
+      },
+    ],
+  });
+  if (p.isCancel(workflowMode)) {
+    p.cancel("Project setup cancelled.");
+    process.exit(0);
+  }
+
   return {
     projectName: projectName.trim(),
     description: description.trim(),
@@ -252,5 +272,6 @@ export async function collectProjectBrief(
     outOfScope,
     codeConventions,
     outputDirectory: outputDirectory.trim(),
+    workflowMode,
   };
 }
