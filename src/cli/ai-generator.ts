@@ -55,9 +55,11 @@ export class AIGenerationTimeoutError extends Error {
 }
 
 /**
- * Default timeout for the AI generation subprocess (90 seconds).
+ * Default inactivity timeout for the AI generation subprocess (60 seconds).
+ * The timer resets whenever stdout data arrives, so long-running but active
+ * generations won't be killed prematurely.
  */
-const DEFAULT_TIMEOUT_MS = 90_000;
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 /**
  * Builds the structured prompt that instructs Claude Code to generate project content.
@@ -179,22 +181,34 @@ export function generateWithAI(
 
     let stdout = "";
     let stderr = "";
+    let settled = false;
+
+    const resetTimer = (): NodeJS.Timeout =>
+      setTimeout(() => {
+        settled = true;
+        child.kill("SIGTERM");
+        reject(new AIGenerationTimeoutError(timeoutMs));
+      }, timeoutMs);
+
+    let timer = resetTimer();
 
     child.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();
+      // Activity detected — restart the inactivity timer
+      if (!settled) {
+        clearTimeout(timer);
+        timer = resetTimer();
+      }
     });
 
     child.stderr.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
     });
 
-    const timer = setTimeout(() => {
-      child.kill("SIGTERM");
-      reject(new AIGenerationTimeoutError(timeoutMs));
-    }, timeoutMs);
-
     child.on("close", (code) => {
       clearTimeout(timer);
+      if (settled) return;
+      settled = true;
 
       if (code !== 0) {
         reject(new AIGenerationError(stderr, code));
@@ -206,6 +220,8 @@ export function generateWithAI(
 
     child.on("error", (err) => {
       clearTimeout(timer);
+      if (settled) return;
+      settled = true;
       reject(new AIGenerationError(err.message, null));
     });
   });

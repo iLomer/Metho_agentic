@@ -223,16 +223,16 @@ describe("generateWithAI", () => {
     expect(mock.child.kill).toHaveBeenCalledWith("SIGTERM");
   });
 
-  it("uses default 90-second timeout when none specified", async () => {
+  it("uses default 60-second inactivity timeout when none specified", async () => {
     const mock = createMockChild();
     mockedSpawn.mockReturnValue(mock.child);
 
     const promise = generateWithAI(sampleContext);
 
-    vi.advanceTimersByTime(90_001);
+    vi.advanceTimersByTime(60_001);
 
     await expect(promise).rejects.toThrow(AIGenerationTimeoutError);
-    await expect(promise).rejects.toThrow("90 seconds");
+    await expect(promise).rejects.toThrow("60 seconds");
   });
 
   it("rejects with AIGenerationError on spawn error", async () => {

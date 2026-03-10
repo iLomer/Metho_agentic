@@ -235,7 +235,7 @@ async function main(): Promise<void> {
 
         if (aiError instanceof AIGenerationTimeoutError) {
           aiSpinner.stop("AI generation failed -- falling back to standard prompts");
-          p.log.warning(`Timed out after ${Math.round(aiError.timeoutMs / 1000)} seconds. Falling back to standard prompts.`);
+          p.log.warning(`No output received for ${Math.round(aiError.timeoutMs / 1000)} seconds. Falling back to standard prompts.`);
         } else {
           const reason =
             aiError instanceof Error ? aiError.message : "Unknown error";
