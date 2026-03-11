@@ -62,6 +62,37 @@ export class AIGenerationTimeoutError extends Error {
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 /**
+ * Extracts plain text from Claude Code stream-json (JSONL) output.
+ *
+ * Each line is a JSON object. Text content arrives as content_block_delta
+ * events with text_delta payloads. We concatenate all text_delta values.
+ */
+export function extractTextFromStream(jsonlStream: string): string {
+  const lines = jsonlStream.split("\n").filter((line) => line.trim());
+  let fullText = "";
+
+  for (const line of lines) {
+    try {
+      const event: Record<string, unknown> = JSON.parse(line);
+      const inner = event.event as Record<string, unknown> | undefined;
+      if (
+        event.type === "stream_event" &&
+        inner?.type === "content_block_delta"
+      ) {
+        const delta = inner.delta as Record<string, unknown> | undefined;
+        if (delta?.type === "text_delta" && typeof delta.text === "string") {
+          fullText += delta.text;
+        }
+      }
+    } catch {
+      // Skip malformed lines
+    }
+  }
+
+  return fullText;
+}
+
+/**
  * Builds the structured prompt that instructs Claude Code to generate project content.
  *
  * The prompt specifies section markers so the output can be deterministically parsed.
@@ -175,11 +206,13 @@ export function generateWithAI(
   const prompt = buildAIPrompt(context);
 
   return new Promise((resolve, reject) => {
-    const child = spawn("claude", ["-p", prompt], {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    const child = spawn(
+      "claude",
+      ["-p", "--output-format", "stream-json", prompt],
+      { stdio: ["ignore", "pipe", "pipe"] },
+    );
 
-    let stdout = "";
+    let rawStream = "";
     let stderr = "";
     let settled = false;
 
@@ -193,7 +226,7 @@ export function generateWithAI(
     let timer = resetTimer();
 
     child.stdout.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString();
+      rawStream += chunk.toString();
       // Activity detected — restart the inactivity timer
       if (!settled) {
         clearTimeout(timer);
@@ -215,7 +248,9 @@ export function generateWithAI(
         return;
       }
 
-      resolve({ raw: stdout });
+      // Extract text content from stream-json JSONL output
+      const text = extractTextFromStream(rawStream);
+      resolve({ raw: text });
     });
 
     child.on("error", (err) => {

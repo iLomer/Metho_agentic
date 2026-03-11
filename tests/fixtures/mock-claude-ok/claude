@@ -9,10 +9,9 @@ if [ "$1" = "--version" ]; then
   exit 0
 fi
 
-# Handle -p flag (AI generation prompt)
+# Handle -p flag (AI generation prompt) with stream-json output
 if [ "$1" = "-p" ]; then
-  cat << 'MOCK_OUTPUT'
----SECTION:PRODUCT_VISION---
+  CONTENT='---SECTION:PRODUCT_VISION---
 Mock AI Vision: This project enables rapid prototyping through intelligent scaffolding. It combines methodology-first thinking with automated project setup to deliver structured, maintainable codebases from day one.
 ---END:PRODUCT_VISION---
 
@@ -127,8 +126,17 @@ Integration tests -- those come in E3.
 - [ ] Build succeeds without warnings
 - [ ] No runtime errors in development mode
 - [ ] API responses validated against types
----END:DEFINITION_OF_DONE---
-MOCK_OUTPUT
+---END:DEFINITION_OF_DONE---'
+
+  # Output as stream-json JSONL events (text_delta chunks)
+  echo '{"type":"stream_event","event":{"type":"message_start"}}'
+
+  # Use printf to safely emit content as a single text_delta event
+  # Escape the content for JSON: replace backslashes, quotes, newlines
+  ESCAPED=$(printf '%s' "$CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}' | sed '$ s/\\n$//')
+  printf '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"%s"}}}\n' "$ESCAPED"
+
+  echo '{"type":"stream_event","event":{"type":"message_stop"}}'
   exit 0
 fi
 

@@ -14,6 +14,7 @@ import { spawn } from "node:child_process";
 import {
   generateWithAI,
   buildAIPrompt,
+  extractTextFromStream,
   AIGenerationError,
   AIGenerationTimeoutError,
 } from "../../src/cli/ai-generator.js";
@@ -78,6 +79,28 @@ function createMockChild(): {
       stderrEmitter.emit("data", Buffer.from(data));
     },
   };
+}
+
+/**
+ * Wraps plain text into stream-json JSONL format (text_delta events).
+ */
+function toStreamJson(text: string): string {
+  const lines: string[] = [];
+  lines.push(JSON.stringify({ type: "stream_event", event: { type: "message_start" } }));
+  // Split text into chunks to simulate streaming
+  const chunkSize = 20;
+  for (let i = 0; i < text.length; i += chunkSize) {
+    const chunk = text.slice(i, i + chunkSize);
+    lines.push(JSON.stringify({
+      type: "stream_event",
+      event: {
+        type: "content_block_delta",
+        delta: { type: "text_delta", text: chunk },
+      },
+    }));
+  }
+  lines.push(JSON.stringify({ type: "stream_event", event: { type: "message_stop" } }));
+  return lines.join("\n") + "\n";
 }
 
 beforeEach(() => {
@@ -156,14 +179,15 @@ describe("generateWithAI", () => {
 
     const promise = generateWithAI(sampleContext);
 
-    mock.pushStdout("---SECTION:PRODUCT_VISION---\nGenerated content\n---END:PRODUCT_VISION---");
+    const content = "---SECTION:PRODUCT_VISION---\nGenerated content\n---END:PRODUCT_VISION---";
+    mock.pushStdout(toStreamJson(content));
     mock.emitClose(0);
 
     const result = await promise;
     expect(result.raw).toContain("Generated content");
   });
 
-  it("spawns claude with -p flag and the prompt", () => {
+  it("spawns claude with -p flag, stream-json output, and the prompt", () => {
     const mock = createMockChild();
     mockedSpawn.mockReturnValue(mock.child);
 
@@ -171,7 +195,7 @@ describe("generateWithAI", () => {
 
     expect(mockedSpawn).toHaveBeenCalledWith(
       "claude",
-      ["-p", expect.stringContaining("test-project")],
+      ["-p", "--output-format", "stream-json", expect.stringContaining("test-project")],
       expect.objectContaining({ stdio: ["ignore", "pipe", "pipe"] }),
     );
 
@@ -253,12 +277,80 @@ describe("generateWithAI", () => {
 
     const promise = generateWithAI(sampleContext, 5000);
 
-    mock.pushStdout("content");
+    mock.pushStdout(toStreamJson("content"));
     mock.emitClose(0);
 
     await promise;
 
     // Advancing past the timeout should not cause issues
     vi.advanceTimersByTime(6000);
+  });
+
+  it("resets inactivity timer when stdout data arrives", async () => {
+    const mock = createMockChild();
+    mockedSpawn.mockReturnValue(mock.child);
+
+    const promise = generateWithAI(sampleContext, 5000);
+
+    // Advance 4 seconds (under 5s timeout)
+    vi.advanceTimersByTime(4000);
+
+    // Push data — should reset the timer
+    mock.pushStdout(JSON.stringify({
+      type: "stream_event",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "chunk1" } },
+    }) + "\n");
+
+    // Advance another 4 seconds (8s total, but only 4s since last data)
+    vi.advanceTimersByTime(4000);
+
+    // Should NOT have timed out — still under 5s since last data
+    expect(mock.child.kill).not.toHaveBeenCalled();
+
+    // Now push final data and close
+    mock.pushStdout(JSON.stringify({
+      type: "stream_event",
+      event: { type: "content_block_delta", delta: { type: "text_delta", text: "chunk2" } },
+    }) + "\n");
+    mock.emitClose(0);
+
+    const result = await promise;
+    expect(result.raw).toBe("chunk1chunk2");
+  });
+});
+
+describe("extractTextFromStream", () => {
+  it("extracts text from text_delta events", () => {
+    const jsonl = [
+      JSON.stringify({ type: "stream_event", event: { type: "message_start" } }),
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: "Hello " } } }),
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: "world" } } }),
+      JSON.stringify({ type: "stream_event", event: { type: "message_stop" } }),
+    ].join("\n");
+
+    expect(extractTextFromStream(jsonl)).toBe("Hello world");
+  });
+
+  it("ignores non-text events", () => {
+    const jsonl = [
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "input_json_delta", partial_json: "{}" } } }),
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: "only this" } } }),
+    ].join("\n");
+
+    expect(extractTextFromStream(jsonl)).toBe("only this");
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(extractTextFromStream("")).toBe("");
+  });
+
+  it("skips malformed JSON lines gracefully", () => {
+    const jsonl = [
+      "not valid json",
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: "ok" } } }),
+      "{broken",
+    ].join("\n");
+
+    expect(extractTextFromStream(jsonl)).toBe("ok");
   });
 });
