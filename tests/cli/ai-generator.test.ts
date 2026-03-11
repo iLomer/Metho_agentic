@@ -195,7 +195,7 @@ describe("generateWithAI", () => {
 
     expect(mockedSpawn).toHaveBeenCalledWith(
       "claude",
-      ["-p", "--output-format", "stream-json", expect.stringContaining("test-project")],
+      ["-p", "--verbose", "--output-format", "stream-json", expect.stringContaining("test-project")],
       expect.objectContaining({ stdio: ["ignore", "pipe", "pipe"] }),
     );
 

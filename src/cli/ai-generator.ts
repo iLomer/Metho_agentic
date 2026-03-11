@@ -208,7 +208,7 @@ export function generateWithAI(
   return new Promise((resolve, reject) => {
     const child = spawn(
       "claude",
-      ["-p", "--output-format", "stream-json", prompt],
+      ["-p", "--verbose", "--output-format", "stream-json", prompt],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
 
