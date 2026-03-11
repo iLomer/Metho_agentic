@@ -236,7 +236,7 @@ export async function collectProjectBrief(
   const outputDirectory = await p.text({
     message: "Project folder",
     defaultValue: ".",
-    placeholder: "Current folder (or type a path like ./my-app)",
+    placeholder: ". (current folder) or a path like ./my-app",
   });
   handleCancel(outputDirectory);
 
@@ -271,7 +271,7 @@ export async function collectProjectBrief(
     valueProposition,
     outOfScope,
     codeConventions,
-    outputDirectory: outputDirectory.trim(),
+    outputDirectory: outputDirectory.trim().toLowerCase() === "current folder" ? "." : outputDirectory.trim(),
     workflowMode,
   };
 }

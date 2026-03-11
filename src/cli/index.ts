@@ -149,7 +149,12 @@ async function main(): Promise<void> {
         p.log.info("Using standard prompts instead.");
       }
     } else {
-      p.log.info("Claude Code not found -- using standard prompts");
+      p.log.warning(
+        "Claude Code not found -- AI generation skipped.\n" +
+        "  Install it to unlock the full agentic workflow:\n" +
+        "  npm install -g @anthropic-ai/claude-code\n" +
+        "  https://docs.anthropic.com/en/docs/claude-code",
+      );
     }
 
     const brief = await collectProjectBrief({ useAI });
@@ -339,32 +344,72 @@ async function main(): Promise<void> {
           "",
           "1. Open it in your editor",
           "   code .",
-          "",
-          "2. Start Claude Code",
-          "   claude",
-          "",
-          '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
-          "   This kicks off the PM agent to create your first tasks.",
-          "",
-          "4. Track this project on Buildrack (optional)",
-          "   buildrack init",
         ];
+
+        if (preflight.claudeCodeAvailable) {
+          nextSteps.push(
+            "",
+            "2. Start Claude Code",
+            "   claude",
+            "",
+            '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+            "   This kicks off the PM agent to create your first tasks.",
+          );
+        } else {
+          nextSteps.push(
+            "",
+            "2. Install Claude Code (required for the agentic workflow)",
+            "   npm install -g @anthropic-ai/claude-code",
+            "",
+            "3. Start Claude Code",
+            "   claude",
+            "",
+            '4. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+            "   This kicks off the PM agent to create your first tasks.",
+          );
+        }
+
+        nextSteps.push(
+          "",
+          `${preflight.claudeCodeAvailable ? "4" : "5"}. Track this project on Buildrack (optional)`,
+          "   buildrack init",
+        );
       } else {
         nextSteps = [
           `Your project is ready at ${brief.outputDirectory}`,
           "",
           "1. Open it in your editor",
           `   code ${brief.outputDirectory}`,
-          "",
-          "2. Start Claude Code in the project folder",
-          `   cd ${brief.outputDirectory} && claude`,
-          "",
-          '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
-          "   This kicks off the PM agent to create your first tasks.",
-          "",
-          "4. Track this project on Buildrack (optional)",
-          "   buildrack init",
         ];
+
+        if (preflight.claudeCodeAvailable) {
+          nextSteps.push(
+            "",
+            "2. Start Claude Code in the project folder",
+            `   cd ${brief.outputDirectory} && claude`,
+            "",
+            '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+            "   This kicks off the PM agent to create your first tasks.",
+          );
+        } else {
+          nextSteps.push(
+            "",
+            "2. Install Claude Code (required for the agentic workflow)",
+            "   npm install -g @anthropic-ai/claude-code",
+            "",
+            "3. Start Claude Code in the project folder",
+            `   cd ${brief.outputDirectory} && claude`,
+            "",
+            '4. Tell Claude: "Read CLAUDE.md and set up the backlog"',
+            "   This kicks off the PM agent to create your first tasks.",
+          );
+        }
+
+        nextSteps.push(
+          "",
+          `${preflight.claudeCodeAvailable ? "4" : "5"}. Track this project on Buildrack (optional)`,
+          "   buildrack init",
+        );
       }
 
       p.note(nextSteps.join("\n"), "What's Next");
