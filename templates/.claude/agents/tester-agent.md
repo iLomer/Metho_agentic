@@ -38,7 +38,7 @@ Process items sequentially even when other agents run in parallel.
 ## Context Budget
 - Grep before reading — only open files you need
 - Use targeted line ranges for long files
-- Max 3 files open before acting — note key info in memory
+- Max 10 files open before acting — note key info in memory
 - Only read files listed in "Files changed" on the task block — don't explore the whole codebase
 
 ## Validation Protocol

@@ -42,6 +42,7 @@ export function buildWorkflowAgentsSection(
     "| `@meto-pm` | `/ai/backlog/`, `tasks-backlog.md`, `tasks-todo.md` |",
     "| `@meto-developer` | `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md` |",
     "| `@meto-tester` | `tasks-in-testing.md` → done or back to todo |",
+    "| `@meto-community` | Community engagement, user communication, market awareness |",
     "",
     "Each agent has a memory file in `.claude/agent-memory/` — read at session start, update at session end.",
   ];

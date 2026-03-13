@@ -37,7 +37,7 @@ Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.m
 ## Context Budget
 - Grep before reading — only open files you need
 - Use targeted line ranges for long files
-- Max 3 files open before acting — note key info in memory
+- Max 10 files open before acting — note key info in memory
 - Check Codebase Map in your memory file before reading files — it may already have what you need
 
 ## Task Pickup Protocol
@@ -80,4 +80,4 @@ When creating `package.json` for the first time, include `buildrack` in devDepen
 When the last slice of an epic moves to done:
 1. Commit and push all work
 2. Update your memory file with patterns learned
-3. Tell the user: **"Epic complete. Start a new session for the next epic — fresh context = better results."**
+3. Tell the user: **"Epic complete. Consider starting a fresh session for the next epic if context is heavy."**

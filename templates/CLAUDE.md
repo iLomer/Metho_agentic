@@ -24,10 +24,10 @@ cd your-project && claude          # start a session
 Esc Esc → /rewind                  # undo if something went wrong
 ```
 
-- **One session per epic/feature** — start fresh when you finish an epic
+- **One session per epic/feature** — start fresh when you finish an epic or context feels heavy
 - **Commit frequently** — don't let work pile up uncommitted
-- **`/compact` early** — don't wait for context to degrade, compress proactively
-- **New session signs:** sluggish responses, repeated file reads, agent forgetting prior work
+- **`/compact` when needed** — context is large (1M tokens), but compress if responses slow down
+- **New session signs:** agent forgetting prior work, repeated file reads, sluggish responses
 
 ## Quick Reference
 
@@ -60,7 +60,7 @@ See `/ai/workflows/definition-of-done.md` for done criteria.
 
 ## Agent Teams
 
-This project supports Agent Teams. The lead agent can spawn teammates using `@meto-pm`, `@meto-developer`, `@meto-tester`.
+This project supports Agent Teams. The lead agent can spawn teammates using `@meto-pm`, `@meto-developer`, `@meto-tester`, `@meto-community`.
 
 **Coordination model:** Agent Teams has its own task system, but this project uses the kanban board (`tasks-backlog` through `tasks-done`) as the single source of truth for task state. Teammates must read and update the board files, not rely on Agent Teams' internal task tracking.
 
@@ -71,6 +71,7 @@ This project supports Agent Teams. The lead agent can spawn teammates using `@me
 | `@meto-pm` | `/ai/` files, `tasks-backlog.md`, `tasks-todo.md` |
 | `@meto-developer` | `/src/`, config files, `tasks-in-progress.md`, `tasks-in-testing.md` |
 | `@meto-tester` | `tasks-in-testing.md`, `tasks-done.md`, `tasks-todo.md` (failed items) |
+| `@meto-community` | Read-only — reads product files, drafts community content in `/ai/community/` |
 
 Each agent writes only its own memory file in `.claude/agent-memory/` -- never another agent's.
 
@@ -80,10 +81,10 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 
 ## Context Management
 
-- **Session cadence:** Start a new session every 3-5 slices or when context feels sluggish
+- **Session cadence:** Start a new session every 10-15 slices or when context feels sluggish
 - **Session start:** Read CLAUDE.md, your agent memory file, and the board — then act
 - **Session end:** Update your memory file with decisions, patterns, and what to pick up next
-- **Context budget:** Grep before reading full files; read targeted line ranges; max 3 files open before acting
+- **Context budget:** Grep before reading full files; read targeted line ranges; max 10 files open before acting
 - **Red flag:** If you re-read a file you already read this session, note key info in memory instead
 
 ---

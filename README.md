@@ -65,10 +65,12 @@ Each preset populates your tech-stack description, definition of done (with stac
 your-project/
 ├── .claude/
 │   ├── agents/
+│   │   ├── community-manager-agent.md
 │   │   ├── developer-agent.md
 │   │   ├── pm-agent.md
 │   │   └── tester-agent.md
 │   ├── agent-memory/
+│   │   ├── meto-community/MEMORY.md
 │   │   ├── meto-developer/MEMORY.md
 │   │   ├── meto-pm/MEMORY.md
 │   │   └── meto-tester/MEMORY.md
@@ -89,7 +91,8 @@ your-project/
 │   │   └── tasks-todo.md
 │   └── workflows/
 │       ├── commit-conventions.md
-│       └── definition-of-done.md
+│       ├── definition-of-done.md
+│       └── session-checkpoint.md
 ├── src/
 ├── .gitignore
 └── CLAUDE.md
@@ -116,12 +119,29 @@ your-project/
 **What's inside:**
 - **CLAUDE.md** -- project instructions that Claude Code reads every session, pre-filled with your vision, stack, and conventions
 - **Kanban board** -- task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
-- **Agent definitions** -- PM, developer, and tester agents configured to follow your methodology from day one
+- **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
 - **Agent memory** -- persistent memory files so agents retain context across sessions
 - **Product context** -- vision, tech stack, and decisions captured in structured files
-- **Epics and workflows** -- definition of done, commit conventions, and an epic backlog to plan against
-- **Agent Teams ready** -- three agents configured to work in parallel with file ownership boundaries
+- **Epics and workflows** -- definition of done, commit conventions, session checkpoints, and an epic backlog to plan against
+- **Agent Teams ready** -- four agents configured to work in parallel with file ownership boundaries
 - **Swarm mode** -- parallel epic agents with domain ownership, checkpoint rhythm, and a live status dashboard
+
+---
+
+## Agents
+
+Every scaffolded project comes with 4 pre-configured agents:
+
+| Agent | Role | Can write code? |
+|---|---|---|
+| `@meto-pm` | Planning, backlog management, epic definition, task slicing | No |
+| `@meto-developer` | Code implementation -- picks tasks from todo, builds, tests | Yes |
+| `@meto-tester` | Validates completed work against acceptance criteria | No |
+| `@meto-community` | Community engagement, user communication, market awareness | No |
+
+The **community manager** understands the product and its market. It reads product context files, drafts Reddit posts, changelog summaries, and feature announcements, and surfaces user feedback themes back to `@meto-pm`. It never writes code or edits source files -- read-only access to the codebase.
+
+In **swarm mode**, additional `@meto-epic-[id]` agents are generated -- one per epic, each scoped to its own file domain.
 
 ---
 
@@ -152,18 +172,31 @@ Best for projects with multiple independent epics where parallelism speeds thing
 
 ---
 
+## Context & Sessions
+
+Meto is optimized for Claude Code's **1M token context window**. With 5x more room than before:
+
+- **10-15 slices per session** before needing a fresh start
+- **Agents can hold more files** in context without degrading
+- **Less frequent `/compact`** -- use it when responses slow down, not proactively
+- **Memory files still matter** -- they persist across sessions, not just within them
+
+Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Session checkpoints (`ai/workflows/session-checkpoint.md`) help hand off between sessions when needed.
+
+---
+
 ## Agent Teams
 
 Agent Teams is a Claude Code feature where multiple AI agents work in parallel on the same codebase, each with a specialized role.
 
 Meto scaffolds projects ready for Agent Teams out of the box:
 
-- **Three pre-configured agents** (Sprint) or **per-epic agents** (Swarm) -- all with file ownership boundaries
+- **Four pre-configured agents** (Sprint) or **per-epic agents** (Swarm) -- all with file ownership boundaries
 - **Feature enabled automatically** -- `.claude/settings.json` sets the experimental flag so Agent Teams works immediately
 
 **To activate:** start `claude` in your project, then say:
 
-> Sprint: "Create an agent team with @meto-pm for planning, @meto-developer for building, @meto-tester for validation"
+> Sprint: "Create an agent team with @meto-pm for planning, @meto-developer for building, @meto-tester for validation, and @meto-community for community engagement"
 
 > Swarm: "Launch @meto-epic-E1 to work on Epic 1"
 
@@ -174,7 +207,7 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 1. `cd your-project`
 2. Open the project in your editor
 3. Start a Claude Code session and call `@meto-pm` to populate your backlog
-4. **Sprint:** spawn an agent team with @meto-pm, @meto-developer, and @meto-tester
+4. **Sprint:** spawn an agent team with @meto-pm, @meto-developer, @meto-tester, and @meto-community
 5. **Swarm:** launch epic agents in parallel, run `npx meto-cli status` to monitor
 6. Pick your first task and start building
 

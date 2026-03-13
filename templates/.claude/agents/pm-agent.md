@@ -47,7 +47,7 @@ Never write to `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md`, or `tasks
 ## Context Budget
 - Grep before reading — only open files you need
 - Use targeted line ranges for long files
-- Max 3 files open before acting — note key info in memory
+- Max 10 files open before acting — note key info in memory
 - Read each epic once, then work from memory — don't re-read `/ai/backlog/epics.md` every task
 
 ## Task Definition Format
@@ -85,4 +85,4 @@ Sprint [N] is ready. [X] tasks in tasks-todo.md.
 
 When all slices of an epic are in `tasks-done.md`, tell the user:
 
-Epic [N] complete! Consider starting a new session for the next epic — fresh context keeps agents sharp.
+Epic [N] complete! You can continue to the next epic or start a fresh session if context feels heavy.

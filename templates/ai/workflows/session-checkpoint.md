@@ -43,7 +43,6 @@ Write this at session end. Paste it into the next session's first message.
 ## When to Force a New Session
 
 - Context feels sluggish (repeating yourself, forgetting earlier decisions)
-- 3-5 slices completed since last fresh session
-- Switching between agents (PM → Developer → Tester)
+- 10-15 slices completed since last fresh session
 - After a major refactor or architecture change
 - When the checkpoint itself exceeds 30 lines
