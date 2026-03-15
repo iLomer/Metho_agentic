@@ -16,6 +16,13 @@ npx meto-cli init
 
 Answer a few questions, and Meto generates a fully structured repository in seconds -- with AI-powered content if Claude Code is installed.
 
+**Already have a project?** Run the audit to bring it up to standard:
+
+```bash
+cd your-existing-project
+npx meto-cli audit
+```
+
 ---
 
 ## How It Works
@@ -36,6 +43,62 @@ Meto detects whether Claude Code is installed on your machine and offers two pat
 Both paths produce the same project structure. The AI path just fills in more content so you spend less time on setup and more time building.
 
 Use `--no-ai` to force the static path even when Claude Code is available.
+
+---
+
+## Audit — For Existing Projects
+
+Already built a project before Meto? Run `meto-cli audit` to scan it against the methodology blueprint and fix what's missing — interactively, one layer at a time.
+
+```bash
+cd your-existing-project
+npx meto-cli audit
+```
+
+The audit checks 4 layers, each gating the next:
+
+```
+Layer 0 — Project Basics         ████████████ 100%
+  ✓ git repo  ✓ README  ✓ source code
+
+Layer 1 — Methodology            ██████░░░░░░  50%
+  ✓ CLAUDE.md
+  ✓ ai/context/product-vision.md
+  ✗ ai/tasks/ (no kanban board)
+    → Create board files? [y/n]
+  ✗ ai/workflows/ (no definition of done)
+    → Create definition-of-done.md? [y/n]
+
+Layer 2 — Agents                  not reached
+Layer 3 — Governance              not reached
+```
+
+| Layer | What it checks |
+|---|---|
+| **Layer 0** | Git initialized, README exists, source code present |
+| **Layer 1** | CLAUDE.md, ai/ context files, kanban board, workflows |
+| **Layer 2** | Agent definitions (PM, developer, tester), agent memory, settings |
+| **Layer 3** | Governance: commit conventions, definition of done, code guidelines, session checkpoints, agent cross-references |
+
+Each missing item offers a fix — create the file from Meto's templates, never overwriting existing content. Run it repeatedly to ratchet your project up one layer at a time.
+
+The audit also **auto-detects your tech stack** from `package.json`, `go.mod`, `pyproject.toml`, `pubspec.yaml`, or `Cargo.toml` to provide stack-specific templates.
+
+---
+
+## Code Guidelines
+
+Every scaffolded project includes `ai/workflows/code-guidelines.md` — enforced by both the developer and tester agents:
+
+| Rule | Limit |
+|---|---|
+| Max file length | 300 lines (hard stop at 500) |
+| Max function length | 50 lines |
+| Max component length | 200 lines (React/Flutter) |
+| Nesting depth | 3 levels max |
+| Circular imports | Not allowed |
+
+Guidelines include stack-specific rules (e.g., "never call Supabase directly from components" for Next.js, "always check error returns" for Go). The developer agent reads these at session start, and the tester agent verifies them before sign-off.
 
 ---
 
@@ -90,6 +153,7 @@ your-project/
 │   │   ├── tasks-in-testing.md
 │   │   └── tasks-todo.md
 │   └── workflows/
+│       ├── code-guidelines.md
 │       ├── commit-conventions.md
 │       ├── definition-of-done.md
 │       └── session-checkpoint.md
@@ -122,6 +186,7 @@ your-project/
 - **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
 - **Agent memory** -- persistent memory files so agents retain context across sessions
 - **Product context** -- vision, tech stack, and decisions captured in structured files
+- **Code guidelines** -- file size limits, naming conventions, and stack-specific rules enforced by agents
 - **Epics and workflows** -- definition of done, commit conventions, session checkpoints, and an epic backlog to plan against
 - **Agent Teams ready** -- four agents configured to work in parallel with file ownership boundaries
 - **Swarm mode** -- parallel epic agents with domain ownership, checkpoint rhythm, and a live status dashboard
@@ -230,6 +295,7 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 | `meto-cli init` | Scaffold a new structured project (AI-powered if Claude Code is detected) |
 | `meto-cli init --no-ai` | Scaffold using static prompts only, skip AI generation |
 | `meto-cli init --dry-run` | Preview the generated file tree without writing to disk |
+| `meto-cli audit` | Scan an existing project against the methodology blueprint and fix gaps interactively |
 | `meto-cli doctor` | Check methodology health of the current project |
 | `meto-cli status` | Show swarm progress dashboard (reads SWARM_AWARENESS.md) |
 | `meto-cli --help` | Show available commands and options |
