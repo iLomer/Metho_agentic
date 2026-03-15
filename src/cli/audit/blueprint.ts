@@ -214,6 +214,93 @@ const LAYER_1_EXPECTATIONS: BlueprintExpectation[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Layer 2 -- Agents
+// ---------------------------------------------------------------------------
+
+const LAYER_2_EXPECTATIONS: BlueprintExpectation[] = [
+  {
+    id: "L2-claude-dir",
+    description: ".claude/ directory",
+    checkType: "dir-exists",
+    path: ".claude",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-settings-json",
+    description: "Agent settings (.claude/settings.json)",
+    checkType: "file-exists",
+    path: ".claude/settings.json",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-agents-dir",
+    description: ".claude/agents/ directory",
+    checkType: "dir-exists",
+    path: ".claude/agents",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-pm-agent",
+    description: "PM agent definition",
+    checkType: "file-exists",
+    path: ".claude/agents/pm-agent.md",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-developer-agent",
+    description: "Developer agent definition",
+    checkType: "file-exists",
+    path: ".claude/agents/developer-agent.md",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-tester-agent",
+    description: "Tester agent definition",
+    checkType: "file-exists",
+    path: ".claude/agents/tester-agent.md",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-agent-memory-dir",
+    description: ".claude/agent-memory/ directory",
+    checkType: "dir-exists",
+    path: ".claude/agent-memory",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-pm-memory",
+    description: "PM agent memory directory",
+    checkType: "dir-exists",
+    path: ".claude/agent-memory/meto-pm",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-developer-memory",
+    description: "Developer agent memory directory",
+    checkType: "dir-exists",
+    path: ".claude/agent-memory/meto-developer",
+    layer: 2,
+    fixable: true,
+  },
+  {
+    id: "L2-tester-memory",
+    description: "Tester agent memory directory",
+    checkType: "dir-exists",
+    path: ".claude/agent-memory/meto-tester",
+    layer: 2,
+    fixable: true,
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Blueprint (all layers)
 // ---------------------------------------------------------------------------
 
@@ -233,5 +320,10 @@ export const AUDIT_BLUEPRINT: readonly BlueprintLayer[] = [
     id: 1,
     name: "Methodology",
     expectations: LAYER_1_EXPECTATIONS,
+  },
+  {
+    id: 2,
+    name: "Agents",
+    expectations: LAYER_2_EXPECTATIONS,
   },
 ] as const;

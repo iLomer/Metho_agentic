@@ -7,7 +7,7 @@ import {
   layerPassed,
   getFailedResults,
 } from "./scanner.js";
-import { fixLayer } from "./fixer.js";
+import { fixLayer, fixLayerTwo } from "./fixer.js";
 import type { LayerScanResult } from "./scanner.js";
 import type { TokenMap } from "../renderer.js";
 
@@ -83,6 +83,7 @@ function printAuditHelp(): void {
       "Layers (gated -- each requires the previous to pass):",
       "  Layer 0: Project Prerequisites (git, README, source dir)",
       "  Layer 1: Methodology (CLAUDE.md, ai/ structure, task board, workflows)",
+      "  Layer 2: Agents (.claude/ settings, agent definitions, agent memory)",
       "",
       "Options:",
       "  --help, -h    Show this help message",
@@ -220,7 +221,10 @@ export async function runAudit(): Promise<LayerScanResult[]> {
 
     if (fixableFailures.length > 0) {
       const tokens = buildAuditTokenMap(projectDir);
-      const fixResult = await fixLayer(projectDir, scanResult, tokens);
+      const fixResult =
+        layer.id === 2
+          ? await fixLayerTwo(projectDir, scanResult, tokens)
+          : await fixLayer(projectDir, scanResult, tokens);
 
       // Re-scan after fixes to get updated results
       const created = fixResult.fixes.filter((f) => f.outcome === "created");
