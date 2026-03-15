@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import * as p from "@clack/prompts";
 import {
@@ -549,6 +549,390 @@ export async function fixLayerTwo(
       fixes.push(result);
       p.log.error(result.message);
     }
+  }
+
+  return {
+    layerId: layerResult.layer.id,
+    fixes,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Layer 3 (Governance) -- content-aware fixer
+// ---------------------------------------------------------------------------
+
+/**
+ * Expectation IDs for governance file-exists checks (create from templates).
+ */
+const GOVERNANCE_FILE_IDS = new Set([
+  "L3-dod-exists",
+  "L3-session-checkpoint",
+]);
+
+/**
+ * Expectation IDs for agent file-contains checks (append references).
+ */
+const AGENT_REFERENCE_IDS = new Set([
+  "L3-pm-agent-refs-dod",
+  "L3-developer-agent-refs-commit",
+  "L3-tester-agent-refs-dod",
+  "L3-pm-agent-refs-memory",
+  "L3-developer-agent-refs-memory",
+  "L3-tester-agent-refs-memory",
+]);
+
+/**
+ * Maps agent reference expectation IDs to the text that should be appended
+ * to the agent definition file when the reference is missing.
+ * Each snippet is a self-contained section that can be appended at the end.
+ */
+const AGENT_REFERENCE_PATCHES: Record<string, string> = {
+  "L3-pm-agent-refs-dod": [
+    "",
+    "## Governance References",
+    "- Read `/ai/workflows/definition-of-done.md` before closing any task",
+    "",
+  ].join("\n"),
+  "L3-developer-agent-refs-commit": [
+    "",
+    "## Commit Conventions",
+    "- Follow commit conventions in `/ai/workflows/commit-conventions.md`",
+    "- Format: `<type>(<scope>): <description> [<agent-tag>]`",
+    "",
+  ].join("\n"),
+  "L3-tester-agent-refs-dod": [
+    "",
+    "## Governance References",
+    "- Validate against `/ai/workflows/definition-of-done.md` for every task",
+    "",
+  ].join("\n"),
+  "L3-pm-agent-refs-memory": [
+    "",
+    "## Memory",
+    "- Read `.claude/agent-memory/meto-pm/MEMORY.md` at session start",
+    "- Update `.claude/agent-memory/meto-pm/MEMORY.md` at session end",
+    "",
+  ].join("\n"),
+  "L3-developer-agent-refs-memory": [
+    "",
+    "## Memory",
+    "- Read `.claude/agent-memory/meto-developer/MEMORY.md` at session start",
+    "- Update `.claude/agent-memory/meto-developer/MEMORY.md` at session end",
+    "",
+  ].join("\n"),
+  "L3-tester-agent-refs-memory": [
+    "",
+    "## Memory",
+    "- Read `.claude/agent-memory/meto-tester/MEMORY.md` at session start",
+    "- Update `.claude/agent-memory/meto-tester/MEMORY.md` at session end",
+    "",
+  ].join("\n"),
+};
+
+/**
+ * The commit conventions section appended to CLAUDE.md when the
+ * L3-commit-conventions-defined check fails.
+ */
+const COMMIT_CONVENTIONS_PATCH = [
+  "",
+  "## Commit Format",
+  "",
+  "```",
+  "feat(scope): description [dev-agent]",
+  "fix(scope): description [dev-agent]",
+  "docs(scope): description [pm-agent]",
+  "test(scope): description [tester-agent]",
+  "chore(scope): description [bootstrap]",
+  "```",
+  "",
+].join("\n");
+
+/**
+ * Appends content to the end of an existing file.
+ * Returns false if the file does not exist.
+ */
+async function appendToFile(
+  filePath: string,
+  content: string,
+): Promise<boolean> {
+  try {
+    await stat(filePath);
+    await appendFile(filePath, content, "utf-8");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Runs the interactive fixer for Layer 3 (Governance).
+ *
+ * Layer 3 differs from other layers because it has three fix strategies:
+ * 1. Missing governance files (definition-of-done, session-checkpoint):
+ *    created from templates, same as Layer 1.
+ * 2. CLAUDE.md missing commit conventions section:
+ *    appends a commit format section to the existing file.
+ * 3. Agent definitions missing governance references:
+ *    appends reference sections to existing agent files.
+ *
+ * All fixes are additive -- existing content is never modified or removed.
+ *
+ * @param projectDir - Absolute path to the project root
+ * @param layerResult - The Layer 3 scan result containing failures to fix
+ * @param tokens - Token map for template rendering
+ * @returns Fix results for each failed expectation
+ */
+export async function fixLayerThree(
+  projectDir: string,
+  layerResult: LayerScanResult,
+  tokens: TokenMap,
+): Promise<LayerFixResult> {
+  const failedResults = layerResult.results.filter((r) => r.status === "fail");
+  const fixes: FixResult[] = [];
+
+  if (failedResults.length === 0) {
+    return {
+      layerId: layerResult.layer.id,
+      fixes,
+    };
+  }
+
+  p.log.info(
+    `Layer ${layerResult.layer.id} (${layerResult.layer.name}): ${failedResults.length} issue${failedResults.length === 1 ? "" : "s"} found`,
+  );
+
+  for (const failed of failedResults) {
+    const { expectation } = failed;
+
+    // Not fixable according to blueprint
+    if (!expectation.fixable) {
+      const result: FixResult = {
+        scanResult: failed,
+        outcome: "skipped",
+        message: `${expectation.description} is not auto-fixable`,
+      };
+      fixes.push(result);
+      p.log.warning(result.message);
+      continue;
+    }
+
+    const targetPath = join(projectDir, expectation.path);
+
+    // Strategy 1: Missing governance files -- create from templates
+    if (GOVERNANCE_FILE_IDS.has(expectation.id)) {
+      if (await fileExists(targetPath)) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "skipped",
+          message: `${expectation.path} already exists`,
+        };
+        fixes.push(result);
+        p.log.warning(result.message);
+        continue;
+      }
+
+      const shouldFix = await p.confirm({
+        message: `Create ${expectation.path}? (${expectation.description})`,
+        initialValue: true,
+      });
+
+      if (p.isCancel(shouldFix) || !shouldFix) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "declined",
+          message: `Skipped ${expectation.path}`,
+        };
+        fixes.push(result);
+        p.log.info(result.message);
+        continue;
+      }
+
+      const rendered = await readAndRenderTemplate(expectation.path, tokens);
+      if (rendered === undefined) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "error",
+          message: `Template not found for ${expectation.path}`,
+        };
+        fixes.push(result);
+        p.log.error(result.message);
+        continue;
+      }
+
+      try {
+        const written = await writeFileIfMissing(targetPath, rendered);
+        if (written) {
+          const result: FixResult = {
+            scanResult: failed,
+            outcome: "created",
+            message: `Created ${expectation.path}`,
+          };
+          fixes.push(result);
+          p.log.success(result.message);
+        } else {
+          const result: FixResult = {
+            scanResult: failed,
+            outcome: "skipped",
+            message: `${expectation.path} already exists (race condition)`,
+          };
+          fixes.push(result);
+          p.log.warning(result.message);
+        }
+      } catch (err: unknown) {
+        const reason = err instanceof Error ? err.message : "Unknown error";
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "error",
+          message: `Failed to create ${expectation.path}: ${reason}`,
+        };
+        fixes.push(result);
+        p.log.error(result.message);
+      }
+      continue;
+    }
+
+    // Strategy 2: CLAUDE.md missing commit conventions -- append section
+    if (expectation.id === "L3-commit-conventions-defined") {
+      if (!(await fileExists(targetPath))) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "skipped",
+          message: `${expectation.path} does not exist -- create it first via Layer 1`,
+        };
+        fixes.push(result);
+        p.log.warning(result.message);
+        continue;
+      }
+
+      const shouldFix = await p.confirm({
+        message: `Append commit conventions section to ${expectation.path}?`,
+        initialValue: true,
+      });
+
+      if (p.isCancel(shouldFix) || !shouldFix) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "declined",
+          message: `Skipped adding commit conventions to ${expectation.path}`,
+        };
+        fixes.push(result);
+        p.log.info(result.message);
+        continue;
+      }
+
+      try {
+        const appended = await appendToFile(targetPath, COMMIT_CONVENTIONS_PATCH);
+        if (appended) {
+          const result: FixResult = {
+            scanResult: failed,
+            outcome: "created",
+            message: `Appended commit conventions section to ${expectation.path}`,
+          };
+          fixes.push(result);
+          p.log.success(result.message);
+        } else {
+          const result: FixResult = {
+            scanResult: failed,
+            outcome: "error",
+            message: `Could not append to ${expectation.path}`,
+          };
+          fixes.push(result);
+          p.log.error(result.message);
+        }
+      } catch (err: unknown) {
+        const reason = err instanceof Error ? err.message : "Unknown error";
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "error",
+          message: `Failed to append to ${expectation.path}: ${reason}`,
+        };
+        fixes.push(result);
+        p.log.error(result.message);
+      }
+      continue;
+    }
+
+    // Strategy 3: Agent definitions missing governance references -- append
+    if (AGENT_REFERENCE_IDS.has(expectation.id)) {
+      if (!(await fileExists(targetPath))) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "skipped",
+          message: `${expectation.path} does not exist -- create it first via Layer 2`,
+        };
+        fixes.push(result);
+        p.log.warning(result.message);
+        continue;
+      }
+
+      const patch = AGENT_REFERENCE_PATCHES[expectation.id];
+      if (patch === undefined) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "skipped",
+          message: `No patch defined for ${expectation.id}`,
+        };
+        fixes.push(result);
+        p.log.warning(result.message);
+        continue;
+      }
+
+      const shouldFix = await p.confirm({
+        message: `Append ${expectation.description.toLowerCase()} to ${expectation.path}?`,
+        initialValue: true,
+      });
+
+      if (p.isCancel(shouldFix) || !shouldFix) {
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "declined",
+          message: `Skipped patching ${expectation.path}`,
+        };
+        fixes.push(result);
+        p.log.info(result.message);
+        continue;
+      }
+
+      try {
+        const appended = await appendToFile(targetPath, patch);
+        if (appended) {
+          const result: FixResult = {
+            scanResult: failed,
+            outcome: "created",
+            message: `Appended ${expectation.description.toLowerCase()} to ${expectation.path}`,
+          };
+          fixes.push(result);
+          p.log.success(result.message);
+        } else {
+          const result: FixResult = {
+            scanResult: failed,
+            outcome: "error",
+            message: `Could not append to ${expectation.path}`,
+          };
+          fixes.push(result);
+          p.log.error(result.message);
+        }
+      } catch (err: unknown) {
+        const reason = err instanceof Error ? err.message : "Unknown error";
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "error",
+          message: `Failed to patch ${expectation.path}: ${reason}`,
+        };
+        fixes.push(result);
+        p.log.error(result.message);
+      }
+      continue;
+    }
+
+    // Fallback: unknown expectation type for Layer 3
+    const result: FixResult = {
+      scanResult: failed,
+      outcome: "skipped",
+      message: `No fix strategy for ${expectation.id}`,
+    };
+    fixes.push(result);
+    p.log.warning(result.message);
   }
 
   return {

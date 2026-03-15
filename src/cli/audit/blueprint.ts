@@ -301,6 +301,92 @@ const LAYER_2_EXPECTATIONS: BlueprintExpectation[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Layer 3 -- Governance
+// ---------------------------------------------------------------------------
+
+const LAYER_3_EXPECTATIONS: BlueprintExpectation[] = [
+  {
+    id: "L3-dod-exists",
+    description: "Definition of done workflow exists",
+    checkType: "file-exists",
+    path: "ai/workflows/definition-of-done.md",
+    layer: 3,
+    fixable: true,
+  },
+  {
+    id: "L3-commit-conventions-defined",
+    description: "Commit conventions defined",
+    checkType: "file-contains",
+    path: "CLAUDE.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "Commit",
+  },
+  {
+    id: "L3-session-checkpoint",
+    description: "Session checkpoint workflow present",
+    checkType: "file-exists",
+    path: "ai/workflows/session-checkpoint.md",
+    layer: 3,
+    fixable: true,
+  },
+  {
+    id: "L3-pm-agent-refs-dod",
+    description: "PM agent references definition of done",
+    checkType: "file-contains",
+    path: ".claude/agents/pm-agent.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "definition-of-done",
+  },
+  {
+    id: "L3-developer-agent-refs-commit",
+    description: "Developer agent references commit conventions",
+    checkType: "file-contains",
+    path: ".claude/agents/developer-agent.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "commit",
+  },
+  {
+    id: "L3-tester-agent-refs-dod",
+    description: "Tester agent references definition of done",
+    checkType: "file-contains",
+    path: ".claude/agents/tester-agent.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "definition-of-done",
+  },
+  {
+    id: "L3-pm-agent-refs-memory",
+    description: "PM agent references memory file",
+    checkType: "file-contains",
+    path: ".claude/agents/pm-agent.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "agent-memory",
+  },
+  {
+    id: "L3-developer-agent-refs-memory",
+    description: "Developer agent references memory file",
+    checkType: "file-contains",
+    path: ".claude/agents/developer-agent.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "agent-memory",
+  },
+  {
+    id: "L3-tester-agent-refs-memory",
+    description: "Tester agent references memory file",
+    checkType: "file-contains",
+    path: ".claude/agents/tester-agent.md",
+    layer: 3,
+    fixable: true,
+    containsPattern: "agent-memory",
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Blueprint (all layers)
 // ---------------------------------------------------------------------------
 
@@ -325,5 +411,10 @@ export const AUDIT_BLUEPRINT: readonly BlueprintLayer[] = [
     id: 2,
     name: "Agents",
     expectations: LAYER_2_EXPECTATIONS,
+  },
+  {
+    id: 3,
+    name: "Governance",
+    expectations: LAYER_3_EXPECTATIONS,
   },
 ] as const;

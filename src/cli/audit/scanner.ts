@@ -72,7 +72,7 @@ async function fileContains(
 ): Promise<boolean> {
   try {
     const content = await readFile(filePath, "utf-8");
-    return content.includes(pattern);
+    return content.toLowerCase().includes(pattern.toLowerCase());
   } catch {
     return false;
   }

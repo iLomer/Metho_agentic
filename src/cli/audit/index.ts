@@ -1,15 +1,17 @@
 import { readdir, stat } from "node:fs/promises";
 import * as p from "@clack/prompts";
 import { AUDIT_BLUEPRINT } from "./blueprint.js";
+import { detectStack } from "./detect-stack.js";
 import {
   scanLayer,
   skipLayer,
   layerPassed,
   getFailedResults,
 } from "./scanner.js";
-import { fixLayer, fixLayerTwo } from "./fixer.js";
+import { fixLayer, fixLayerTwo, fixLayerThree } from "./fixer.js";
 import type { LayerScanResult } from "./scanner.js";
 import type { TokenMap } from "../renderer.js";
+import { getDefinitionOfDone } from "../stacks.js";
 
 // ---------------------------------------------------------------------------
 // Types (kept for backward compatibility -- may be consumed by other modules)
@@ -84,6 +86,7 @@ function printAuditHelp(): void {
       "  Layer 0: Project Prerequisites (git, README, source dir)",
       "  Layer 1: Methodology (CLAUDE.md, ai/ structure, task board, workflows)",
       "  Layer 2: Agents (.claude/ settings, agent definitions, agent memory)",
+      "  Layer 3: Governance (definition of done, commit conventions, session checkpoints)",
       "",
       "Options:",
       "  --help, -h    Show this help message",
@@ -101,8 +104,15 @@ function printAuditHelp(): void {
  * Builds a minimal token map for rendering templates during audit fixes.
  * Uses placeholder values since we are creating missing files in an existing project
  * rather than scaffolding a brand-new one.
+ *
+ * When a definition-of-done value is provided (from stack detection), it is used
+ * instead of the generic placeholder. This allows Layer 3 governance files to
+ * contain stack-appropriate done criteria.
  */
-function buildAuditTokenMap(projectDir: string): TokenMap {
+function buildAuditTokenMap(
+  projectDir: string,
+  definitionOfDone?: string,
+): TokenMap {
   const projectName = projectDir.split("/").pop() ?? "my-project";
 
   return {
@@ -115,7 +125,7 @@ function buildAuditTokenMap(projectDir: string): TokenMap {
     VALUE_PROPOSITION: "To be defined",
     OUT_OF_SCOPE: "To be defined",
     CODE_CONVENTIONS: "To be defined",
-    DEFINITION_OF_DONE: "To be defined by @meto-pm",
+    DEFINITION_OF_DONE: definitionOfDone ?? "To be defined by @meto-pm",
     STARTER_EPICS: "",
     STARTER_TASKS: "",
     WORKFLOW_AGENTS_SECTION: "",
@@ -196,6 +206,10 @@ export async function runAudit(): Promise<LayerScanResult[]> {
 
   p.log.info(`Auditing project at ${projectDir}`);
 
+  // Detect tech stack for stack-specific definition-of-done content
+  const detected = await detectStack(projectDir);
+  const stackDod = getDefinitionOfDone(detected.stack);
+
   const allLayerResults: LayerScanResult[] = [];
   let previousLayerPassed = true;
 
@@ -220,11 +234,15 @@ export async function runAudit(): Promise<LayerScanResult[]> {
     const fixableFailures = failures.filter((r) => r.expectation.fixable);
 
     if (fixableFailures.length > 0) {
-      const tokens = buildAuditTokenMap(projectDir);
-      const fixResult =
-        layer.id === 2
-          ? await fixLayerTwo(projectDir, scanResult, tokens)
-          : await fixLayer(projectDir, scanResult, tokens);
+      const tokens = buildAuditTokenMap(projectDir, stackDod);
+      let fixResult;
+      if (layer.id === 2) {
+        fixResult = await fixLayerTwo(projectDir, scanResult, tokens);
+      } else if (layer.id === 3) {
+        fixResult = await fixLayerThree(projectDir, scanResult, tokens);
+      } else {
+        fixResult = await fixLayer(projectDir, scanResult, tokens);
+      }
 
       // Re-scan after fixes to get updated results
       const created = fixResult.fixes.filter((f) => f.outcome === "created");
