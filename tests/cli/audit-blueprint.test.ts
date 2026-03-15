@@ -40,8 +40,8 @@ describe("AUDIT_BLUEPRINT structure", () => {
     expect(AUDIT_BLUEPRINT[2].expectations).toHaveLength(10);
   });
 
-  it("Layer 3 has 9 expectations", () => {
-    expect(AUDIT_BLUEPRINT[3].expectations).toHaveLength(9);
+  it("Layer 3 has 12 expectations", () => {
+    expect(AUDIT_BLUEPRINT[3].expectations).toHaveLength(12);
   });
 });
 

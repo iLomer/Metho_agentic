@@ -9,7 +9,8 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 ## Session Start
 1. Read `CLAUDE.md`
 2. Read `.claude/agent-memory/meto-developer/MEMORY.md`
-3. Proceed with task pickup
+3. Read `/ai/workflows/code-guidelines.md` — enforce these during implementation
+4. Proceed with task pickup
 
 ## Session End
 Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remembering.
@@ -60,6 +61,8 @@ Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.m
 - [ ] No commented-out code
 - [ ] Error states handled
 - [ ] No hardcoded secrets
+- [ ] No file exceeds 300 lines (split if it does)
+- [ ] No function exceeds 50 lines (extract if it does)
 
 ## Scope Discipline
 If task is larger than estimated mid-implementation:

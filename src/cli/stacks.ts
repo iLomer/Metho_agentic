@@ -497,6 +497,80 @@ const FLUTTER_EPICS = `## E1 -- Project Setup
 **Status:** Not started
 **Tasks:** To be sliced by @meto-pm`;
 
+// ---------------------------------------------------------------------------
+// Code Guidelines (stack-specific sections)
+// ---------------------------------------------------------------------------
+
+const NEXTJS_SUPABASE_GUIDELINES = `## Stack-Specific Guidelines (Next.js + Supabase)
+
+- **Components:** Max 200 lines per component. Extract hooks into \`use*.ts\` files
+- **API routes:** One route per file. Keep handlers under 50 lines — extract business logic to services
+- **Supabase queries:** Never call Supabase directly from components — use a data access layer
+- **Server vs Client:** Mark components explicitly with \`"use client"\` only when needed. Default to server components
+- **Environment variables:** Never hardcode secrets. Use \`.env.local\` and document in \`.env.example\``;
+
+const REACT_NATIVE_GUIDELINES = `## Stack-Specific Guidelines (React Native)
+
+- **Components:** Max 200 lines. Extract hooks into \`use*.ts\` files
+- **Styles:** Co-locate \`StyleSheet.create\` at the bottom of the component file, or extract to \`*.styles.ts\` if large
+- **No inline styles** — always use StyleSheet for performance
+- **Platform-specific code:** Use \`.ios.ts\` / \`.android.ts\` suffixes, not runtime \`Platform.OS\` checks in render
+- **Navigation:** Keep screen components thin — extract business logic to hooks`;
+
+const NODEJS_CLI_GUIDELINES = `## Stack-Specific Guidelines (Node.js CLI)
+
+- **One command per file** — each subcommand gets its own module
+- **No process.exit() in library code** — only at the top-level entry point
+- **Stderr for errors, stdout for output** — never mix them
+- **Graceful shutdown:** Handle SIGINT and SIGTERM for cleanup
+- **No synchronous I/O** in hot paths — use async/await`;
+
+const PYTHON_FASTAPI_GUIDELINES = `## Stack-Specific Guidelines (Python / FastAPI)
+
+- **One router per domain** — e.g., \`routers/users.py\`, \`routers/orders.py\`
+- **Pydantic models for all I/O** — never return raw dicts from endpoints
+- **Type hints on every function** — mypy strict mode enforced
+- **No business logic in route handlers** — extract to service layer
+- **Max function length:** 30 lines (Python functions tend shorter than TS)`;
+
+const GO_GUIDELINES = `## Stack-Specific Guidelines (Go)
+
+- **Accept interfaces, return structs** — keep function signatures flexible
+- **Error wrapping:** Use \`fmt.Errorf("context: %w", err)\` — never discard errors
+- **No \`init()\` functions** unless absolutely necessary — prefer explicit initialization
+- **Package naming:** Short, lowercase, no underscores. The package name is part of the API (\`http.Client\`, not \`httppackage.HTTPClient\`)
+- **Test files:** \`*_test.go\` next to the source, same package for white-box tests`;
+
+const VITE_REACT_GUIDELINES = `## Stack-Specific Guidelines (Vite + React)
+
+- **Components:** Max 200 lines. Extract hooks into \`use*.ts\` files
+- **State management:** Keep state as close to where it's used as possible. Lift only when shared
+- **No prop drilling past 2 levels** — use context or a state library
+- **CSS:** One stylesheet per component (\`*.module.css\`) or co-located Tailwind classes
+- **Bundle awareness:** Lazy-load routes with \`React.lazy\` — never load everything upfront`;
+
+const FLUTTER_GUIDELINES = `## Stack-Specific Guidelines (Flutter)
+
+- **Widgets:** Max 200 lines per widget. Extract sub-widgets into separate files
+- **No build method over 50 lines** — decompose into smaller widgets or extract methods
+- **State management:** Use Riverpod/Bloc consistently — never mix \`setState\` with state management in the same feature
+- **Const constructors:** Use \`const\` wherever possible for widget performance
+- **No magic strings** — extract routes, asset paths, and keys to constants`;
+
+const CUSTOM_STACK_GUIDELINES = `## Stack-Specific Guidelines
+
+*Add guidelines specific to your chosen technology stack here.*`;
+
+const STACK_GUIDELINES: Record<Exclude<TechStack, "custom">, string> = {
+  "nextjs-supabase": NEXTJS_SUPABASE_GUIDELINES,
+  "react-native": REACT_NATIVE_GUIDELINES,
+  "nodejs-cli": NODEJS_CLI_GUIDELINES,
+  "python-fastapi": PYTHON_FASTAPI_GUIDELINES,
+  "go": GO_GUIDELINES,
+  "vite-react": VITE_REACT_GUIDELINES,
+  "flutter": FLUTTER_GUIDELINES,
+};
+
 const STACK_EPICS: Record<Exclude<TechStack, "custom">, string> = {
   "nextjs-supabase": NEXTJS_SUPABASE_EPICS,
   "react-native": REACT_NATIVE_EPICS,
@@ -552,6 +626,29 @@ export function getDefinitionOfDone(
   }
 
   return STACK_DODS[stack];
+}
+
+/**
+ * Returns stack-specific code guidelines for the selected tech stack.
+ *
+ * For preset stacks, returns guidelines tailored to the technology.
+ * For custom stacks, returns a placeholder to be filled by the user.
+ *
+ * @param stack - The selected tech stack preset
+ * @param customStack - The user's free-text stack description (when stack is "custom")
+ * @returns Formatted markdown string with stack-specific code guidelines
+ */
+export function getCodeGuidelines(
+  stack: TechStack,
+  customStack?: string,
+): string {
+  if (stack === "custom") {
+    return customStack !== undefined
+      ? `${CUSTOM_STACK_GUIDELINES}\n\n> Custom stack: ${customStack}. Add your technology-specific rules above.`
+      : CUSTOM_STACK_GUIDELINES;
+  }
+
+  return STACK_GUIDELINES[stack];
 }
 
 /**

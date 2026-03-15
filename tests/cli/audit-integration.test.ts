@@ -146,11 +146,11 @@ describe("audit integration -- fully scaffolded project", () => {
     );
     await writeFile(
       join(dir, ".claude/agents/developer-agent.md"),
-      "# Developer Agent\n\nReferences commit conventions and agent-memory/meto-developer\n",
+      "# Developer Agent\n\nReferences commit conventions and agent-memory/meto-developer and code-guidelines\n",
     );
     await writeFile(
       join(dir, ".claude/agents/tester-agent.md"),
-      "# Tester Agent\n\nReferences definition-of-done and agent-memory/meto-tester\n",
+      "# Tester Agent\n\nReferences definition-of-done and agent-memory/meto-tester and code-guidelines\n",
     );
     await mkdir(join(dir, ".claude/agent-memory/meto-pm"), { recursive: true });
     await mkdir(join(dir, ".claude/agent-memory/meto-developer"), {
@@ -164,6 +164,10 @@ describe("audit integration -- fully scaffolded project", () => {
     await writeFile(
       join(dir, "ai/workflows/session-checkpoint.md"),
       "# Session Checkpoint\n",
+    );
+    await writeFile(
+      join(dir, "ai/workflows/code-guidelines.md"),
+      "# Code Guidelines\n",
     );
   }
 

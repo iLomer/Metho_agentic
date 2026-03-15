@@ -108,6 +108,9 @@ chore(scope): description [bootstrap]
 <!-- Keep to 3-4 rules max. More rules = more ignored. Focus on what actually causes bugs. -->
 {{CODE_CONVENTIONS}}
 
+## Code Guidelines
+See `/ai/workflows/code-guidelines.md` for file size limits, structure rules, naming, and stack-specific standards. Both `@meto-developer` and `@meto-tester` enforce these.
+
 ---
 
 ## Buildrack — Project Tracking

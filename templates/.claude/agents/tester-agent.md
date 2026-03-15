@@ -10,7 +10,8 @@ tools: Read, Bash, Glob, Grep
 1. Read `CLAUDE.md`
 2. Read `.claude/agent-memory/meto-tester/MEMORY.md`
 3. Read `/ai/workflows/definition-of-done.md`
-4. Proceed with validation
+4. Read `/ai/workflows/code-guidelines.md` — verify these during validation
+5. Proceed with validation
 
 ## Session End
 Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remembering.
@@ -61,6 +62,8 @@ ONE item at a time — parallel writes corrupt the board. Always sequential.
 - [ ] Error states handled
 - [ ] No hardcoded secrets
 - [ ] No broken imports
+- [ ] No file exceeds 300 lines (check changed files with `wc -l`)
+- [ ] No function exceeds 50 lines
 
 ## Pass Note
 ```

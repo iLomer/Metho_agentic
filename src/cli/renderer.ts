@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
 import {
+  getCodeGuidelines,
   getDefinitionOfDone,
   getStackDescription,
   getStarterEpics,
@@ -105,6 +106,7 @@ export function buildTokenMap(
       VALUE_PROPOSITION: aiContent.valueProposition,
       OUT_OF_SCOPE: aiContent.outOfScope,
       CODE_CONVENTIONS: brief.codeConventions,
+      CODE_GUIDELINES_STACK: getCodeGuidelines(brief.techStack, brief.customStack),
       DEFINITION_OF_DONE: aiContent.definitionOfDone,
       STARTER_EPICS: aiContent.epics,
       STARTER_TASKS: aiContent.starterTasks,
@@ -122,6 +124,7 @@ export function buildTokenMap(
     VALUE_PROPOSITION: brief.valueProposition,
     OUT_OF_SCOPE: brief.outOfScope,
     CODE_CONVENTIONS: brief.codeConventions,
+    CODE_GUIDELINES_STACK: getCodeGuidelines(brief.techStack, brief.customStack),
     DEFINITION_OF_DONE: getDefinitionOfDone(brief.techStack, brief.customStack),
     STARTER_EPICS: getStarterEpics(
       brief.techStack,
