@@ -567,6 +567,7 @@ export async function fixLayerTwo(
 const GOVERNANCE_FILE_IDS = new Set([
   "L3-dod-exists",
   "L3-session-checkpoint",
+  "L3-code-guidelines-exists",
 ]);
 
 /**
@@ -579,6 +580,8 @@ const AGENT_REFERENCE_IDS = new Set([
   "L3-pm-agent-refs-memory",
   "L3-developer-agent-refs-memory",
   "L3-tester-agent-refs-memory",
+  "L3-developer-agent-refs-guidelines",
+  "L3-tester-agent-refs-guidelines",
 ]);
 
 /**
@@ -625,6 +628,22 @@ const AGENT_REFERENCE_PATCHES: Record<string, string> = {
     "## Memory",
     "- Read `.claude/agent-memory/meto-tester/MEMORY.md` at session start",
     "- Update `.claude/agent-memory/meto-tester/MEMORY.md` at session end",
+    "",
+  ].join("\n"),
+  "L3-developer-agent-refs-guidelines": [
+    "",
+    "## Code Guidelines",
+    "- Read `/ai/workflows/code-guidelines.md` at session start",
+    "- Enforce file size limits (300 lines max), function length (50 lines max)",
+    "- No file should exceed 500 lines -- hard stop",
+    "",
+  ].join("\n"),
+  "L3-tester-agent-refs-guidelines": [
+    "",
+    "## Code Guidelines",
+    "- Read `/ai/workflows/code-guidelines.md` during validation",
+    "- Check changed files with `wc -l` -- no file over 300 lines",
+    "- Verify no function exceeds 50 lines",
     "",
   ].join("\n"),
 };
