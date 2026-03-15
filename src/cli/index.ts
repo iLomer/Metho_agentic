@@ -20,6 +20,7 @@ import { DirectoryNotEmptyError, writeScaffold } from "./scaffold.js";
 import { formatFileTree } from "./tree.js";
 import { runDoctor } from "./doctor.js";
 import { runStatus } from "./status.js";
+import { runAudit } from "./audit/index.js";
 import { generateWithAI, AIGenerationTimeoutError } from "./ai-generator.js";
 import { parseAIOutput, validateAIContent } from "./ai-parser.js";
 import type { AIGeneratedContent } from "./ai-parser.js";
@@ -71,6 +72,7 @@ function printHelp(): void {
       "  init              Scaffold a new structured project",
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
+      "  audit             Check project prerequisites and methodology compliance",
       "  doctor            Check methodology health of the current project",
       "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
       "",
@@ -432,6 +434,11 @@ async function main(): Promise<void> {
     }
 
     interruption.uninstall();
+    return;
+  }
+
+  if (arg === "audit") {
+    await runAudit();
     return;
   }
 
