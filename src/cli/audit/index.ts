@@ -1,9 +1,23 @@
 import { readdir, stat } from "node:fs/promises";
-import { join } from "node:path";
 import * as p from "@clack/prompts";
+import { AUDIT_BLUEPRINT } from "./blueprint.js";
+import {
+  scanLayer,
+  skipLayer,
+  layerPassed,
+  getFailedResults,
+} from "./scanner.js";
+import { fixLayer } from "./fixer.js";
+import type { LayerScanResult } from "./scanner.js";
+import type { TokenMap } from "../renderer.js";
+
+// ---------------------------------------------------------------------------
+// Types (kept for backward compatibility -- may be consumed by other modules)
+// ---------------------------------------------------------------------------
 
 /**
- * Result of a single Layer 0 audit check.
+ * Result of a single audit check (legacy interface from Layer 0 scaffold).
+ * Retained for backward compatibility; the scanner uses ScanResult internally.
  */
 export interface AuditCheckResult {
   /** Human-readable name of the check */
@@ -14,153 +28,45 @@ export interface AuditCheckResult {
   message: string;
 }
 
-/**
- * Source code directories to look for. If any one of these exists,
- * the "source code directory" check passes.
- */
-const SOURCE_CODE_DIRS: readonly string[] = [
-  "src",
-  "lib",
-  "app",
-  "pkg",
-  "cmd",
-  "internal",
-];
+// ---------------------------------------------------------------------------
+// Display helpers
+// ---------------------------------------------------------------------------
 
 /**
- * Checks whether the given path is a directory.
+ * Displays a layer's scan results using @clack/prompts.
  */
-async function isDirectory(filePath: string): Promise<boolean> {
-  try {
-    const stats = await stat(filePath);
-    return stats.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Layer 0 check: git is initialized in the project directory.
- */
-async function checkGitInitialized(
-  projectDir: string,
-): Promise<AuditCheckResult> {
-  const gitDir = join(projectDir, ".git");
-  const exists = await isDirectory(gitDir);
-
-  if (exists) {
-    return {
-      name: "Git initialized",
-      status: "pass",
-      message: ".git directory found",
-    };
+function displayLayerResults(layerResult: LayerScanResult): void {
+  if (layerResult.skipped) {
+    p.note(
+      `Skipped: ${layerResult.skipReason ?? "prerequisite layer failed"}`,
+      `Layer ${layerResult.layer.id} -- ${layerResult.layer.name}`,
+    );
+    return;
   }
 
-  return {
-    name: "Git initialized",
-    status: "fail",
-    message: "No .git directory found -- run 'git init' to initialize",
-  };
-}
-
-/**
- * Layer 0 check: README file exists (case-insensitive match).
- */
-async function checkReadmeExists(
-  projectDir: string,
-): Promise<AuditCheckResult> {
-  let entries: string[];
-  try {
-    entries = await readdir(projectDir);
-  } catch {
-    return {
-      name: "README exists",
-      status: "fail",
-      message: "Could not read project directory",
-    };
-  }
-
-  const hasReadme = entries.some((entry) =>
-    entry.toLowerCase().startsWith("readme"),
-  );
-
-  if (hasReadme) {
-    return {
-      name: "README exists",
-      status: "pass",
-      message: "README file found",
-    };
-  }
-
-  return {
-    name: "README exists",
-    status: "fail",
-    message: "No README file found in the project root",
-  };
-}
-
-/**
- * Layer 0 check: at least one recognized source code directory exists.
- */
-async function checkSourceCodeDir(
-  projectDir: string,
-): Promise<AuditCheckResult> {
-  for (const dir of SOURCE_CODE_DIRS) {
-    const dirPath = join(projectDir, dir);
-    const exists = await isDirectory(dirPath);
-    if (exists) {
-      return {
-        name: "Source code directory",
-        status: "pass",
-        message: `Found source directory: ${dir}/`,
-      };
-    }
-  }
-
-  return {
-    name: "Source code directory",
-    status: "fail",
-    message: `No source directory found (looked for: ${SOURCE_CODE_DIRS.join(", ")})`,
-  };
-}
-
-/**
- * Runs all Layer 0 checks against the given project directory.
- * Returns an array of results -- one per check.
- */
-export async function runLayer0Checks(
-  projectDir: string,
-): Promise<AuditCheckResult[]> {
-  const results: AuditCheckResult[] = [];
-
-  results.push(await checkGitInitialized(projectDir));
-  results.push(await checkReadmeExists(projectDir));
-  results.push(await checkSourceCodeDir(projectDir));
-
-  return results;
-}
-
-/**
- * Displays Layer 0 audit results using @clack/prompts.
- */
-function displayResults(results: AuditCheckResult[]): void {
-  for (const result of results) {
+  for (const result of layerResult.results) {
     if (result.status === "pass") {
-      p.log.success(`${result.name}: ${result.message}`);
+      p.log.success(`${result.expectation.description}: ${result.message}`);
+    } else if (result.status === "fail") {
+      p.log.error(`${result.expectation.description}: ${result.message}`);
     } else {
-      p.log.error(`${result.name}: ${result.message}`);
+      p.log.warning(`${result.expectation.description}: ${result.message}`);
     }
   }
 
-  const passed = results.filter((r) => r.status === "pass").length;
-  const failed = results.filter((r) => r.status === "fail").length;
-  const total = results.length;
+  const passed = layerResult.results.filter((r) => r.status === "pass").length;
+  const total = layerResult.results.length;
+  const failed = layerResult.results.filter((r) => r.status === "fail").length;
 
   p.note(
     `${passed}/${total} passed, ${failed} failed`,
-    "Layer 0 -- Project Prerequisites",
+    `Layer ${layerResult.layer.id} -- ${layerResult.layer.name}`,
   );
 }
+
+// ---------------------------------------------------------------------------
+// Help
+// ---------------------------------------------------------------------------
 
 /**
  * Prints usage information for the audit command.
@@ -171,12 +77,12 @@ function printAuditHelp(): void {
     [
       "Usage: meto-cli audit [options]",
       "",
-      "Checks whether your project meets methodology prerequisites.",
+      "Checks whether your project meets methodology standards.",
+      "Runs layered checks and offers to fix missing files.",
       "",
-      "Layer 0 (Project Prerequisites):",
-      "  - Git initialized",
-      "  - README exists",
-      "  - Source code directory exists (src/, lib/, app/, etc.)",
+      "Layers (gated -- each requires the previous to pass):",
+      "  Layer 0: Project Prerequisites (git, README, source dir)",
+      "  Layer 1: Methodology (CLAUDE.md, ai/ structure, task board, workflows)",
       "",
       "Options:",
       "  --help, -h    Show this help message",
@@ -186,42 +92,86 @@ function printAuditHelp(): void {
   p.outro("Run 'meto-cli audit' from your project root.");
 }
 
+// ---------------------------------------------------------------------------
+// Token map for audit fixes
+// ---------------------------------------------------------------------------
+
 /**
- * Validates that the given directory looks like a project directory.
- * Returns true if it exists and is a directory.
+ * Builds a minimal token map for rendering templates during audit fixes.
+ * Uses placeholder values since we are creating missing files in an existing project
+ * rather than scaffolding a brand-new one.
  */
-async function isValidProjectDirectory(
-  dirPath: string,
-): Promise<boolean> {
-  return isDirectory(dirPath);
+function buildAuditTokenMap(projectDir: string): TokenMap {
+  const projectName = projectDir.split("/").pop() ?? "my-project";
+
+  return {
+    PROJECT_NAME: projectName,
+    PRODUCT_VISION: "To be defined",
+    TECH_STACK: "To be defined",
+    TARGET_USERS: "To be defined",
+    PROBLEM_STATEMENT: "To be defined",
+    SUCCESS_CRITERIA: "To be defined",
+    VALUE_PROPOSITION: "To be defined",
+    OUT_OF_SCOPE: "To be defined",
+    CODE_CONVENTIONS: "To be defined",
+    DEFINITION_OF_DONE: "To be defined by @meto-pm",
+    STARTER_EPICS: "",
+    STARTER_TASKS: "",
+    WORKFLOW_AGENTS_SECTION: "",
+  };
 }
+
+// ---------------------------------------------------------------------------
+// Validation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks whether the given path is a directory.
+ */
+async function isDirectory(dirPath: string): Promise<boolean> {
+  try {
+    const stats = await stat(dirPath);
+    return stats.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
 
 /**
  * Entry point for the `meto-cli audit` command.
- * Runs Layer 0 checks against the current working directory and displays results.
+ *
+ * Runs layered checks against the project directory:
+ * 1. Layer 0 (Project Prerequisites) -- must all pass to continue
+ * 2. Layer 1 (Methodology) -- gated on Layer 0; offers interactive fixes
+ *
+ * Returns the collected scan results for use by the reporter (slice-069).
  */
-export async function runAudit(): Promise<void> {
+export async function runAudit(): Promise<LayerScanResult[]> {
   const args = process.argv.slice(3);
 
   if (args.includes("--help") || args.includes("-h")) {
     printAuditHelp();
-    return;
+    return [];
   }
 
   p.intro("meto-cli audit");
 
   const projectDir = process.cwd();
 
-  const isValid = await isValidProjectDirectory(projectDir);
+  const isValid = await isDirectory(projectDir);
   if (!isValid) {
     p.log.error(
       "Current directory is not a valid project directory. Run this command from within your project root.",
     );
     p.outro("");
     process.exit(1);
+    return [];
   }
 
-  // Check if directory has any files (not an empty/nonexistent directory)
   let entries: string[];
   try {
     entries = await readdir(projectDir);
@@ -231,7 +181,7 @@ export async function runAudit(): Promise<void> {
     );
     p.outro("");
     process.exit(1);
-    return;
+    return [];
   }
 
   if (entries.length === 0) {
@@ -240,23 +190,81 @@ export async function runAudit(): Promise<void> {
     );
     p.outro("");
     process.exit(1);
-    return;
+    return [];
   }
 
   p.log.info(`Auditing project at ${projectDir}`);
 
-  const results = await runLayer0Checks(projectDir);
-  displayResults(results);
+  const allLayerResults: LayerScanResult[] = [];
+  let previousLayerPassed = true;
 
-  const hasFail = results.some((r) => r.status === "fail");
+  for (const layer of AUDIT_BLUEPRINT) {
+    // Gating: skip this layer if the previous layer failed
+    if (!previousLayerPassed) {
+      const skipped = skipLayer(
+        layer,
+        `Layer ${layer.id - 1} did not pass -- skipping Layer ${layer.id}`,
+      );
+      allLayerResults.push(skipped);
+      displayLayerResults(skipped);
+      continue;
+    }
 
-  if (hasFail) {
-    p.outro("Some prerequisites are missing. Address the issues above before proceeding.");
-  } else {
-    p.outro("All Layer 0 checks passed.");
+    // Scan the layer
+    const scanResult = await scanLayer(projectDir, layer);
+    displayLayerResults(scanResult);
+
+    // If there are fixable failures, run the fixer
+    const failures = getFailedResults(scanResult);
+    const fixableFailures = failures.filter((r) => r.expectation.fixable);
+
+    if (fixableFailures.length > 0) {
+      const tokens = buildAuditTokenMap(projectDir);
+      const fixResult = await fixLayer(projectDir, scanResult, tokens);
+
+      // Re-scan after fixes to get updated results
+      const created = fixResult.fixes.filter((f) => f.outcome === "created");
+      if (created.length > 0) {
+        p.log.info(`Fixed ${created.length} issue${created.length === 1 ? "" : "s"} in Layer ${layer.id}`);
+
+        // Re-scan to reflect fixes
+        const rescanResult = await scanLayer(projectDir, layer);
+        allLayerResults.push(rescanResult);
+        previousLayerPassed = layerPassed(rescanResult);
+      } else {
+        allLayerResults.push(scanResult);
+        previousLayerPassed = layerPassed(scanResult);
+      }
+    } else {
+      allLayerResults.push(scanResult);
+      previousLayerPassed = layerPassed(scanResult);
+    }
   }
 
-  if (hasFail) {
+  // Summary
+  const totalExpectations = allLayerResults.reduce(
+    (sum, lr) => sum + lr.results.length,
+    0,
+  );
+  const totalPassed = allLayerResults.reduce(
+    (sum, lr) => sum + lr.results.filter((r) => r.status === "pass").length,
+    0,
+  );
+  const totalFailed = allLayerResults.reduce(
+    (sum, lr) => sum + lr.results.filter((r) => r.status === "fail").length,
+    0,
+  );
+
+  if (totalFailed > 0) {
+    p.outro(
+      `Audit complete: ${totalPassed}/${totalExpectations} passed, ${totalFailed} failed`,
+    );
     process.exit(1);
+  } else {
+    p.outro(
+      `Audit complete: ${totalPassed}/${totalExpectations} checks passed`,
+    );
   }
+
+  return allLayerResults;
 }
