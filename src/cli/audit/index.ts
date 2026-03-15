@@ -11,7 +11,7 @@ import {
 import { fixLayer, fixLayerTwo, fixLayerThree } from "./fixer.js";
 import type { LayerScanResult } from "./scanner.js";
 import type { TokenMap } from "../renderer.js";
-import { getDefinitionOfDone } from "../stacks.js";
+import { getCodeGuidelines, getDefinitionOfDone } from "../stacks.js";
 
 // ---------------------------------------------------------------------------
 // Types (kept for backward compatibility -- may be consumed by other modules)
@@ -83,7 +83,7 @@ function printAuditHelp(): void {
       "Runs layered checks and offers to fix missing files.",
       "",
       "Layers (gated -- each requires the previous to pass):",
-      "  Layer 0: Project Prerequisites (git, README, source dir)",
+      "  Layer 0: Project Prerequisites (git, README, source dir) -- informational, never blocks",
       "  Layer 1: Methodology (CLAUDE.md, ai/ structure, task board, workflows)",
       "  Layer 2: Agents (.claude/ settings, agent definitions, agent memory)",
       "  Layer 3: Governance (definition of done, commit conventions, session checkpoints)",
@@ -112,6 +112,7 @@ function printAuditHelp(): void {
 function buildAuditTokenMap(
   projectDir: string,
   definitionOfDone?: string,
+  codeGuidelinesStack?: string,
 ): TokenMap {
   const projectName = projectDir.split("/").pop() ?? "my-project";
 
@@ -125,6 +126,7 @@ function buildAuditTokenMap(
     VALUE_PROPOSITION: "To be defined",
     OUT_OF_SCOPE: "To be defined",
     CODE_CONVENTIONS: "To be defined",
+    CODE_GUIDELINES_STACK: codeGuidelinesStack ?? "",
     DEFINITION_OF_DONE: definitionOfDone ?? "To be defined by @meto-pm",
     STARTER_EPICS: "",
     STARTER_TASKS: "",
@@ -209,13 +211,15 @@ export async function runAudit(): Promise<LayerScanResult[]> {
   // Detect tech stack for stack-specific definition-of-done content
   const detected = await detectStack(projectDir);
   const stackDod = getDefinitionOfDone(detected.stack);
+  const stackGuidelines = getCodeGuidelines(detected.stack);
 
   const allLayerResults: LayerScanResult[] = [];
   let previousLayerPassed = true;
 
   for (const layer of AUDIT_BLUEPRINT) {
-    // Gating: skip this layer if the previous layer failed
-    if (!previousLayerPassed) {
+    // Gating: Layer 0 is informational only — never blocks.
+    // All other layers are gated on the previous layer passing.
+    if (!previousLayerPassed && layer.id > 1) {
       const skipped = skipLayer(
         layer,
         `Layer ${layer.id - 1} did not pass -- skipping Layer ${layer.id}`,
@@ -234,7 +238,7 @@ export async function runAudit(): Promise<LayerScanResult[]> {
     const fixableFailures = failures.filter((r) => r.expectation.fixable);
 
     if (fixableFailures.length > 0) {
-      const tokens = buildAuditTokenMap(projectDir, stackDod);
+      const tokens = buildAuditTokenMap(projectDir, stackDod, stackGuidelines);
       let fixResult;
       if (layer.id === 2) {
         fixResult = await fixLayerTwo(projectDir, scanResult, tokens);
@@ -252,14 +256,15 @@ export async function runAudit(): Promise<LayerScanResult[]> {
         // Re-scan to reflect fixes
         const rescanResult = await scanLayer(projectDir, layer);
         allLayerResults.push(rescanResult);
-        previousLayerPassed = layerPassed(rescanResult);
+        previousLayerPassed = layer.id === 0 ? true : layerPassed(rescanResult);
       } else {
         allLayerResults.push(scanResult);
         previousLayerPassed = layerPassed(scanResult);
       }
     } else {
       allLayerResults.push(scanResult);
-      previousLayerPassed = layerPassed(scanResult);
+      // Layer 0 is informational — its failures never gate Layer 1
+      previousLayerPassed = layer.id === 0 ? true : layerPassed(scanResult);
     }
   }
 
