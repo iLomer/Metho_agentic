@@ -69,14 +69,6 @@ const LAYER_0_EXPECTATIONS: BlueprintExpectation[] = [
     fixable: false,
   },
   {
-    id: "L0-readme",
-    description: "README exists",
-    checkType: "custom",
-    path: "README*",
-    layer: 0,
-    fixable: false,
-  },
-  {
     id: "L0-source-dir",
     description: "Source code directory exists",
     checkType: "custom",

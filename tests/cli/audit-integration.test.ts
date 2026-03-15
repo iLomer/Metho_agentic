@@ -31,7 +31,8 @@ async function auditProject(projectDir: string): Promise<LayerScanResult[]> {
   let previousPassed = true;
 
   for (const layer of AUDIT_BLUEPRINT) {
-    if (!previousPassed) {
+    // Layer 0 is informational — never gates. All other layers are gated.
+    if (!previousPassed && layer.id > 1) {
       results.push(
         skipLayer(layer, `Layer ${layer.id - 1} did not pass`),
       );
@@ -40,7 +41,8 @@ async function auditProject(projectDir: string): Promise<LayerScanResult[]> {
 
     const scanResult = await scanLayer(projectDir, layer);
     results.push(scanResult);
-    previousPassed = layerPassed(scanResult);
+    // Layer 0 never blocks — always treat as passed for gating
+    previousPassed = layer.id === 0 ? true : layerPassed(scanResult);
   }
 
   return results;
@@ -67,19 +69,22 @@ describe("audit integration -- empty directory", () => {
     expect(results).toHaveLength(4);
   });
 
-  it("Layer 0 fails with all 3 expectations failing", async () => {
+  it("Layer 0 fails with all 2 expectations failing", async () => {
     const results = await auditProject(tempDir);
     const layer0 = results[0];
 
     expect(layer0.skipped).toBe(false);
-    expect(layer0.results).toHaveLength(3);
+    expect(layer0.results).toHaveLength(2);
     expect(layer0.results.every((r) => r.status === "fail")).toBe(true);
   });
 
-  it("Layers 1-3 are all skipped due to Layer 0 gating", async () => {
+  it("Layers 2-3 are skipped due to Layer 1 gating (Layer 0 is informational)", async () => {
     const results = await auditProject(tempDir);
 
-    for (let i = 1; i <= 3; i++) {
+    // Layer 1 is scanned (Layer 0 never gates) but fails
+    expect(results[1].skipped).toBe(false);
+
+    for (let i = 2; i <= 3; i++) {
       expect(results[i].skipped).toBe(true);
       expect(results[i].skipReason).toContain("did not pass");
       expect(results[i].results.every((r) => r.status === "skip")).toBe(true);
@@ -106,7 +111,6 @@ describe("audit integration -- fully scaffolded project", () => {
   async function scaffoldFullProject(dir: string): Promise<void> {
     // Layer 0: prerequisites
     await mkdir(join(dir, ".git"), { recursive: true });
-    await writeFile(join(dir, "README.md"), "# My Project\n");
     await mkdir(join(dir, "src"), { recursive: true });
 
     // Layer 1: methodology
@@ -232,7 +236,6 @@ describe("audit integration -- partial project (Layer 0 passes, Layer 1 fails)",
   it("Layer 0 passes, Layer 1 has failures, Layers 2-3 are skipped", async () => {
     // Create Layer 0 prerequisites only
     await mkdir(join(tempDir, ".git"));
-    await writeFile(join(tempDir, "README.md"), "# Project\n");
     await mkdir(join(tempDir, "src"));
 
     const results = await auditProject(tempDir);
@@ -268,7 +271,6 @@ describe("audit integration -- partial project (Layers 0-1 pass, Layer 2 fails)"
   it("Layers 0-1 pass, Layer 2 fails, Layer 3 is skipped", async () => {
     // Layer 0
     await mkdir(join(tempDir, ".git"));
-    await writeFile(join(tempDir, "README.md"), "# Project\n");
     await mkdir(join(tempDir, "src"));
 
     // Layer 1 -- all 15 expectations
@@ -321,21 +323,8 @@ describe("audit integration -- Layer 0 custom checks", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("accepts any README variant (case-insensitive)", async () => {
-    await mkdir(join(tempDir, ".git"));
-    await writeFile(join(tempDir, "Readme.rst"), "Title\n=====\n");
-    await mkdir(join(tempDir, "src"));
-
-    const results = await auditProject(tempDir);
-    const readmeResult = results[0].results.find(
-      (r) => r.expectation.id === "L0-readme",
-    );
-    expect(readmeResult?.status).toBe("pass");
-  });
-
   it("accepts alternative source directories (lib, app, etc.)", async () => {
     await mkdir(join(tempDir, ".git"));
-    await writeFile(join(tempDir, "README.md"), "# Hi\n");
     await mkdir(join(tempDir, "lib"));
 
     const results = await auditProject(tempDir);
@@ -347,7 +336,6 @@ describe("audit integration -- Layer 0 custom checks", () => {
 
   it("fails source-dir check when no recognized directory exists", async () => {
     await mkdir(join(tempDir, ".git"));
-    await writeFile(join(tempDir, "README.md"), "# Hi\n");
     // No src, lib, app, pkg, cmd, or internal dirs
 
     const results = await auditProject(tempDir);

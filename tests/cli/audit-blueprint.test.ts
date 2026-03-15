@@ -28,8 +28,8 @@ describe("AUDIT_BLUEPRINT structure", () => {
     }
   });
 
-  it("Layer 0 has 3 expectations", () => {
-    expect(AUDIT_BLUEPRINT[0].expectations).toHaveLength(3);
+  it("Layer 0 has 2 expectations", () => {
+    expect(AUDIT_BLUEPRINT[0].expectations).toHaveLength(2);
   });
 
   it("Layer 1 has 15 expectations", () => {
@@ -124,19 +124,16 @@ describe("Layer 0 specifics", () => {
     }
   });
 
-  it("has git, readme, and source-dir checks", () => {
+  it("has git and source-dir checks", () => {
     const ids = layer0.expectations.map((e) => e.id);
     expect(ids).toContain("L0-git");
-    expect(ids).toContain("L0-readme");
     expect(ids).toContain("L0-source-dir");
   });
 
-  it("readme and source-dir use custom check type", () => {
-    const readme = layer0.expectations.find((e) => e.id === "L0-readme");
+  it("source-dir uses custom check type", () => {
     const sourceDir = layer0.expectations.find(
       (e) => e.id === "L0-source-dir",
     );
-    expect(readme?.checkType).toBe("custom");
     expect(sourceDir?.checkType).toBe("custom");
   });
 });
