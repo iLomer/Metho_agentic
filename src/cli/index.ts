@@ -75,6 +75,8 @@ function printHelp(): void {
       "  audit             Check project prerequisites and methodology compliance",
       "  doctor            Check methodology health of the current project",
       "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
+      "  rack              Project shelf (list, add, push, check, scan, open)",
+      "  daemon start      Start local agent dispatcher for the dashboard",
       "",
       "Options:",
       "  --help, -h        Show this help message",
@@ -449,6 +451,64 @@ async function main(): Promise<void> {
 
   if (arg === "status") {
     await runStatus();
+    return;
+  }
+
+  if (arg === "rack") {
+    const rackArg = process.argv[3];
+    p.intro("meto-cli rack -- project shelf");
+
+    if (!rackArg || rackArg === "--help") {
+      p.note(
+        [
+          "Usage: meto-cli rack <command>",
+          "",
+          "Commands:",
+          "  list        list all projects with costs",
+          "  check       show current project card",
+          "  scan        dry-run: show what would be detected",
+          "  push        update project card by re-scanning",
+          "  add         quick-add service, tool, url, or note",
+          "  open        open project card in browser",
+          "",
+          "Requires authentication via the Meto dashboard.",
+        ].join("\n"),
+        "Help",
+      );
+      p.outro("Manage your projects at the Meto dashboard.");
+      return;
+    }
+
+    p.log.info(`rack ${rackArg} — coming soon. Use the Meto dashboard for now.`);
+    p.outro("");
+    return;
+  }
+
+  if (arg === "daemon") {
+    const daemonArg = process.argv[3];
+    p.intro("meto-cli daemon");
+
+    if (daemonArg === "start") {
+      const portIndex = process.argv.indexOf("--port");
+      const port = portIndex !== -1 ? process.argv[portIndex + 1] : "7890";
+      p.log.info(`Starting daemon on ws://127.0.0.1:${port ?? "7890"}`);
+      p.log.info("Run from packages/daemon for now:");
+      p.log.info("  cd packages/daemon && npx tsx src/index.ts start");
+      p.outro("");
+      return;
+    }
+
+    p.note(
+      [
+        "Usage: meto-cli daemon start [--port 7890]",
+        "",
+        "Starts the local agent dispatcher.",
+        "The Meto dashboard connects via WebSocket to dispatch",
+        "Claude Code sessions to your projects.",
+      ].join("\n"),
+      "Help",
+    );
+    p.outro("");
     return;
   }
 
