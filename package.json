@@ -13,19 +13,12 @@
     "LICENSE",
     "CHANGELOG.md"
   ],
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "npm run build",
-    "web:dev": "npm run dev --workspace=apps/web",
-    "web:build": "npm run build --workspace=apps/web",
-    "daemon:dev": "npm run dev --workspace=packages/daemon"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "scaffold",
