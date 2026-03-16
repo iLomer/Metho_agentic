@@ -37,10 +37,12 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@clack/prompts": "^0.9.1"
+    "@clack/prompts": "^0.9.1",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
   }

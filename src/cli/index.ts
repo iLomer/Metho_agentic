@@ -21,6 +21,7 @@ import { formatFileTree } from "./tree.js";
 import { runDoctor } from "./doctor.js";
 import { runStatus } from "./status.js";
 import { runAudit } from "./audit/index.js";
+import { runDaemon } from "../daemon/index.js";
 import { generateWithAI, AIGenerationTimeoutError } from "./ai-generator.js";
 import { parseAIOutput, validateAIContent } from "./ai-parser.js";
 import type { AIGeneratedContent } from "./ai-parser.js";
@@ -73,6 +74,7 @@ function printHelp(): void {
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
       "  audit             Check project prerequisites and methodology compliance",
+      "  daemon start      Start the local agent dispatcher (WebSocket server)",
       "  doctor            Check methodology health of the current project",
       "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
       "",
@@ -434,6 +436,51 @@ async function main(): Promise<void> {
     }
 
     interruption.uninstall();
+    return;
+  }
+
+  if (arg === "daemon") {
+    const subcommand = process.argv[3];
+
+    if (subcommand === "start") {
+      const portFlagIndex = process.argv.indexOf("--port");
+      let port = 7890;
+
+      if (portFlagIndex !== -1) {
+        const portValue = Number(process.argv[portFlagIndex + 1]);
+        if (Number.isNaN(portValue) || portValue < 1 || portValue > 65535) {
+          p.log.error("Invalid port number. Must be between 1 and 65535.");
+          process.exit(1);
+        }
+        port = portValue;
+      }
+
+      runDaemon(port);
+      return;
+    }
+
+    // No subcommand or unknown subcommand -- show daemon help
+    p.intro("meto-cli daemon -- local agent dispatcher");
+    p.note(
+      [
+        "Usage: meto-cli daemon <command> [options]",
+        "",
+        "Commands:",
+        "  start             Start the daemon WebSocket server",
+        "",
+        "Options:",
+        "  --port <number>   Port number (default: 7890)",
+        "",
+        "The daemon runs a WebSocket server on localhost that the",
+        "Meto cockpit connects to for:",
+        "  - Reading project boards from local files",
+        "  - Creating and moving tasks locally",
+        "  - Dispatching Claude Code agent sessions",
+        "  - Streaming agent output in real-time",
+      ].join("\n"),
+      "Help",
+    );
+    p.outro("Run 'meto-cli daemon start' to launch the daemon.");
     return;
   }
 
