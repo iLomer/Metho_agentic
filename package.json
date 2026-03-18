@@ -3,9 +3,6 @@
   "version": "0.11.3",
   "description": "Scaffold structured software projects with built-in methodology",
   "type": "module",
-  "workspaces": [
-    "cockpit"
-  ],
   "bin": {
     "meto-cli": "./dist/cli/index.js"
   },
