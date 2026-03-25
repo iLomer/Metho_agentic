@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, dirname } from "node:path";
-import { spawn } from "node:child_process";
+import { spawnSync } from "node:child_process";
 
 export interface ClaudeSettings {
   enabledPlugins?: Record<string, boolean>;
@@ -64,11 +64,7 @@ export function mergeTooling(existing: ClaudeSettings): ClaudeSettings {
 }
 
 export function runCcstatusline(): void {
-  const child = spawn("npx", ["ccstatusline@latest"], {
-    stdio: "ignore",
-    detached: true,
-  });
-  child.unref();
+  spawnSync("npx", ["ccstatusline@latest"], { stdio: "inherit" });
 }
 
 export async function setupClaudeTooling(): Promise<SetupResult> {
