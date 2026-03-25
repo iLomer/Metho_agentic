@@ -346,8 +346,10 @@ async function main(): Promise<void> {
       const toolingResult = await setupClaudeTooling();
       if (toolingResult.success) {
         p.log.success("Claude tooling installed (Superpowers, Context7, Sequential Thinking)");
-        p.log.info("Setting up Claude Code status line...");
-        runCcstatusline();
+        if (process.stdout.isTTY) {
+          p.log.info("Setting up Claude Code status line...");
+          runCcstatusline();
+        }
       } else {
         p.log.warn(`Claude tooling setup skipped: ${toolingResult.warning}`);
       }
