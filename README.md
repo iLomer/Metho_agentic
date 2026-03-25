@@ -34,6 +34,7 @@ Meto detects whether Claude Code is installed on your machine and offers two pat
 2. Choose your workflow mode -- **Sprint** (sequential) or **Swarm** (parallel epic agents)
 3. Claude Code generates your product vision, problem statement, epics, and a sliced backlog with acceptance criteria
 4. Meto renders everything into a structured project ready for your first sprint or swarm
+5. Context7, Sequential Thinking MCP, and ccstatusline are installed into your Claude Code environment automatically
 
 **Without Claude Code (static):**
 1. You answer 10 questions -- the 5 above plus problem statement, success criteria, value proposition, out of scope, and code conventions
@@ -43,6 +44,24 @@ Meto detects whether Claude Code is installed on your machine and offers two pat
 Both paths produce the same project structure. The AI path just fills in more content so you spend less time on setup and more time building.
 
 Use `--no-ai` to force the static path even when Claude Code is available.
+
+---
+
+## Claude Tooling Setup
+
+`meto init` automatically configures your Claude Code environment so your agents are better equipped from day one. No manual setup required.
+
+**What gets installed into `~/.claude/settings.json`:**
+
+| Tool | What it does |
+|---|---|
+| **Context7 MCP** | Injects up-to-date library documentation into agent context — reduces hallucinated APIs and outdated patterns |
+| **Sequential Thinking MCP** | Gives agents a structured reasoning chain for complex, multi-step problems |
+| **ccstatusline** | Adds a status line to your Claude Code terminal showing session state at a glance |
+
+Context7 and Sequential Thinking are registered as MCP servers and activate automatically in every Claude Code session. The ccstatusline setup is interactive — you'll configure it in your terminal during `meto init`.
+
+All three are installed with a deep merge: your existing `~/.claude/settings.json` is never overwritten, only extended.
 
 ---
 

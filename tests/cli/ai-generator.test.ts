@@ -353,4 +353,31 @@ describe("extractTextFromStream", () => {
 
     expect(extractTextFromStream(jsonl)).toBe("ok");
   });
+
+  it("extracts text from result event (current format)", () => {
+    const jsonl = [
+      JSON.stringify({ type: "system", subtype: "init", session_id: "abc" }),
+      JSON.stringify({ type: "assistant", message: { content: [{ type: "text", text: "Hello!" }] } }),
+      JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "Hello!" }),
+    ].join("\n");
+
+    expect(extractTextFromStream(jsonl)).toBe("Hello!");
+  });
+
+  it("prefers result event over stream_event format when both present", () => {
+    const jsonl = [
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: "old" } } }),
+      JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "new" }),
+    ].join("\n");
+
+    expect(extractTextFromStream(jsonl)).toBe("new");
+  });
+
+  it("falls back to stream_event format when no result event present", () => {
+    const jsonl = [
+      JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: "fallback" } } }),
+    ].join("\n");
+
+    expect(extractTextFromStream(jsonl)).toBe("fallback");
+  });
 });

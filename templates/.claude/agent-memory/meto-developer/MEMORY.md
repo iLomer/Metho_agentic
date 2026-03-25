@@ -4,6 +4,14 @@
 
 ---
 
+## Red Flags — Stop Before Acting
+
+- Writing implementation code before a failing test exists → write the test first
+- Third fix attempt on the same bug hasn't worked → stop, re-read the spec, re-plan
+- About to claim a task is done without running the verification command this session → run it first
+- Touching files outside the task's stated scope → flag it, don't silently expand
+- Hardcoding content that should come from a template or config → read from source
+
 ## Active Decisions
 <!-- Architecture or implementation decisions in progress -->
 

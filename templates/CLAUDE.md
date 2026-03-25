@@ -89,6 +89,16 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 
 ---
 
+## Workflow Rules
+
+- **Plan first:** For any task with 3+ steps or architectural decisions, enter plan mode before writing code. If something goes sideways, STOP and re-plan.
+- **Test first, always:** Write the failing test before implementation. Watch it fail, then make it pass. Code written before a test = delete and restart.
+- **Systematic debugging:** Root-cause first — read the error, trace the call, form a hypothesis. If 3 distinct fixes fail, stop and re-plan rather than trying a fourth.
+- **Verify before done:** Never mark a task complete without running the verification command in the current session. No verbal claims — show the output.
+- **Minimal impact:** Changes touch only what's necessary. No temporary fixes — find root causes.
+
+---
+
 ## Commit Format
 
 ```

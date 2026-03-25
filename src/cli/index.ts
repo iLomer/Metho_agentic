@@ -3,7 +3,7 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import * as p from "@clack/prompts";
-import { collectDeepContent, collectProjectBrief } from "./prompts.js";
+import { collectProjectBrief } from "./prompts.js";
 import { InterruptionHandler } from "./interruption.js";
 import {
   buildTokenMap,
@@ -244,21 +244,14 @@ async function main(): Promise<void> {
         clearInterval(progressTimer);
 
         if (aiError instanceof AIGenerationTimeoutError) {
-          aiSpinner.stop("AI generation failed -- falling back to standard prompts");
-          p.log.warning(`No output received for ${Math.round(aiError.timeoutMs / 1000)} seconds. Falling back to standard prompts.`);
+          aiSpinner.stop("AI generation failed -- scaffolding with defaults");
+          p.log.warning(`No output received for ${Math.round(aiError.timeoutMs / 1000)} seconds. Project content will use placeholder defaults — run @meto-pm to fill them in.`);
         } else {
           const reason =
             aiError instanceof Error ? aiError.message : "Unknown error";
-          aiSpinner.stop("AI generation failed -- falling back to standard prompts");
-          p.log.warning(`AI generation failed: ${reason}. Falling back to standard prompts.`);
+          aiSpinner.stop("AI generation failed -- scaffolding with defaults");
+          p.log.warning(`AI generation failed: ${reason}. Project content will use placeholder defaults — run @meto-pm to fill them in.`);
         }
-
-        const deep = await collectDeepContent();
-        brief.problemStatement = deep.problemStatement;
-        brief.successCriteria = deep.successCriteria;
-        brief.valueProposition = deep.valueProposition;
-        brief.outOfScope = deep.outOfScope;
-        brief.codeConventions = deep.codeConventions;
       }
     }
 
@@ -345,7 +338,7 @@ async function main(): Promise<void> {
       // Claude tooling setup
       const toolingResult = await setupClaudeTooling();
       if (toolingResult.success) {
-        p.log.success("Claude tooling installed (Superpowers, Context7, Sequential Thinking)");
+        p.log.success("Claude tooling installed (Context7, Sequential Thinking)");
         if (process.stdout.isTTY) {
           p.log.info("Setting up Claude Code status line...");
           runCcstatusline();

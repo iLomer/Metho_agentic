@@ -64,13 +64,33 @@ const DEFAULT_TIMEOUT_MS = 60_000;
 /**
  * Extracts plain text from Claude Code stream-json (JSONL) output.
  *
- * Each line is a JSON object. Text content arrives as content_block_delta
- * events with text_delta payloads. We concatenate all text_delta values.
+ * Current format: a `result` event at the end of the stream contains the
+ * full aggregated text in its `result` field.
+ *
+ * Fallback: older format where text arrived as content_block_delta events
+ * with text_delta payloads (kept for backwards compatibility).
  */
 export function extractTextFromStream(jsonlStream: string): string {
   const lines = jsonlStream.split("\n").filter((line) => line.trim());
-  let fullText = "";
 
+  // Current format: look for the result event which has the full text
+  for (const line of lines) {
+    try {
+      const event: Record<string, unknown> = JSON.parse(line);
+      if (
+        event.type === "result" &&
+        event.subtype === "success" &&
+        typeof event.result === "string"
+      ) {
+        return event.result;
+      }
+    } catch {
+      // Skip malformed lines
+    }
+  }
+
+  // Fallback: old stream_event + content_block_delta format
+  let fullText = "";
   for (const line of lines) {
     try {
       const event: Record<string, unknown> = JSON.parse(line);

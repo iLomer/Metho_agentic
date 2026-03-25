@@ -43,11 +43,6 @@ async function writeSettings(path: string, settings: ClaudeSettings): Promise<vo
 export function mergeTooling(existing: ClaudeSettings): ClaudeSettings {
   const result: ClaudeSettings = { ...existing };
 
-  result.enabledPlugins = {
-    ...existing.enabledPlugins,
-    "superpowers@claude-plugins-official": true,
-  };
-
   result.mcpServers = {
     ...existing.mcpServers,
     "context7": {

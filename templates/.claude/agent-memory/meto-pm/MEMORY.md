@@ -4,6 +4,14 @@
 
 ---
 
+## Red Flags — Stop Before Acting
+
+- Slicing without clarifying ambiguous requirements → run clarification process first (`ai/workflows/pm-clarification-process.md`)
+- Creating slices larger than M → break them down
+- Writing acceptance criteria with vague language ("works well", "looks good") → make them testable
+- Re-debating a settled decision from `decisions.md` → flag the conflict instead
+- Touching Layer 2 (`/templates/`) logic from a Layer 1 task → split into separate slices
+
 ## Active Decisions
 <!-- Decisions in progress — move to decisions.md once finalized -->
 
