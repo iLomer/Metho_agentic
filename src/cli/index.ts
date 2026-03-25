@@ -31,6 +31,7 @@ import {
   generateSwarmSettings,
   parseEpics,
 } from "./swarm.js";
+import { setupClaudeTooling, runCcstatusline } from "./init/setup-claude-tooling.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -339,6 +340,16 @@ async function main(): Promise<void> {
         } catch {
           gitSpinner.stop("Git initialization failed -- skipping.");
         }
+      }
+
+      // Claude tooling setup
+      const toolingResult = await setupClaudeTooling();
+      if (toolingResult.success) {
+        p.log.success("Claude tooling installed (Superpowers, Context7, Sequential Thinking)");
+        p.log.info("Setting up Claude Code status line...");
+        runCcstatusline();
+      } else {
+        p.log.warn(`Claude tooling setup skipped: ${toolingResult.warning}`);
       }
 
       let nextSteps: string[];
