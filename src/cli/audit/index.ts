@@ -350,9 +350,21 @@ export async function runAudit(): Promise<LayerScanResult[]> {
 
   if (allCreatedFiles.length > 0) {
     await writeMigrationPrompt(projectDir, allCreatedFiles);
-    p.log.info(
-      "Migration prompt written to ai/migrate.md\n" +
-      "  Open Claude Code and run: @meto-pm — paste the contents of ai/migrate.md",
+    p.note(
+      [
+        "Meto created new methodology files alongside your existing project files.",
+        "To merge your existing content into the new structure:",
+        "",
+        "1. Open Claude Code in this project",
+        "   claude",
+        "",
+        "2. Run @meto-pm and paste the contents of ai/migrate.md",
+        '   "@meto-pm — read ai/migrate.md and follow the instructions"',
+        "",
+        "The agent will fill in placeholders, consolidate old files,",
+        "and leave you with one coherent project.",
+      ].join("\n"),
+      "Next step: migrate your existing content",
     );
   }
 
