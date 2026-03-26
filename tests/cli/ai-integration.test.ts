@@ -147,12 +147,7 @@ describe("meto-cli init with AI (integration)", () => {
       CR,                          // 5. Stack (first = nextjs-supabase)
       outputDir + CR,              // 6. Output directory (AI skips deep prompts)
       CR,                          // 7. Workflow mode (first = sprint)
-      // AI generation fails, fallback to deep content prompts:
-      CR,                          // 8. Problem statement (default)
-      CR,                          // 9. Success criteria (default)
-      CR,                          // 10. Value proposition (default)
-      CR,                          // 11. Out of scope (default)
-      CR,                          // 12. Code conventions (default)
+      // AI fails — scaffolds immediately with defaults, no extra prompts
     ];
 
     const result = await runCliWithMockClaude(["init"], answers, MOCK_CLAUDE_ERR_DIR);
@@ -160,7 +155,7 @@ describe("meto-cli init with AI (integration)", () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("Done. Happy building!");
     expect(result.stdout).toContain("AI generation failed");
-    expect(result.stdout).toContain("Falling back to standard prompts");
+    expect(result.stdout).toContain("scaffolding with defaults");
 
     // Verify scaffold was created with static fallback content
     const dirStat = await stat(outputDir);

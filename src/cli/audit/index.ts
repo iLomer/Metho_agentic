@@ -1,4 +1,5 @@
-import { readdir, stat } from "node:fs/promises";
+import { readdir, stat, writeFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { AUDIT_BLUEPRINT } from "./blueprint.js";
 import { detectStack } from "./detect-stack.js";
@@ -151,6 +152,69 @@ async function isDirectory(dirPath: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
+// Migration prompt generator
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates a Claude Code migration prompt and writes it to ai/migrate.md.
+ *
+ * Called after audit when new meto files were created in an existing project.
+ * The prompt tells @meto-pm exactly what to do: read existing project files,
+ * fill in the meto placeholders, and clean up superseded content.
+ */
+async function writeMigrationPrompt(
+  projectDir: string,
+  createdFiles: string[],
+): Promise<void> {
+  const fileList = createdFiles.map((f) => `- \`${f}\``).join("\n");
+
+  const prompt = `# Meto Migration — Paste this into Claude Code and run with @meto-pm
+
+Meto has added its methodology structure to this existing project.
+The files below were created with placeholder content and need to be filled in
+from the existing project. Your job is to do that merge.
+
+## Files created with placeholders
+
+${fileList}
+
+## What to do
+
+1. **Scan the existing project** — read README.md, package.json, any docs/ or
+   wiki/ folders, architecture docs, CONTRIBUTING.md, and any other files that
+   describe what this project is and how it works.
+
+2. **Fill in the meto files** — replace every "To be defined" placeholder with
+   real content extracted from the existing files:
+   - \`ai/context/product-vision.md\` ← README intro, any vision or pitch docs
+   - \`ai/context/tech-stack.md\` ← README stack section, package.json dependencies
+   - \`ai/context/decisions.md\` ← any ADRs, architecture decisions, or "why we chose X" docs
+   - \`CLAUDE.md\` ← project name, stack summary, coding conventions from existing linting/style configs
+   - \`ai/workflows/definition-of-done.md\` ← any existing QA checklists or PR templates
+   - Agent definitions in \`.claude/agents/\` ← adapt to the actual stack and domain
+
+3. **Do not delete anything** without confirming with the user first. If an
+   existing file is fully superseded by a new meto file, flag it with a note
+   rather than deleting it.
+
+4. **Populate the backlog** — once context files are filled in, create 3-5 epics
+   in \`ai/backlog/epics.md\` based on the project's current state and known
+   remaining work.
+
+5. **Delete this file** (\`ai/migrate.md\`) when the migration is complete.
+
+## Guiding principle
+
+The goal is one coherent project — not old files next to new files.
+Everything the project knows about itself should live in the meto structure.
+`;
+
+  const aiDir = join(projectDir, "ai");
+  await mkdir(aiDir, { recursive: true });
+  await writeFile(join(aiDir, "migrate.md"), prompt, "utf-8");
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
@@ -214,6 +278,7 @@ export async function runAudit(): Promise<LayerScanResult[]> {
   const stackGuidelines = getCodeGuidelines(detected.stack);
 
   const allLayerResults: LayerScanResult[] = [];
+  const allCreatedFiles: string[] = [];
   let previousLayerPassed = true;
 
   for (const layer of AUDIT_BLUEPRINT) {
@@ -251,6 +316,7 @@ export async function runAudit(): Promise<LayerScanResult[]> {
       // Re-scan after fixes to get updated results
       const created = fixResult.fixes.filter((f) => f.outcome === "created");
       if (created.length > 0) {
+        allCreatedFiles.push(...created.map((f) => f.scanResult.expectation.path));
         p.log.info(`Fixed ${created.length} issue${created.length === 1 ? "" : "s"} in Layer ${layer.id}`);
 
         // Re-scan to reflect fixes
@@ -281,6 +347,14 @@ export async function runAudit(): Promise<LayerScanResult[]> {
     (sum, lr) => sum + lr.results.filter((r) => r.status === "fail").length,
     0,
   );
+
+  if (allCreatedFiles.length > 0) {
+    await writeMigrationPrompt(projectDir, allCreatedFiles);
+    p.log.info(
+      "Migration prompt written to ai/migrate.md\n" +
+      "  Open Claude Code and run: @meto-pm — paste the contents of ai/migrate.md",
+    );
+  }
 
   if (totalFailed > 0) {
     p.outro(
