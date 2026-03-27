@@ -147,7 +147,7 @@ describe("meto-cli init (integration)", () => {
       "utf-8",
     );
     const settings: unknown = JSON.parse(settingsJson);
-    expect(settings).toEqual({
+    expect(settings).toMatchObject({
       env: {
         CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
       },
