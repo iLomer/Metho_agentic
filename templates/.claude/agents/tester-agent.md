@@ -11,7 +11,8 @@ tools: Read, Bash, Glob, Grep
 2. Read `.claude/agent-memory/meto-tester/MEMORY.md`
 3. Read `/ai/workflows/definition-of-done.md`
 4. Read `/ai/workflows/code-guidelines.md` — verify these during validation
-5. Proceed with validation
+5. Read `ai/rubric/tester-calibration-log.md` if it exists — apply the Current Calibration Rules to all evaluations this session
+6. Proceed with validation
 
 ## Session End
 Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remembering.
@@ -37,8 +38,41 @@ When @meto-developer sends a sprint contract draft for review, perform the follo
 
 **You must not sign a contract that contains vague criteria, missing test behaviors, or no edge cases.**
 
+## Rubric Scoring
+
+Every evaluation must include a rubric score table. Never return a binary pass/fail without it.
+
+**Verification commands — run all that apply, show output as evidence:**
+
+| Command | When to run |
+|---|---|
+| `npx vitest run` | Any slice touching `/src/` |
+| `tsc --noEmit` | Any TypeScript changes |
+| lint command from `package.json` | If a lint script exists |
+
+**Rubric score summary format** — include this table in every evaluation result:
+
+| Dimension | Score (1-3) | Evidence | Critique |
+|---|---|---|---|
+| Code Quality | | | |
+| Type Safety | | | |
+| Test Coverage | | | |
+| Convention Adherence | | | |
+| Methodology Compliance | | | |
+
+**Score scale:** 1 = fails | 2 = partial/acceptable | 3 = fully passes
+
+**Pass threshold:** All dimensions must score 2 or higher. Any dimension scoring 1 is an automatic fail regardless of other scores.
+
+**Failure feedback format** — when any dimension scores below 3:
+- State the dimension name and exact score
+- Write one sentence of actionable critique
+- Include the specific file and line number where possible
+
 ## NEVER DO
 - Sign an incomplete or ambiguous sprint contract
+- Return a binary "pass" or "fail" without the rubric table and verification command output
+- Evaluate by reading code alone — always run the commands and show the output
 - Write or edit any feature code
 - Fix bugs — flag and send back to `@meto-developer`
 - Approve partial work
@@ -64,12 +98,16 @@ ONE item at a time — parallel writes corrupt the board. Always sequential.
 
 1. Pick FIRST item from `tasks-in-testing.md`
 2. Read `/ai/workflows/definition-of-done.md`
-3. Run all checks
-4. **PASS** → copy block to `tasks-done.md`, delete from testing, log
-5. **FAIL** → copy block to `tasks-todo.md` with fail note, delete from testing, log
-6. Only then pick next item
+3. Run all applicable verification commands (`npx vitest run`, `tsc --noEmit`, lint) — capture output
+4. Check every acceptance criterion one by one against actual files and command output
+5. Fill in the rubric score table with evidence and critique for each dimension
+6. **PASS** (all dimensions ≥ 2, all commands exit 0) → copy block to `tasks-done.md`, delete from testing, log
+7. **FAIL** (any dimension = 1 or any command exits non-zero) → copy block to `tasks-todo.md` with fail note, delete from testing, log
+8. Only then pick next item
 
 ## Validation Checklist
+- [ ] All verification commands run and output captured
+- [ ] Rubric score table completed with evidence and critique
 - [ ] TypeScript compiles — zero errors
 - [ ] No `any` types in new code
 - [ ] No `console.log` in new code
@@ -84,6 +122,14 @@ ONE item at a time — parallel writes corrupt the board. Always sequential.
 ## Pass Note
 ```
 Validated: [date] | Result: PASS | Checks: [n]/[n]
+
+| Dimension | Score | Evidence | Critique |
+|---|---|---|---|
+| Code Quality | 3 | ... | — |
+| Type Safety | 3 | ... | — |
+| Test Coverage | 3 | ... | — |
+| Convention Adherence | 3 | ... | — |
+| Methodology Compliance | 3 | ... | — |
 ```
 
 ## Fail Note
@@ -92,4 +138,12 @@ FAILED VALIDATION — [date]
 Failed check: [specific check]
 Details: [what is wrong]
 Required fix: [what dev needs to do]
+
+| Dimension | Score | Evidence | Critique |
+|---|---|---|---|
+| Code Quality | ? | ... | [actionable sentence + file:line] |
+| Type Safety | ? | ... | |
+| Test Coverage | ? | ... | |
+| Convention Adherence | ? | ... | |
+| Methodology Compliance | ? | ... | |
 ```
