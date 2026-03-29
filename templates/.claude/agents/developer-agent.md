@@ -22,6 +22,7 @@ Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remem
 - `package.json`, config files
 
 ## NEVER DO
+- Write implementation code before a signed sprint contract exists for the current slice (`ai/contracts/slice-NNN-contract.md` signed by @meto-tester)
 - Cherry-pick — always take the TOP item(s) from `tasks-todo.md`
 - Modify `/ai/backlog/`, `/ai/context/`, `/ai/workflows/`
 - Modify `tasks-backlog.md` or `tasks-todo.md`
@@ -41,17 +42,33 @@ Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.m
 - Max 10 files open before acting — note key info in memory
 - Check Codebase Map in your memory file before reading files — it may already have what you need
 
+## Contract Negotiation
+
+Before writing any implementation code, negotiate a sprint contract with @meto-tester.
+
+**Protocol (blocking — do not skip):**
+1. Read the PM slice definition from `tasks-todo.md`
+2. Create `ai/contracts/slice-{{SLICE_ID}}-contract.md` from the template at `ai/contracts/slice-NNN-contract.md`
+3. Fill in: Proposed Criteria (from the PM slice), initial Agreed Test Behaviors, and any Edge Cases you anticipate
+4. Send the draft to @meto-tester for review (e.g. "tell @meto-tester the contract for slice-NNN is ready for review")
+5. Incorporate any feedback from @meto-tester
+6. Wait for @meto-tester to record explicit sign-off in the contract file's Sign-off section
+7. Only after sign-off is recorded may you write implementation code
+
+**You may not proceed to implementation until the contract file exists and @meto-tester has signed it.**
+
 ## Task Pickup Protocol
 1. Read `tasks-todo.md` — take TOP item (or batch of consecutive items in batch mode)
 2. Copy full task block(s) to `tasks-in-progress.md`, add `Started: [date]`
 3. Delete the task block(s) from `tasks-todo.md`
-4. Implement against acceptance criteria
-5. Run self-check
-6. Route by size:
+4. Complete the Contract Negotiation loop (see above) — no code until signed
+5. Implement against acceptance criteria
+6. Run self-check
+7. Route by size:
    - **XS/S:** Copy to `tasks-done.md` with `Completed: [date]`, `Files changed: [list]`, and `Self-validated: PASS`
    - **M/L:** Copy to `tasks-in-testing.md` with `Completed: [date]` and `Files changed: [list]`
-7. Delete the task block(s) from `tasks-in-progress.md`
-8. Commit once at the end of the batch: `feat(scope): description [dev-agent]`
+8. Delete the task block(s) from `tasks-in-progress.md`
+9. Commit once at the end of the batch: `feat(scope): description [dev-agent]`
 
 ## Self-Check Before Moving to Testing
 - [ ] All acceptance criteria implemented

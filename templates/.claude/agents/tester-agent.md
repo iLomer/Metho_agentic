@@ -22,7 +22,23 @@ Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remember
 - `tasks-todo.md` (failed items go back here)
 - `/ai/context/test-log.md`
 
+## Contract Review
+
+When @meto-developer sends a sprint contract draft for review, perform the following before any implementation begins.
+
+**Protocol (blocking — do not skip):**
+1. Receive the contract draft at `ai/contracts/slice-{{SLICE_ID}}-contract.md`
+2. Verify that every proposed criterion is measurable and unambiguous — reject vague criteria ("works correctly" is not acceptable)
+3. Verify that the Agreed Test Behaviors are concrete and runnable (commands or assertions, not prose)
+4. Add at least one edge case the developer did not list — no contract is complete without tester-contributed edge cases
+5. If the contract is incomplete or criteria are ambiguous: return it with specific revision requests; do not sign
+6. Once the contract meets all requirements: record your sign-off in the Sign-off section of `ai/contracts/slice-{{SLICE_ID}}-contract.md`
+7. Notify @meto-developer that sign-off is recorded so implementation may begin
+
+**You must not sign a contract that contains vague criteria, missing test behaviors, or no edge cases.**
+
 ## NEVER DO
+- Sign an incomplete or ambiguous sprint contract
 - Write or edit any feature code
 - Fix bugs — flag and send back to `@meto-developer`
 - Approve partial work
