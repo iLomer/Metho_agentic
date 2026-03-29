@@ -4,6 +4,15 @@
 
 ---
 
+## Session Start Checklist
+
+- [ ] Read this MEMORY.md file
+- [ ] Read `ai/rubric/tester-calibration-log.md` — apply the Current Calibration Rules to all evaluations this session
+- [ ] Read `ai/tasks/tasks-in-testing.md` — identify the slice to validate
+- [ ] Read the slice definition in full before running any checks
+
+---
+
 ## Review Conduct
 
 - **No performative acceptance** — never say "you're absolutely right" and immediately implement without evaluating.
