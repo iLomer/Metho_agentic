@@ -10,7 +10,16 @@ import {
   getFailedResults,
 } from "./scanner.js";
 import { fixLayer, fixLayerTwo, fixLayerThree } from "./fixer.js";
+import {
+  extractLastSlices,
+  buildRubricChecks,
+} from "./rubric-check.js";
+import {
+  displayRubricResults,
+  rubricHasFailed,
+} from "./rubric-display.js";
 import type { LayerScanResult } from "./scanner.js";
+import type { RubricSliceResult } from "./rubric-check.js";
 import type { TokenMap } from "../renderer.js";
 import { getCodeGuidelines, getDefinitionOfDone } from "../stacks.js";
 
@@ -91,6 +100,7 @@ function printAuditHelp(): void {
       "",
       "Options:",
       "  --help, -h    Show this help message",
+      "  --rubric      Also check the last 5 completed slices for contract and rubric score files",
     ].join("\n"),
     "Help",
   );
@@ -368,14 +378,41 @@ export async function runAudit(): Promise<LayerScanResult[]> {
     );
   }
 
-  if (totalFailed > 0) {
+  // --rubric flag: runs after existing layers (additive)
+  let rubricResults: RubricSliceResult[] = [];
+  const hasRubricFlag = args.includes("--rubric");
+
+  if (hasRubricFlag) {
+    p.log.info("Running rubric compliance checks on last 5 completed slices...");
+    const sliceIds = await extractLastSlices(projectDir, 5);
+
+    if (sliceIds.length === 0) {
+      p.note(
+        "ai/tasks/tasks-done.md is missing or contains no completed slices.\nAdd completed slices to tasks-done.md before running --rubric.",
+        "Rubric Compliance",
+      );
+    } else {
+      rubricResults = await buildRubricChecks(projectDir, sliceIds);
+      displayRubricResults(rubricResults);
+    }
+  }
+
+  const rubricFailed = rubricHasFailed(rubricResults);
+
+  if (totalFailed > 0 || rubricFailed) {
     p.outro(
-      `Audit complete: ${totalPassed}/${totalExpectations} passed, ${totalFailed} failed`,
+      `Audit complete: ${totalPassed}/${totalExpectations} passed, ${totalFailed} failed` +
+        (hasRubricFlag
+          ? ` | Rubric: ${rubricResults.filter((r) => r.status === "fail").length} gap(s) found`
+          : ""),
     );
     process.exit(1);
   } else {
     p.outro(
-      `Audit complete: ${totalPassed}/${totalExpectations} checks passed`,
+      `Audit complete: ${totalPassed}/${totalExpectations} checks passed` +
+        (hasRubricFlag && rubricResults.length > 0
+          ? ` | Rubric: ${rubricResults.length} checks passed`
+          : ""),
     );
   }
 
