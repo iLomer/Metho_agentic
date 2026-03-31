@@ -165,6 +165,13 @@ your-project/
 │   │   ├── product-vision.md
 │   │   ├── tech-stack.md
 │   │   └── test-log.md
+│   ├── contracts/
+│   │   └── slice-NNN-contract.md  # sprint contract per slice
+│   ├── handoff/
+│   │   └── current.md             # session handoff artifact
+│   ├── rubric/
+│   │   ├── tester-rubric.md       # grading dimensions + thresholds
+│   │   └── tester-calibration-log.md
 │   ├── tasks/
 │   │   ├── tasks-backlog.md
 │   │   ├── tasks-done.md
@@ -265,7 +272,7 @@ Meto is optimized for Claude Code's **1M token context window**. With 5x more ro
 - **Less frequent `/compact`** -- use it when responses slow down, not proactively
 - **Memory files still matter** -- they persist across sessions, not just within them
 
-Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Session checkpoints (`ai/workflows/session-checkpoint.md`) help hand off between sessions when needed.
+Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Every session also ends by writing `ai/handoff/current.md` — a structured snapshot of sprint state, completed steps, blockers, and the single next action. The next agent reads this before anything else. Git history preserves the full audit trail of handoffs.
 
 ---
 
@@ -315,6 +322,7 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 | `meto-cli init --no-ai` | Scaffold using static prompts only, skip AI generation |
 | `meto-cli init --dry-run` | Preview the generated file tree without writing to disk |
 | `meto-cli audit` | Scan an existing project against the methodology blueprint and fix gaps interactively |
+| `meto-cli audit --rubric` | Check the last 5 completed slices for sprint contracts, rubric scores, and passing tests |
 | `meto-cli doctor` | Check methodology health of the current project |
 | `meto-cli status` | Show swarm progress dashboard (reads SWARM_AWARENESS.md) |
 | `meto-cli --help` | Show available commands and options |
