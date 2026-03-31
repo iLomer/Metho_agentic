@@ -83,8 +83,16 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 ## Context Management
 
 - **Session cadence:** Start a new session every 10-15 slices or when context feels sluggish
-- **Session start:** Read CLAUDE.md, your agent memory file, and the board — then act
-- **Session end:** Update your memory file with decisions, patterns, and what to pick up next
+- **Session start — checklist (run in order):**
+  1. **Read `ai/handoff/current.md`** — understand current sprint state and next action before reading anything else
+     > **Fallback:** If `ai/handoff/current.md` does not exist, read `ai/tasks/tasks-in-progress.md` and the memory file for your agent role instead.
+  2. Read `CLAUDE.md`
+  3. Read your agent memory file (`.claude/agent-memory/<your-role>/MEMORY.md`)
+  4. Read the board (`ai/tasks/tasks-in-progress.md`) — then act
+- **Session end — blocking steps (must complete before closing the session):**
+  1. **[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written**
+  2. Update your memory file with decisions, patterns, and what to pick up next
+  > **Context limit reminder:** If context is near the limit, write the handoff before doing anything else — it is the most important session-end action.
 - **Context budget:** Grep before reading full files; read targeted line ranges; max 10 files open before acting
 - **Red flag:** If you re-read a file you already read this session, note key info in memory instead
 
@@ -103,6 +111,7 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 
 ## NEVER DO — @meto-developer
 
+- End a session without writing `ai/handoff/current.md`
 - Write implementation code before a signed sprint contract exists for the current slice
 - Pick up more than one task at a time
 - Cherry-pick — always take the TOP item from `tasks-todo.md`

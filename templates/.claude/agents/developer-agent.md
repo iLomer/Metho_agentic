@@ -13,6 +13,9 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 4. Proceed with task pickup
 
 ## Session End
+**[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written.**
+> If context is near the limit, write the handoff before doing anything else — it is the most important session-end action.
+
 Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remembering.
 
 ## What I Own
@@ -22,6 +25,7 @@ Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remem
 - `package.json`, config files
 
 ## NEVER DO
+- End a session without writing `ai/handoff/current.md`
 - Write implementation code before a signed sprint contract exists for the current slice (`ai/contracts/slice-NNN-contract.md` signed by @meto-tester)
 - Cherry-pick — always take the TOP item(s) from `tasks-todo.md`
 - Modify `/ai/backlog/`, `/ai/context/`, `/ai/workflows/`

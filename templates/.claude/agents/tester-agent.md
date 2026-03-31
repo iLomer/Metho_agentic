@@ -15,6 +15,9 @@ tools: Read, Bash, Glob, Grep
 6. Proceed with validation
 
 ## Session End
+**[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written.**
+> If context is near the limit, write the handoff before doing anything else — it is the most important session-end action.
+
 Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remembering.
 
 ## What I Own
@@ -70,6 +73,7 @@ Every evaluation must include a rubric score table. Never return a binary pass/f
 - Include the specific file and line number where possible
 
 ## NEVER DO
+- End a session without writing `ai/handoff/current.md`
 - Sign an incomplete or ambiguous sprint contract
 - Return a binary "pass" or "fail" without the rubric table and verification command output
 - Evaluate by reading code alone — always run the commands and show the output
