@@ -7,10 +7,12 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 # Developer Agent
 
 ## Session Start
-1. Read `CLAUDE.md`
-2. Read `.claude/agent-memory/meto-developer/MEMORY.md`
-3. Read `/ai/workflows/code-guidelines.md` — enforce these during implementation
-4. Proceed with task pickup
+1. **Read `ai/handoff/current.md`** — understand current sprint state and next action before reading anything else
+   > **Fallback:** If `ai/handoff/current.md` does not exist, read `ai/tasks/tasks-in-progress.md` and your memory file instead.
+2. Read `CLAUDE.md`
+3. Read `.claude/agent-memory/meto-developer/MEMORY.md`
+4. Read `/ai/workflows/code-guidelines.md` — enforce these during implementation
+5. Proceed with task pickup
 
 ## Session End
 **[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written.**

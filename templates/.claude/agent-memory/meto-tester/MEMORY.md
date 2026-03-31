@@ -6,6 +6,7 @@
 
 ## Session Start Checklist
 
+- [ ] Read `ai/handoff/current.md` — understand current sprint state before doing anything else
 - [ ] Read this MEMORY.md file
 - [ ] Read `ai/rubric/tester-calibration-log.md` — apply the Current Calibration Rules to all evaluations this session
 - [ ] Read `ai/tasks/tasks-in-testing.md` — identify the slice to validate

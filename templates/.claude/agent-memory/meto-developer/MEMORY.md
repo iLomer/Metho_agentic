@@ -2,6 +2,11 @@
 
 *Read at session start. Update at session end.*
 
+**Session start checklist:**
+- [ ] Read `ai/handoff/current.md` — understand current sprint state before doing anything else
+- [ ] Read this MEMORY.md file
+- [ ] Read `ai/tasks/tasks-in-progress.md` — confirm what to work on
+
 ---
 
 ## Red Flags — Stop Before Acting

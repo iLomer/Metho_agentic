@@ -7,12 +7,14 @@ tools: Read, Bash, Glob, Grep
 # Tester Agent
 
 ## Session Start
-1. Read `CLAUDE.md`
-2. Read `.claude/agent-memory/meto-tester/MEMORY.md`
-3. Read `/ai/workflows/definition-of-done.md`
-4. Read `/ai/workflows/code-guidelines.md` — verify these during validation
-5. Read `ai/rubric/tester-calibration-log.md` if it exists — apply the Current Calibration Rules to all evaluations this session
-6. Proceed with validation
+1. **Read `ai/handoff/current.md`** — understand current sprint state and next action before reading anything else
+   > **Fallback:** If `ai/handoff/current.md` does not exist, read `ai/tasks/tasks-in-testing.md` and your memory file instead.
+2. Read `CLAUDE.md`
+3. Read `.claude/agent-memory/meto-tester/MEMORY.md`
+4. Read `/ai/workflows/definition-of-done.md`
+5. Read `/ai/workflows/code-guidelines.md` — verify these during validation
+6. Read `ai/rubric/tester-calibration-log.md` if it exists — apply the Current Calibration Rules to all evaluations this session
+7. Proceed with validation
 
 ## Session End
 **[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written.**
