@@ -403,10 +403,29 @@ async function main(): Promise<void> {
         p.log.warn(`Claude tooling setup skipped: ${toolingResult.warning}`);
       }
 
+      // Build MCP env var notes based on selections
+      const mcpEnvNotes: string[] = [];
+      if (mcpSelections.includes("github")) {
+        mcpEnvNotes.push(
+          "Set `GITHUB_TOKEN` in your shell or `.env` — required for GitHub MCP",
+        );
+      }
+      if (mcpSelections.includes("postgres")) {
+        mcpEnvNotes.push(
+          "Set `DATABASE_URL` in your shell or `.env` — required for PostgreSQL MCP",
+        );
+      }
+      if (mcpSelections.includes("sentry")) {
+        mcpEnvNotes.push(
+          "Set `SENTRY_AUTH_TOKEN` and `SENTRY_ORG` in your shell or `.env` — required for Sentry MCP",
+        );
+      }
+
       let nextSteps: string[];
       if (isCwd) {
         nextSteps = [
           "Your project is ready in the current directory.",
+          "`.claude/settings.json` pre-configured for your stack.",
           "",
           "1. Open it in your editor",
           "   code .",
@@ -420,6 +439,10 @@ async function main(): Promise<void> {
             "",
             '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
             "   This kicks off the PM agent to create your first tasks.",
+            "",
+            "4. Run `/doctor` in Claude Code to verify your setup",
+            "",
+            "5. Run `/fewer-permission-prompts` to extend the permission allowlist if needed",
           );
         } else {
           nextSteps.push(
@@ -432,12 +455,17 @@ async function main(): Promise<void> {
             "",
             '4. Tell Claude: "Read CLAUDE.md and set up the backlog"',
             "   This kicks off the PM agent to create your first tasks.",
+            "",
+            "5. Run `/doctor` in Claude Code to verify your setup",
+            "",
+            "6. Run `/fewer-permission-prompts` to extend the permission allowlist if needed",
           );
         }
 
       } else {
         nextSteps = [
           `Your project is ready at ${brief.outputDirectory}`,
+          "`.claude/settings.json` pre-configured for your stack.",
           "",
           "1. Open it in your editor",
           `   code ${brief.outputDirectory}`,
@@ -451,6 +479,10 @@ async function main(): Promise<void> {
             "",
             '3. Tell Claude: "Read CLAUDE.md and set up the backlog"',
             "   This kicks off the PM agent to create your first tasks.",
+            "",
+            "4. Run `/doctor` in Claude Code to verify your setup",
+            "",
+            "5. Run `/fewer-permission-prompts` to extend the permission allowlist if needed",
           );
         } else {
           nextSteps.push(
@@ -463,9 +495,18 @@ async function main(): Promise<void> {
             "",
             '4. Tell Claude: "Read CLAUDE.md and set up the backlog"',
             "   This kicks off the PM agent to create your first tasks.",
+            "",
+            "5. Run `/doctor` in Claude Code to verify your setup",
+            "",
+            "6. Run `/fewer-permission-prompts` to extend the permission allowlist if needed",
           );
         }
 
+      }
+
+      // Append MCP env var notes if any integrations were selected
+      if (mcpEnvNotes.length > 0) {
+        nextSteps.push("", ...mcpEnvNotes);
       }
 
       p.note(nextSteps.join("\n"), "What's Next");
