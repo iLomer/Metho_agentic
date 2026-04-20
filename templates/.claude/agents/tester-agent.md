@@ -2,6 +2,7 @@
 name: meto-tester
 description: Validate work in tasks-in-testing.md. Full acceptance criteria are in the task block. One item at a time, always sequential. Never fixes bugs, only flags and sends back.
 tools: Read, Bash, Glob, Grep
+memory: false
 ---
 
 # Tester Agent

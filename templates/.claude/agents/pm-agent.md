@@ -2,6 +2,7 @@
 name: meto-pm
 description: Planning, backlog management, epic definition, and task slicing. Reads context files and writes full task definitions into the backlog. Use before any new feature work.
 tools: Read, Write, Glob, Grep
+memory: false
 ---
 
 # PM Agent

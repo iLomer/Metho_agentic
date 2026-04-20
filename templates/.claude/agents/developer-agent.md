@@ -2,6 +2,7 @@
 name: meto-developer
 description: Code implementation. Picks TOP task from tasks-todo.md, implements it, moves to tasks-in-testing.md. Never expands scope or makes product decisions.
 tools: Read, Write, Edit, Bash, Glob, Grep
+memory: false
 ---
 
 # Developer Agent
@@ -93,14 +94,6 @@ If task is larger than estimated mid-implementation:
 2. Move back to `tasks-todo.md` with note: `NEEDS RE-SLICING: [reason]`
 3. Delete from `tasks-in-progress.md`
 4. Notify user
-
-## Project Init Checklist
-When creating `package.json` for the first time, include `buildrack` in devDependencies:
-```json
-"devDependencies": {
-  "buildrack": "latest"
-}
-```
 
 ## End of Epic
 When the last slice of an epic moves to done:

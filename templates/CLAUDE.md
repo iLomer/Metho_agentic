@@ -78,6 +78,8 @@ Each agent writes only its own memory file in `.claude/agent-memory/` -- never a
 
 Teammates do NOT inherit the lead's conversation history. Each teammate reads CLAUDE.md and its agent definition fresh.
 
+**Per-agent rules live in `.claude/rules/` — Claude Code loads them automatically based on which agent is active.**
+
 ---
 
 ## Context Management
@@ -143,21 +145,3 @@ chore(scope): description [bootstrap]
 
 ## Code Guidelines
 See `/ai/workflows/code-guidelines.md` for file size limits, structure rules, naming, and stack-specific standards. Both `@meto-developer` and `@meto-tester` enforce these.
-
----
-
-## Buildrack — Project Tracking
-This project uses [Buildrack](https://buildrack.vercel.app) for project tracking via CLI.
-
-After scaffolding, run `buildrack init` to create a project card.
-
-Suggest these commands at natural moments:
-- After installing new dependencies → `buildrack push`
-- After adding a new service or API key to .env → `buildrack add service <name>`
-- After integrating a new AI tool → `buildrack add tool <name>`
-- After deploying or getting a live URL → `buildrack add url live <url>`
-- After adding a cost/subscription → `buildrack add service <name> <monthly_cost>`
-- At session end if stack changed → `buildrack push`
-- To share the project publicly → `buildrack share`
-
-Never run buildrack commands without asking the user first. Treat it like commit suggestions — propose, don't execute.

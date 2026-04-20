@@ -32,6 +32,9 @@ import {
   parseEpics,
 } from "./swarm.js";
 import { setupClaudeTooling, runCcstatusline } from "./init/setup-claude-tooling.js";
+import { generateClaudeSettings } from "./scaffold/claude-settings.js";
+import { generateMcpConfig } from "./scaffold/mcp-config.js";
+import type { McpSelection } from "./scaffold/mcp-config.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -164,6 +167,34 @@ async function main(): Promise<void> {
 
     const brief = await collectProjectBrief({ useAI });
 
+    // MCP integration prompt (skipped in dry-run mode)
+    let mcpSelections: McpSelection[] = [];
+    if (!dryRun) {
+      type McpPromptOption = McpSelection | "none";
+      const mcpResult = await p.multiselect<McpPromptOption>({
+        message: "Which MCP integrations do you want pre-configured? (Space to select, Enter to confirm)",
+        options: [
+          { value: "github" as McpPromptOption, label: "GitHub", hint: "issues, PRs, code review — recommended" },
+          { value: "sentry" as McpPromptOption, label: "Sentry", hint: "error monitoring" },
+          { value: "postgres" as McpPromptOption, label: "PostgreSQL", hint: "database queries" },
+          { value: "none" as McpPromptOption, label: "None / skip" },
+        ],
+        required: false,
+      });
+      if (p.isCancel(mcpResult)) {
+        p.cancel("Project setup cancelled.");
+        interruption.uninstall();
+        process.exit(0);
+      }
+      // Filter out "none" — if user selected "none", produce empty selection
+      const rawSelections = mcpResult as McpPromptOption[];
+      if (!rawSelections.includes("none")) {
+        mcpSelections = rawSelections.filter(
+          (s): s is McpSelection => s !== "none",
+        );
+      }
+    }
+
     const writeError = await checkWritePermission(brief.outputDirectory);
     if (writeError !== undefined) {
       p.log.error(writeError);
@@ -289,6 +320,31 @@ async function main(): Promise<void> {
             };
           }
         }
+      } else {
+        // Sprint mode: overwrite .claude/settings.json with stack-aware permission allowlist
+        const claudeSettingsContent = generateClaudeSettings(brief.techStack);
+        const settingsIndex = renderedFiles.findIndex(
+          (f) => f.relativePath.replace(/\\/g, "/") === ".claude/settings.json",
+        );
+        if (settingsIndex !== -1) {
+          renderedFiles[settingsIndex] = {
+            relativePath: ".claude/settings.json",
+            content: claudeSettingsContent,
+          };
+        } else {
+          renderedFiles.push({
+            relativePath: ".claude/settings.json",
+            content: claudeSettingsContent,
+          });
+        }
+      }
+
+      // Add .mcp.json if any MCP integrations were selected
+      if (mcpSelections.length > 0) {
+        renderedFiles.push({
+          relativePath: ".mcp.json",
+          content: generateMcpConfig(mcpSelections),
+        });
       }
 
       if (dryRun) {
@@ -379,11 +435,6 @@ async function main(): Promise<void> {
           );
         }
 
-        nextSteps.push(
-          "",
-          `${preflight.claudeCodeAvailable ? "4" : "5"}. Track this project on Buildrack (optional)`,
-          "   buildrack init",
-        );
       } else {
         nextSteps = [
           `Your project is ready at ${brief.outputDirectory}`,
@@ -415,11 +466,6 @@ async function main(): Promise<void> {
           );
         }
 
-        nextSteps.push(
-          "",
-          `${preflight.claudeCodeAvailable ? "4" : "5"}. Track this project on Buildrack (optional)`,
-          "   buildrack init",
-        );
       }
 
       p.note(nextSteps.join("\n"), "What's Next");

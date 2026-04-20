@@ -2,6 +2,7 @@
 name: meto-epic-{{EPIC_ID}}
 description: Use to implement tasks belonging to {{EPIC_NAME}} ({{EPIC_ID}}). Owns {{EPIC_DOMAIN}}. Picks tasks tagged {{EPIC_ID}} from tasks-todo.md and runs independent tasks in parallel. Reports checkpoint status to SWARM_AWARENESS.md every 3 completed tasks. Do NOT use for tasks belonging to other epics.
 tools: Read, Write, Edit, Bash, Glob, Grep
+memory: false
 ---
 
 # Epic Agent — {{EPIC_NAME}} ({{EPIC_ID}})

@@ -13,6 +13,28 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Context compacting — handoff will be preserved in ai/handoff/current.md'"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Context compacted. Re-read ai/handoff/current.md to restore sprint state.'"
+          }
+        ]
+      }
     ]
   }
 }

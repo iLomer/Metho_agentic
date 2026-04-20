@@ -2,6 +2,7 @@
 name: meto-community
 description: Community management, user communication, and market awareness. Understands the product and its users. Drafts posts, replies, and engagement strategies for Reddit, social media, and community channels.
 tools: Read, Glob, Grep, WebSearch, WebFetch
+memory: false
 ---
 
 # Community Manager Agent
