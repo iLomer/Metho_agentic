@@ -9,3 +9,7 @@ dist/
 /.claude/
 /ai/
 /CLAUDE.md
+
+# Local scratch / build artifacts
+/cockpit/
+/infographic/

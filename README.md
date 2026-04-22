@@ -32,14 +32,16 @@ Meto detects whether Claude Code is installed on your machine and offers two pat
 **With Claude Code (AI-powered):**
 1. You answer 5 questions -- project name, description, target users, tech stack, output directory
 2. Choose your workflow mode -- **Sprint** (sequential) or **Swarm** (parallel epic agents)
-3. Claude Code generates your product vision, problem statement, epics, and a sliced backlog with acceptance criteria
-4. Meto renders everything into a structured project ready for your first sprint or swarm
-5. Context7, Sequential Thinking MCP, and ccstatusline are installed into your Claude Code environment automatically
+3. Select any MCP integrations to pre-configure for your project (GitHub, Sentry, PostgreSQL)
+4. Claude Code generates your product vision, problem statement, epics, and a sliced backlog with acceptance criteria
+5. Meto renders everything -- `.claude/settings.json` pre-configured with your stack's permission allowlist, `.mcp.json` generated if you selected integrations
+6. Context7, Sequential Thinking MCP, and ccstatusline are installed into your Claude Code environment automatically
 
 **Without Claude Code (static):**
 1. You answer 10 questions -- the 5 above plus problem statement, success criteria, value proposition, out of scope, and code conventions
 2. Choose your workflow mode -- Sprint or Swarm
-3. Meto renders your answers into the same structured project with sensible defaults
+3. Select any MCP integrations to pre-configure for your project (GitHub, Sentry, PostgreSQL)
+4. Meto renders your answers into the same structured project -- `.claude/settings.json` pre-configured with your stack's permission allowlist, `.mcp.json` generated if you selected integrations
 
 Both paths produce the same project structure. The AI path just fills in more content so you spend less time on setup and more time building.
 
@@ -62,6 +64,37 @@ Use `--no-ai` to force the static path even when Claude Code is available.
 Context7 and Sequential Thinking are registered as MCP servers and activate automatically in every Claude Code session. The ccstatusline setup is interactive — you'll configure it in your terminal during `meto init`.
 
 All three are installed with a deep merge: your existing `~/.claude/settings.json` is never overwritten, only extended.
+
+---
+
+## Project MCP Integrations
+
+During `meto init`, you can pre-configure MCP servers scoped to your project. Unlike the global Claude Tooling above, these go into a `.mcp.json` at your project root -- they activate only when Claude Code is opened inside that project.
+
+| Integration | MCP server | Env var required |
+|---|---|---|
+| **GitHub** | `@modelcontextprotocol/server-github` | `GITHUB_TOKEN` |
+| **Sentry** | `@modelcontextprotocol/server-sentry` | `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` |
+| **PostgreSQL** | `@modelcontextprotocol/server-postgres` | `DATABASE_URL` |
+
+Select one, many, or none -- you can always add more later by editing `.mcp.json` directly. Meto prints the required env var names at the end of `init` so you know exactly what to set.
+
+---
+
+## Stack-Aware Permissions
+
+Every scaffolded project gets a `.claude/settings.json` pre-configured with a permission allowlist for the chosen tech stack. This means your agents can run `npm test`, `pytest`, `go build`, etc. without Claude Code prompting for approval on every command.
+
+| Stack | Pre-allowed commands |
+|---|---|
+| **Next.js / Vite / Node.js / React Native** | `npm run *`, `npx *`, `node *`, `npx tsc *`, `npx vitest *` |
+| **Python (FastAPI)** | `pytest *`, `pip *`, `python *`, `uv *`, `uvicorn *`, `alembic *` |
+| **Go** | `go test *`, `go build *`, `go run *`, `go fmt *`, `golangci-lint *` |
+| **Flutter** | `flutter test`, `flutter pub *`, `flutter build *`, `dart *`, `fvm *` |
+
+All stacks also include universal allows: `Read`, `Edit`, `Write`, `Glob`, `Grep`, and common shell commands (`git *`, `ls *`, `mkdir *`, etc.).
+
+Run `/fewer-permission-prompts` inside Claude Code anytime to extend the allowlist based on what your agents actually use.
 
 ---
 
@@ -156,7 +189,11 @@ your-project/
 │   │   ├── meto-developer/MEMORY.md
 │   │   ├── meto-pm/MEMORY.md
 │   │   └── meto-tester/MEMORY.md
-│   └── settings.json
+│   ├── rules/
+│   │   ├── agent-developer.md    # quick NEVER DO / ALWAYS rules card
+│   │   ├── agent-pm.md
+│   │   └── agent-tester.md
+│   └── settings.json             # stack-aware permission allowlist
 ├── ai/
 │   ├── backlog/
 │   │   └── epics.md
@@ -185,6 +222,7 @@ your-project/
 │       └── session-checkpoint.md
 ├── src/
 ├── .gitignore
+├── .mcp.json                     # optional — generated if MCP integrations were selected
 └── CLAUDE.md
 ```
 
@@ -210,7 +248,10 @@ your-project/
 - **CLAUDE.md** -- project instructions that Claude Code reads every session, pre-filled with your vision, stack, and conventions
 - **Kanban board** -- task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
 - **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
+- **Agent quick-rules** -- `.claude/rules/` compact "NEVER DO / ALWAYS" cards Claude Code loads as context for each agent role
 - **Agent memory** -- persistent memory files so agents retain context across sessions
+- **Stack-aware permissions** -- `.claude/settings.json` pre-configured with the right permission allowlist for your tech stack
+- **Project MCP integrations** -- optional `.mcp.json` with GitHub, Sentry, or PostgreSQL servers ready to activate
 - **Product context** -- vision, tech stack, and decisions captured in structured files
 - **Code guidelines** -- file size limits, naming conventions, and stack-specific rules enforced by agents
 - **Epics and workflows** -- definition of done, commit conventions, session checkpoints, and an epic backlog to plan against

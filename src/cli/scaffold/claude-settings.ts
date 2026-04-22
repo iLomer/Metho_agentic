@@ -82,6 +82,9 @@ function getStackSpecificAllows(stack: TechStack): string[] {
 export function generateClaudeSettings(stack: TechStack): string {
   const allow = [...UNIVERSAL_ALLOWS, ...getStackSpecificAllows(stack)];
   const settings = {
+    env: {
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
+    },
     permissions: {
       allow,
     },

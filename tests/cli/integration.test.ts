@@ -104,6 +104,7 @@ describe("meto-cli init (integration)", () => {
       CR,                        // 9. Code conventions (default)
       outputDir + CR,            // 10. Output directory
       CR,                        // 11. Workflow mode (first = sprint)
+      CR,                        // 12. MCP integrations (Enter = none)
     ];
 
     const result = await runCli(["init", "--no-ai"], answers);

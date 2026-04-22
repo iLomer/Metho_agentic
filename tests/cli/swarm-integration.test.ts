@@ -134,6 +134,7 @@ describe("meto-cli init -- swarm mode (integration)", () => {
       CR,                              // 9. Code conventions (default)
       outputDir + CR,                  // 10. Output directory
       ARROW_DOWN + CR,                 // 11. Workflow mode (arrow down to select swarm)
+      CR,                              // 12. MCP integrations (Enter = none)
     ];
 
     const result = await runCli(["init", "--no-ai"], answers);
@@ -217,6 +218,7 @@ describe("meto-cli init -- swarm mode (integration)", () => {
       CR,                               // 9. Code conventions (default)
       outputDir + CR,                   // 10. Output directory
       CR,                               // 11. Workflow mode (first = sprint)
+      CR,                               // 12. MCP integrations (Enter = none)
     ];
 
     const result = await runCli(["init", "--no-ai"], answers);
@@ -289,6 +291,7 @@ describe("meto-cli status (integration)", () => {
       CR,                      // Conventions
       scaffoldDir + CR,        // Output directory
       ARROW_DOWN + CR,         // Swarm mode
+      CR,                      // MCP integrations (Enter = none)
     ];
 
     const initResult = await runCli(["init", "--no-ai"], initAnswers);
@@ -320,6 +323,7 @@ describe("meto-cli status (integration)", () => {
       CR,                      // Conventions
       scaffoldDir + CR,        // Output directory
       CR,                      // Sprint mode (default)
+      CR,                      // MCP integrations (Enter = none)
     ];
 
     const initResult = await runCli(["init", "--no-ai"], initAnswers);

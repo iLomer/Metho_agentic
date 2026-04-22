@@ -108,6 +108,7 @@ describe("meto-cli init with AI (integration)", () => {
       CR,                          // 5. Stack (first = nextjs-supabase)
       outputDir + CR,              // 6. Output directory (AI skips deep prompts)
       CR,                          // 7. Workflow mode (first = sprint)
+      CR,                          // 8. MCP integrations (Enter = none)
     ];
 
     const result = await runCliWithMockClaude(["init"], answers);
@@ -147,7 +148,7 @@ describe("meto-cli init with AI (integration)", () => {
       CR,                          // 5. Stack (first = nextjs-supabase)
       outputDir + CR,              // 6. Output directory (AI skips deep prompts)
       CR,                          // 7. Workflow mode (first = sprint)
-      // AI fails — scaffolds immediately with defaults, no extra prompts
+      CR,                          // 8. MCP integrations (Enter = none)
     ];
 
     const result = await runCliWithMockClaude(["init"], answers, MOCK_CLAUDE_ERR_DIR);
@@ -185,6 +186,7 @@ describe("meto-cli init with AI (integration)", () => {
       CR,                        // 9. Code conventions (default)
       outputDir + CR,            // 10. Output directory
       CR,                        // 11. Workflow mode (first = sprint)
+      CR,                        // 12. MCP integrations (Enter = none)
     ];
 
     const result = await runCliWithMockClaude(["init", "--no-ai"], answers);
