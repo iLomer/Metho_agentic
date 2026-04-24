@@ -57,6 +57,19 @@ tasks-backlog → tasks-todo → tasks-in-progress → tasks-in-testing → task
 
 See `/ai/workflows/definition-of-done.md` for done criteria.
 
+### Task Definition Format
+
+Each task block uses this structure:
+
+```
+## [slice-NNN] -- Title
+**Epic:** ENN | **Size:** XS/S/M/L | **Depends on:** slice-NNN or none
+**Needs:** slice-NNN, slice-NNN   (optional — omit if none)
+**Blocks:** slice-NNN, slice-NNN  (optional — omit if none)
+```
+
+> `Needs` lists tasks that must be in `tasks-done.md` before this task is safe to start. `Blocks` lists tasks that cannot start until this one is done. Both fields are read by `meto ready`.
+
 ---
 
 ## Agent Teams
