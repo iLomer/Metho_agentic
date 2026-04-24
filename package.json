@@ -37,6 +37,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.0",
     "@clack/prompts": "^0.9.1",
     "ws": "^8.19.0"
   },
