@@ -35,6 +35,7 @@ import { setupClaudeTooling, runCcstatusline } from "./init/setup-claude-tooling
 import { generateClaudeSettings } from "./scaffold/claude-settings.js";
 import { generateMcpConfig } from "./scaffold/mcp-config.js";
 import type { McpSelection } from "./scaffold/mcp-config.js";
+import { runCompact } from "./compact/run-compact.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -78,6 +79,8 @@ function printHelp(): void {
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
       "  audit             Check project prerequisites and methodology compliance",
+      "  compact           Compact tasks-done.md using Claude Haiku summarization",
+      "  compact --dry-run Preview tasks that would be compacted without writing",
       "  daemon start      Start the local agent dispatcher (WebSocket server)",
       "  doctor            Check methodology health of the current project",
       "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
@@ -589,6 +592,11 @@ async function main(): Promise<void> {
 
   if (arg === "status") {
     await runStatus();
+    return;
+  }
+
+  if (arg === "compact") {
+    await runCompact();
     return;
   }
 
