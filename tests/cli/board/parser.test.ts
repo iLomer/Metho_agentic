@@ -147,4 +147,24 @@ describe("parseTaskDependencies", () => {
       expect(result.sliceId).toBe("slice-085");
     });
   });
+
+  describe("slice-110 fixture scenarios", () => {
+    it("returns ['slice-101', 'slice-102'] for Needs: slice-101, slice-102", () => {
+      const block = `## [slice-304] -- Task needing two deps\n**Epic:** E30 | **Size:** S | **Depends on:** slice-101, slice-102\n**Needs:** slice-101, slice-102\n\n**User Story**\nAs a developer, I want a task with two dependencies.\n`;
+      const result = parseTaskDependencies(block);
+      expect(result.needs).toEqual(["slice-101", "slice-102"]);
+    });
+
+    it("returns [] for Needs: none", () => {
+      const block = `## [slice-305] -- Task with explicit none\n**Epic:** E30 | **Size:** XS | **Depends on:** none\n**Needs:** none\n\n**User Story**\nAs a developer, I want a task that explicitly declares no needs.\n`;
+      const result = parseTaskDependencies(block);
+      expect(result.needs).toEqual([]);
+    });
+
+    it("returns [] when no Needs line is present", () => {
+      const block = `## [slice-306] -- Task with no Needs field\n**Epic:** E30 | **Size:** XS | **Depends on:** none\n\n**User Story**\nAs a developer, I want a task that omits the Needs field entirely.\n`;
+      const result = parseTaskDependencies(block);
+      expect(result.needs).toEqual([]);
+    });
+  });
 });

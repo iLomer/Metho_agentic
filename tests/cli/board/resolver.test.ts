@@ -3,6 +3,11 @@ import { getReadyTasks } from "../../../src/cli/board/resolver.js";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const FIXTURES_DIR = path.resolve(__dirname, "../../fixtures/board");
 
 // ---- fixture helpers ----
 
@@ -234,6 +239,71 @@ describe("getReadyTasks", () => {
 
       const result = await getReadyTasks(todoPath, donePath);
       expect(result.map((t) => t.sliceId)).toEqual(["slice-300"]);
+    });
+  });
+});
+
+describe("getReadyTasks with fixture files", () => {
+  const todaNoDepsPath = path.join(FIXTURES_DIR, "tasks-todo-no-deps.md");
+  const todoWithDepsPath = path.join(FIXTURES_DIR, "tasks-todo-with-deps.md");
+  const doneSamplePath = path.join(FIXTURES_DIR, "tasks-done-sample.md");
+
+  describe("tasks-todo-no-deps.md + tasks-done-sample.md", () => {
+    it("returns all 3 tasks as ready when none have needs", async () => {
+      const result = await getReadyTasks(todaNoDepsPath, doneSamplePath);
+      expect(result).toHaveLength(3);
+    });
+
+    it("returns tasks in file order: slice-301, slice-302, slice-303", async () => {
+      const result = await getReadyTasks(todaNoDepsPath, doneSamplePath);
+      expect(result.map((t) => t.sliceId)).toEqual([
+        "slice-301",
+        "slice-302",
+        "slice-303",
+      ]);
+    });
+  });
+
+  describe("tasks-todo-with-deps.md + tasks-done-sample.md", () => {
+    it("returns only the 2 tasks whose needs are fully satisfied", async () => {
+      const result = await getReadyTasks(todoWithDepsPath, doneSamplePath);
+      expect(result).toHaveLength(2);
+    });
+
+    it("returns slice-304 (needs slice-050) and slice-305 (needs slice-050, slice-051)", async () => {
+      const result = await getReadyTasks(todoWithDepsPath, doneSamplePath);
+      expect(result.map((t) => t.sliceId)).toEqual(["slice-304", "slice-305"]);
+    });
+
+    it("does not return slice-306 (needs slice-052 which is not in done)", async () => {
+      const result = await getReadyTasks(todoWithDepsPath, doneSamplePath);
+      const ids = result.map((t) => t.sliceId);
+      expect(ids).not.toContain("slice-306");
+    });
+
+    it("does not return slice-307 (needs slice-052 which is not in done)", async () => {
+      const result = await getReadyTasks(todoWithDepsPath, doneSamplePath);
+      const ids = result.map((t) => t.sliceId);
+      expect(ids).not.toContain("slice-307");
+    });
+
+    it("preserves file order for the ready tasks", async () => {
+      const result = await getReadyTasks(todoWithDepsPath, doneSamplePath);
+      expect(result[0].sliceId).toBe("slice-304");
+      expect(result[1].sliceId).toBe("slice-305");
+    });
+  });
+
+  describe("tasks-todo-with-deps.md + missing donePath", () => {
+    it("returns 0 tasks when done file is missing and all tasks have needs", async () => {
+      const missingDonePath = path.join(FIXTURES_DIR, "tasks-done-nonexistent.md");
+      const result = await getReadyTasks(todoWithDepsPath, missingDonePath);
+      expect(result).toHaveLength(0);
+    });
+
+    it("returns empty array (not a throw) when done file is missing", async () => {
+      const missingDonePath = path.join(FIXTURES_DIR, "tasks-done-nonexistent.md");
+      await expect(getReadyTasks(todoWithDepsPath, missingDonePath)).resolves.toEqual([]);
     });
   });
 });
