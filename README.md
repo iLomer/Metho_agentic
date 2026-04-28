@@ -283,6 +283,8 @@ In **swarm mode**, additional `@meto-epic-[id]` agents are generated -- one per 
 
 One task at a time, sequential. The developer agent picks from the top of the todo list, implements, tests, done. Simple and controlled.
 
+Tasks can declare optional `needs` dependencies in their definition (e.g. `**Needs:** slice-010, slice-011`). Run `meto-cli ready` to surface only the tasks whose dependencies are fully satisfied — no more manually reasoning about ordering in a long backlog.
+
 ### Swarm
 
 Multiple epic agents run in parallel, each scoped to its own domain (files/directories). Every 3 tasks, agents write a checkpoint to `SWARM_AWARENESS.md`. You stay in control with:
@@ -314,6 +316,8 @@ Meto is optimized for Claude Code's **1M token context window**. With 5x more ro
 - **Memory files still matter** -- they persist across sessions, not just within them
 
 Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Every session also ends by writing `ai/handoff/current.md` — a structured snapshot of sprint state, completed steps, blockers, and the single next action. The next agent reads this before anything else. Git history preserves the full audit trail of handoffs.
+
+**Board compaction:** On long-running projects, `tasks-done.md` accumulates closed task definitions and starts adding noise to agent context. Run `meto-cli compact` to replace each closed task with a 2–3 sentence Claude Haiku summary — same information, a fraction of the tokens. Use `--dry-run` to preview before writing, and `--min-tasks=N` to skip compaction on short projects (default threshold: 20 tasks).
 
 ---
 
@@ -366,6 +370,10 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 | `meto-cli audit --rubric` | Check the last 5 completed slices for sprint contracts, rubric scores, and passing tests |
 | `meto-cli doctor` | Check methodology health of the current project |
 | `meto-cli status` | Show swarm progress dashboard (reads SWARM_AWARENESS.md) |
+| `meto-cli compact` | Summarise closed tasks in `tasks-done.md` using Claude Haiku to shrink agent context load |
+| `meto-cli compact --dry-run` | Preview which tasks would be compacted without writing to disk or calling the API |
+| `meto-cli compact --min-tasks=N` | Skip compaction when `tasks-done.md` has fewer than N tasks (default: 20) |
+| `meto-cli ready` | List tasks in `tasks-todo.md` whose `needs` dependencies are all satisfied — safe to start now |
 | `meto-cli --help` | Show available commands and options |
 | `meto-cli --version` | Show the installed version |
 
