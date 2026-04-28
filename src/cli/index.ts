@@ -36,6 +36,7 @@ import { generateClaudeSettings } from "./scaffold/claude-settings.js";
 import { generateMcpConfig } from "./scaffold/mcp-config.js";
 import type { McpSelection } from "./scaffold/mcp-config.js";
 import { runCompact } from "./compact/run-compact.js";
+import { runReady } from "./board/run-ready.js";
 
 /**
  * Resolves the absolute path to the package root directory.
@@ -81,6 +82,7 @@ function printHelp(): void {
       "  audit             Check project prerequisites and methodology compliance",
       "  compact           Compact tasks-done.md using Claude Haiku summarization",
       "  compact --dry-run Preview tasks that would be compacted without writing",
+      "  ready             List unblocked tasks ready to start from tasks-todo.md",
       "  daemon start      Start the local agent dispatcher (WebSocket server)",
       "  doctor            Check methodology health of the current project",
       "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
@@ -597,6 +599,11 @@ async function main(): Promise<void> {
 
   if (arg === "compact") {
     await runCompact();
+    return;
+  }
+
+  if (arg === "ready") {
+    await runReady();
     return;
   }
 
