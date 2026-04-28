@@ -18,7 +18,7 @@ export const COMPACT_PROMPT =
   'Be concise and factual. Output only the summary paragraph — no headings, no bullet points, no preamble.';
 
 function extractSliceHeader(block: string): string {
-  const firstLine = block.split('\n')[0] ?? '';
+  const firstLine = block.trimStart().split('\n')[0] ?? '';
   const match = firstLine.match(/^##\s+(\[slice-\S+\])\s+--\s+(.+)$/);
   if (!match) return firstLine.replace(/^##\s+/, '').trim();
   return `${match[1]} -- ${match[2].trim()}`;
