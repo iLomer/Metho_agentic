@@ -300,7 +300,11 @@ This reads `SWARM_AWARENESS.md` and prints a formatted dashboard -- epic progres
 2. Each epic gets its own agent (`@meto-epic-E1`, `@meto-epic-E2`, etc.)
 3. Launch agents in separate Claude Code sessions -- they work in parallel
 4. Agents checkpoint every 3 tasks and flag conflicts for shared files
-5. Run `npx meto-cli status` anytime to see the swarm state
+5. When an epic finishes all its tasks, it sets status to `testing-ready` and pauses
+6. Launch `@meto-tester` scoped to that epic -- it validates all tasks before marking the epic `complete`
+7. Run `npx meto-cli status` anytime to see the swarm state
+
+The generated `CLAUDE.md` enforces swarm mode from the first session -- it prevents Claude from defaulting to `@meto-pm` (sprint behaviour) and directs it to read `SWARM_AWARENESS.md` and launch epic agents instead.
 
 Best for projects with multiple independent epics where parallelism speeds things up.
 
