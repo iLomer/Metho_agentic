@@ -16,6 +16,8 @@ Each epic runs its own agent in parallel. Epic agents are scoped to their domain
 | Risk | Low | Medium — requires domain discipline |
 | Best for | Solo, small scope, tight control | Multiple epics, independent domains |
 
+> **When to use swarm:** epics own distinct file domains, tasks have no shared state, and a task cycling back through testing is acceptable cost. If epics share files or a blocked epic would stall everything, use sprint.
+
 ---
 
 ## Starting a Swarm
@@ -43,7 +45,31 @@ After 3 tasks complete (parallel or sequential):
 
 **Parallelism within an epic:** Independent tasks (no dependency chain) run in parallel using background agents or worktrees. Only tasks that depend on another's output run sequentially.
 
-A checkpoint is NOT a blocker — if status is `on-track` the agent continues automatically. Only `blocked` status requires user intervention.
+A checkpoint is NOT a blocker — if status is `on-track` the agent continues automatically. Only `blocked` or `testing-ready` status requires user intervention.
+
+---
+
+## Testing Phase
+
+When an epic agent sets its status to `testing-ready`:
+
+```
+Epic agent clears all tasks from tasks-todo.md (tagged to its epic)
+-> Sets SWARM_AWARENESS.md status to `testing-ready`
+-> Surfaces to user: "All [EPIC_ID] tasks are in testing — run @meto-tester"
+-> PAUSES — does not pick up new work
+
+User launches @meto-tester (separate session or teammate)
+-> Tester processes ONLY tasks in tasks-in-testing.md tagged Epic: [EPIC_ID]
+-> Sequential, one at a time — same validation protocol as sprint mode
+
+On completion:
+  ALL PASS  → tester sets epic status to `complete` in SWARM_AWARENESS.md
+  ANY FAIL  → failed tasks return to tasks-todo.md, tester sets epic status to `on-track`
+              epic agent resumes automatically (sees tasks back in todo)
+```
+
+Other epic agents keep running while this epic is in testing — testing one epic never blocks another.
 
 ---
 

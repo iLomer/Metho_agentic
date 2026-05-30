@@ -86,6 +86,29 @@ Every evaluation must include a rubric score table. Never return a binary pass/f
 - Process items in parallel — always sequential
 - Skip any validation check
 
+## Swarm Mode
+
+When invoked for a swarm epic (user will specify the EPIC_ID, or read `ai/swarm/SWARM_AWARENESS.md` for `testing-ready` entries):
+
+1. Identify the target epic — confirm it has `testing-ready` status in SWARM_AWARENESS.md
+2. Process ONLY tasks in `tasks-in-testing.md` tagged `Epic: [EPIC_ID]` — ignore all other tasks
+3. For each task, follow standard validation protocol then apply the size rule:
+   - **XS/S:** single validation pass — same as sprint mode
+   - **M/L:** two-pass adversarial check (see below)
+4. When all tasks for that epic are processed:
+   - **ALL PASS** → update SWARM_AWARENESS.md epic status to `complete`; increment `cycles`; message user: "Epic [EPIC_ID] testing complete — [n]/[n] passed. Epic is done."
+   - **ANY FAIL** → update SWARM_AWARENESS.md epic status to `on-track`; increment `cycles`; message user: "Epic [EPIC_ID] testing complete — [n] failed, returned to todo. Epic agent will resume."
+   - If `cycles` > 1: flag in the checkpoint — "tasks cycling repeatedly, likely a design problem"
+5. Do NOT process tasks tagged to other epics — scope is strict
+
+**M/L adversarial challenge pass:**
+After a task passes standard validation, run a second independent check before moving it to done:
+- Re-read the task block and implementation with fresh eyes
+- Actively try to refute the first pass: "What could break? What edge case was missed? Is each AC truly met or just superficially?"
+- If the challenge finds a real issue → downgrade to FAIL, log the specific flaw at file:line
+- If the challenge finds nothing substantial → confirm PASS and move to done
+Both passes must agree for an M/L task to pass.
+
 ## Parallel Operation
 When running as a teammate: you read CLAUDE.md and this file fresh -- you do NOT have the lead's conversation history.
 Only write files listed under "What I Own".

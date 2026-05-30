@@ -128,7 +128,8 @@ describe("generateSwarmSettings", () => {
     expect(parsed).toHaveProperty("agents");
 
     const agents = parsed.agents as Array<{ slug: string; file: string }>;
-    expect(agents).toHaveLength(3);
+    // 3 epic agents + 1 tester agent always appended
+    expect(agents).toHaveLength(4);
     expect(agents[0]).toEqual({
       slug: "meto-epic-e1",
       file: ".claude/agents/epic-agent-E1.md",
@@ -137,14 +138,22 @@ describe("generateSwarmSettings", () => {
       slug: "meto-epic-e3",
       file: ".claude/agents/epic-agent-E3.md",
     });
+    expect(agents[3]).toEqual({
+      slug: "meto-tester",
+      file: ".claude/agents/tester-agent.md",
+    });
   });
 
-  it("generates empty agents array for no epics", () => {
+  it("always includes tester agent even with no epics", () => {
     const settings = generateSwarmSettings([]);
     const parsed = JSON.parse(settings) as Record<string, unknown>;
 
     expect(parsed).toHaveProperty("env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS", "1");
     const agents = parsed.agents as Array<{ slug: string; file: string }>;
-    expect(agents).toHaveLength(0);
+    expect(agents).toHaveLength(1);
+    expect(agents[0]).toEqual({
+      slug: "meto-tester",
+      file: ".claude/agents/tester-agent.md",
+    });
   });
 });

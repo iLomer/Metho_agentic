@@ -21,7 +21,7 @@
 |---|---|---|---|---|---|
 | *(populated at swarm init by @meto-pm)* | | | not-started | 0 | none |
 
-Status values: `not-started` · `on-track` · `blocked` · `complete`
+Status values: `not-started` · `on-track` · `blocked` · `testing-ready` · `complete`
 
 ---
 
@@ -40,7 +40,7 @@ See full ownership rules in `ai/swarm/domain-map.md`.
 Append only. Never delete entries. One line per checkpoint.
 
 ```
-[ISO date] | [EPIC_ID] | done:[n] | status:[on-track/blocked] | blocker:[none or description]
+[ISO date] | [EPIC_ID] | done:[n] | status:[on-track/blocked/testing-ready] | cycles:[n] | blocker:[none or description]
 ```
 
 ---

@@ -2,6 +2,8 @@
 
 {{PRODUCT_VISION}}
 
+{{WORKFLOW_SESSION_START}}
+
 ## Read First
 1. `/ai/context/product-vision.md` — what and why
 2. `/ai/context/tech-stack.md` — stack and constraints
@@ -15,16 +17,8 @@
 
 ## Daily Workflow
 
-```
-cd your-project && claude          # start a session
-→ @meto-pm                         # plan: populate backlog, slice epics
-→ @meto-developer                  # build: picks from todo, implements, commits
-→ @meto-tester                     # validate: M/L slices only
-/compact                           # compress context when it feels heavy
-Esc Esc → /rewind                  # undo if something went wrong
-```
+{{WORKFLOW_DAILY_WORKFLOW}}
 
-- **One session per epic/feature** — start fresh when you finish an epic or context feels heavy
 - **Commit frequently** — don't let work pile up uncommitted
 - **`/compact` when needed** — context is large (1M tokens), but compress if responses slow down
 - **New session signs:** agent forgetting prior work, repeated file reads, sluggish responses

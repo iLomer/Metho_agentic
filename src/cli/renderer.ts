@@ -26,6 +26,71 @@ export interface RenderedFile {
 }
 
 /**
+ * Generates a session-start directive for CLAUDE.md based on workflow mode.
+ * Sprint mode returns an empty string (no banner needed).
+ * Swarm mode returns a prominent directive that prevents Claude from defaulting to @meto-pm.
+ */
+export function buildWorkflowSessionStart(workflowMode: WorkflowMode): string {
+  if (workflowMode === "sprint") {
+    return "";
+  }
+
+  return [
+    "## Session Start — Swarm Mode",
+    "",
+    "> **This project uses swarm mode.** Do NOT start with `@meto-pm` or pick tasks as `@meto-developer`.",
+    "> Your role as lead agent is to orchestrate — read state, then launch the right epic agent.",
+    "",
+    "**Run in order at the start of every session:**",
+    "1. Read `ai/swarm/SWARM_AWARENESS.md` — check each epic's status (`not-started` / `on-track` / `testing-ready` / `complete`)",
+    "2. Read `ai/swarm/domain-map.md` — confirm domain ownership before launching any agent",
+    "3. For each epic with status `not-started` or `on-track`: launch `@meto-epic-[id]` (separate Claude Code session or teammate)",
+    "4. For each epic with status `testing-ready`: launch `@meto-tester` scoped to that epic",
+    "5. Run `npx meto-cli status` to get a live terminal view of swarm progress",
+    "",
+    "**Lead agent rules:**",
+    "- NEVER implement tasks directly — always delegate to epic agents",
+    "- NEVER call `@meto-pm` unless the backlog is empty and planning is genuinely needed",
+    "- NEVER run two epic agents that share files in the same session (check domain-map first)",
+  ].join("\n");
+}
+
+/**
+ * Generates the Daily Workflow section for CLAUDE.md based on workflow mode.
+ * Sprint mode shows the standard @meto-pm → @meto-developer → @meto-tester flow.
+ * Swarm mode shows the epic-agent-first flow.
+ */
+export function buildWorkflowDailyWorkflow(workflowMode: WorkflowMode): string {
+  if (workflowMode === "sprint") {
+    return [
+      "```",
+      "cd your-project && claude          # start a session",
+      "→ @meto-pm                         # plan: populate backlog, slice epics",
+      "→ @meto-developer                  # build: picks from todo, implements, commits",
+      "→ @meto-tester                     # validate: M/L slices only",
+      "/compact                           # compress context when it feels heavy",
+      "Esc Esc → /rewind                  # undo if something went wrong",
+      "```",
+    ].join("\n");
+  }
+
+  return [
+    "```",
+    "cd your-project && claude              # start a session",
+    "→ read SWARM_AWARENESS.md             # check which epics are ready",
+    "→ @meto-epic-[id]                     # launch per-epic agent (one per epic, separate session)",
+    "→ @meto-tester                        # when an epic is testing-ready",
+    "npx meto-cli status                   # check swarm progress at any time",
+    "/compact                              # compress context when it feels heavy",
+    "```",
+    "",
+    "- **One session per epic** — each `@meto-epic-[id]` runs in its own Claude Code window",
+    "- **Lead orchestrates, never implements** — read SWARM_AWARENESS.md, launch agents, monitor",
+    "- **Commit frequently** — epic agents commit after each task",
+  ].join("\n");
+}
+
+/**
  * Generates the Agents section for CLAUDE.md based on workflow mode.
  * Sprint mode includes the standard 3-agent table.
  * Swarm mode adds a swarm agent table with epic-agent references and swarm file references.
@@ -91,9 +156,10 @@ export function buildTokenMap(
   brief: ProjectBrief,
   aiContent?: AIGeneratedContent,
 ): TokenMap {
-  const workflowAgentsSection = buildWorkflowAgentsSection(
-    brief.workflowMode ?? "sprint",
-  );
+  const mode = brief.workflowMode ?? "sprint";
+  const workflowAgentsSection = buildWorkflowAgentsSection(mode);
+  const workflowSessionStart = buildWorkflowSessionStart(mode);
+  const workflowDailyWorkflow = buildWorkflowDailyWorkflow(mode);
 
   if (aiContent !== undefined) {
     return {
@@ -111,6 +177,8 @@ export function buildTokenMap(
       STARTER_EPICS: aiContent.epics,
       STARTER_TASKS: aiContent.starterTasks,
       WORKFLOW_AGENTS_SECTION: workflowAgentsSection,
+      WORKFLOW_SESSION_START: workflowSessionStart,
+      WORKFLOW_DAILY_WORKFLOW: workflowDailyWorkflow,
     };
   }
 
@@ -133,6 +201,8 @@ export function buildTokenMap(
     ),
     STARTER_TASKS: "",
     WORKFLOW_AGENTS_SECTION: workflowAgentsSection,
+    WORKFLOW_SESSION_START: workflowSessionStart,
+    WORKFLOW_DAILY_WORKFLOW: workflowDailyWorkflow,
   };
 }
 

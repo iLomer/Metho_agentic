@@ -118,10 +118,16 @@ export function generateSwarmSettings(epicIds: string[]): string {
     env: {
       CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
     },
-    agents: epicIds.map((id) => ({
-      slug: `meto-epic-${id.toLowerCase()}`,
-      file: `.claude/agents/epic-agent-${id}.md`,
-    })),
+    agents: [
+      ...epicIds.map((id) => ({
+        slug: `meto-epic-${id.toLowerCase()}`,
+        file: `.claude/agents/epic-agent-${id}.md`,
+      })),
+      {
+        slug: "meto-tester",
+        file: ".claude/agents/tester-agent.md",
+      },
+    ],
   };
   return JSON.stringify(settings, null, 2) + "\n";
 }

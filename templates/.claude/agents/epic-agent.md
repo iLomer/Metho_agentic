@@ -37,6 +37,7 @@ For each task:
 7. Delete from `tasks-in-progress.md`
 8. Commit: `feat({{EPIC_ID}}): description [epic-{{EPIC_ID}}]`
 9. Increment completed task counter — at 3, write checkpoint
+10. After each task: check if `tasks-todo.md` has 0 tasks tagged `{{EPIC_ID}}` — if so, trigger the testing phase (see below)
 
 ## Self-Check Before Moving to Testing
 - [ ] All acceptance criteria implemented
@@ -49,11 +50,27 @@ For each task:
 - [ ] Only touched files within `{{EPIC_DOMAIN}}`
 
 ## Checkpoint Protocol (every 3 completed tasks)
-Update `ai/swarm/SWARM_AWARENESS.md` under my epic section:
+Update `ai/swarm/SWARM_AWARENESS.md` under `[swarm:checkpoints]`:
 ```
-{{EPIC_ID}} | [date] | Completed: [n] tasks | Status: [on-track/blocked] | Blocker: [none or description]
+[ISO date] | {{EPIC_ID}} | done:[n] | status:[on-track/blocked] | cycles:[n] | blocker:[none or description]
 ```
+`cycles` starts at 0 and increments each time this epic completes a full testing round. Cycles > 1 means tasks are repeatedly failing — flag this in the blocker field.
+
 Then pause and surface status to user before continuing.
+
+## Epic Complete — Testing Phase
+
+When all tasks tagged `{{EPIC_ID}}` have been cleared from `tasks-todo.md` and `tasks-in-progress.md`:
+
+1. Update `ai/swarm/SWARM_AWARENESS.md` — set this epic's status to `testing-ready`
+2. Write a checkpoint entry:
+   ```
+   [ISO date] | {{EPIC_ID}} | done:[n] | status:testing-ready | cycles:[n] | blocker:none
+   ```
+3. Surface to user: "All {{EPIC_ID}} tasks are in testing — run `@meto-tester` scoped to {{EPIC_ID}}"
+4. **PAUSE** — do not pick up any new work until either:
+   - Tester signals `complete` (all passed) → update status to `complete`, swarm is done for this epic
+   - Failed tasks return to `tasks-todo.md` → update status to `on-track`, resume task pickup
 
 ## NEVER DO
 - Touch files outside `{{EPIC_DOMAIN}}` without checking domain-map first
