@@ -35,15 +35,15 @@ export async function getReadyTasks(
 
   // Build done set: collect all slice IDs from done file
   const doneSet = new Set<string>();
-  for (const line of doneContent.split("\n")) {
+  for (const line of doneContent.split(/\r?\n/)) {
     const match = SLICE_ID_PATTERN.exec(line);
     if (match) {
       doneSet.add(match[1]);
     }
   }
 
-  // Split todo content into blocks by the --- separator
-  const blocks = todoContent.split(/\n---\n/);
+  // Split todo content into blocks by the --- separator (LF or CRLF)
+  const blocks = todoContent.split(/\r?\n---\r?\n/);
 
   // Parse each block and keep only ready tasks (sliceId must be present)
   const readyTasks: TaskDependency[] = [];

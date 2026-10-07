@@ -59,7 +59,8 @@ export async function compactDone(filePath: string): Promise<CompactResult> {
   }
 
   const outputPath = resolve(filePath);
-  const raw = readFileSync(outputPath, 'utf-8');
+  // Normalize CRLF so block splitting and header parsing work on Windows-edited files
+  const raw = readFileSync(outputPath, 'utf-8').replace(/\r\n/g, '\n');
 
   // Split on the `\n---\n` separator used in all board files
   const segments = raw.split('\n---\n');

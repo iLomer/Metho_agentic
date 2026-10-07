@@ -2,12 +2,17 @@ import { describe, it, expect, afterEach } from "vitest";
 import { spawn } from "node:child_process";
 import { readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { tmpdir, platform } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const CURRENT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const PROJECT_ROOT = join(CURRENT_DIR, "..", "..");
 const CLI_ENTRY = join(PROJECT_ROOT, "dist", "cli", "index.js");
+
+// The mock `claude` fixtures are POSIX shell scripts. Windows can't spawn them,
+// so the CLI would fall through to a real `claude` on PATH -- skip there.
+const IS_WINDOWS = platform() === "win32";
+
 const MOCK_CLAUDE_OK_DIR = join(CURRENT_DIR, "..", "fixtures", "mock-claude-ok");
 const MOCK_CLAUDE_ERR_DIR = join(CURRENT_DIR, "..", "fixtures", "mock-claude-err");
 
@@ -96,7 +101,7 @@ describe("meto-cli init with AI (integration)", () => {
     }
   });
 
-  it("scaffolds with AI-generated content when mock claude succeeds", { timeout: 60_000 }, async () => {
+  it.skipIf(IS_WINDOWS)("scaffolds with AI-generated content when mock claude succeeds", { timeout: 60_000 }, async () => {
     const projectName = `ai-e2e-test-${Date.now()}`;
     outputDir = join(tmpdir(), projectName);
 
@@ -136,7 +141,7 @@ describe("meto-cli init with AI (integration)", () => {
     expect(epics).toContain("E2 -- Core Feature");
   });
 
-  it("falls back to static prompts when mock claude fails with exit code 1", { timeout: 60_000 }, async () => {
+  it.skipIf(IS_WINDOWS)("falls back to static prompts when mock claude fails with exit code 1", { timeout: 60_000 }, async () => {
     const projectName = `ai-fail-test-${Date.now()}`;
     outputDir = join(tmpdir(), projectName);
 
