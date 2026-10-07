@@ -41,11 +41,7 @@ export function rubricHasFailed(results: RubricSliceResult[]): boolean {
  */
 export function formatRubricLine(result: RubricSliceResult): string {
   const typeLabel =
-    result.checkType === "contract"
-      ? "contract"
-      : result.checkType === "score"
-        ? "rubric score"
-        : "verification";
+    result.checkType === "score" ? "rubric score" : "verification";
 
   const status = result.status === "pass" ? "pass" : "FAIL";
   let line = `[${result.sliceId}] ${typeLabel}: ${status} — ${result.message}`;

@@ -116,27 +116,18 @@ describe("buildRubricChecks", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  it("reports missing contract and score files as fail", async () => {
+  it("reports missing score file as fail", async () => {
     const results = await buildRubricChecks(dir, ["slice-042"]);
-    const contractCheck = results.find(
-      (r) => r.sliceId === "slice-042" && r.checkType === "contract",
-    );
     const scoreCheck = results.find(
       (r) => r.sliceId === "slice-042" && r.checkType === "score",
     );
-    expect(contractCheck?.status).toBe("fail");
     expect(scoreCheck?.status).toBe("fail");
   });
 
-  it("reports present contract file as pass", async () => {
-    await mkdir(join(dir, "ai", "contracts"), { recursive: true });
-    await makeFile(join(dir, "ai", "contracts", "slice-042-contract.md"), "# Contract");
-
+  it("does not check for contract files", async () => {
     const results = await buildRubricChecks(dir, ["slice-042"]);
-    const contractCheck = results.find(
-      (r) => r.sliceId === "slice-042" && r.checkType === "contract",
-    );
-    expect(contractCheck?.status).toBe("pass");
+    const checkTypes = results.map((r) => r.checkType as string);
+    expect(checkTypes).not.toContain("contract");
   });
 
   it("reports present score file as pass", async () => {
@@ -162,14 +153,6 @@ describe("buildRubricChecks", () => {
     expect(results).toEqual([]);
   });
 
-  it("includes fix instruction message for missing contract", async () => {
-    const results = await buildRubricChecks(dir, ["slice-042"]);
-    const contractCheck = results.find(
-      (r) => r.sliceId === "slice-042" && r.checkType === "contract",
-    );
-    expect(contractCheck?.fixInstruction).toContain("ai/contracts/slice-042-contract.md");
-  });
-
   it("includes fix instruction message for missing score", async () => {
     const results = await buildRubricChecks(dir, ["slice-042"]);
     const scoreCheck = results.find(
@@ -187,13 +170,13 @@ describe("RubricSliceResult type shape", () => {
   it("has required fields: sliceId, checkType, status, message, fixInstruction", () => {
     const example: RubricSliceResult = {
       sliceId: "slice-001",
-      checkType: "contract",
+      checkType: "score",
       status: "pass",
-      message: "Found ai/contracts/slice-001-contract.md",
+      message: "Found ai/rubric/slice-001-score.md",
       fixInstruction: undefined,
     };
     expect(example.sliceId).toBe("slice-001");
-    expect(example.checkType).toBe("contract");
+    expect(example.checkType).toBe("score");
     expect(example.status).toBe("pass");
   });
 });

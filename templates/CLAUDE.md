@@ -43,11 +43,12 @@ tasks-backlog → tasks-todo → tasks-in-progress → tasks-in-testing → task
 
 - Full task definition travels with the task through every column
 - `@meto-developer` picks TOP item from todo — no cherry-picking
-- **A task moves from todo → in-progress only after the sprint contract is written and agreed** (`ai/contracts/slice-NNN-contract.md` exists and is signed by @meto-tester)
+- **The task block is the agreement:** acceptance criteria + Out of Scope define done. No separate contract or sign-off before coding.
 - **XS/S slices:** developer self-validates and moves straight to done (no tester)
 - **M/L slices:** must go through `@meto-tester` before done
 - Only `@meto-tester` moves tasks backwards (testing → todo on fail)
 - **Batch mode:** developer may process multiple slices per session, committing once at the end
+- **Parallel work:** independent slices (no `Needs` between them, no shared files) may run at the same time — use `meto ready` to find them
 
 See `/ai/workflows/definition-of-done.md` for done criteria.
 
@@ -60,6 +61,12 @@ Each task block uses this structure:
 **Epic:** ENN | **Size:** XS/S/M/L | **Depends on:** slice-NNN or none
 **Needs:** slice-NNN, slice-NNN   (optional — omit if none)
 **Blocks:** slice-NNN, slice-NNN  (optional — omit if none)
+
+**Acceptance Criteria**
+- [ ] Criterion — must be checkable (an observable outcome, not "works correctly")
+  Verify: `test name or command`   (optional)
+
+**Out of Scope**
 ```
 
 > `Needs` lists tasks that must be in `tasks-done.md` before this task is safe to start. `Blocks` lists tasks that cannot start until this one is done. Both fields are read by `meto ready`.
@@ -110,8 +117,7 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 ## Workflow Rules
 
 - **Plan first:** For any task with 3+ steps or architectural decisions, enter plan mode before writing code. If something goes sideways, STOP and re-plan.
-- **Contract first:** Before writing any implementation code, create `ai/contracts/slice-NNN-contract.md` from the template and get explicit sign-off from @meto-tester. No code until the contract exists and is signed.
-- **Test first, always:** Write the failing test before implementation. Watch it fail, then make it pass. Code written before a test = delete and restart.
+- **Test first, always:** Write the failing test before implementation — one test per acceptance criterion (use its `Verify:` line when present). Watch it fail, then make it pass. Code written before a test = delete and restart.
 - **Systematic debugging:** Root-cause first — read the error, trace the call, form a hypothesis. If 3 distinct fixes fail, stop and re-plan rather than trying a fourth.
 - **Verify before done:** Never mark a task complete without running the verification command in the current session. No verbal claims — show the output.
 - **Minimal impact:** Changes touch only what's necessary. No temporary fixes — find root causes.
@@ -121,11 +127,10 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 ## NEVER DO — @meto-developer
 
 - End a session without writing `ai/handoff/current.md`
-- Write implementation code before a signed sprint contract exists for the current slice
-- Pick up more than one task at a time
-- Cherry-pick — always take the TOP item from `tasks-todo.md`
+- Start a slice whose `Needs` are not all in `tasks-done.md`
+- Cherry-pick — always take the TOP ready item(s) from `tasks-todo.md`
 - Modify backlog or todo files (owned by @meto-pm)
-- Move tasks to `tasks-done.md` (owned by @meto-tester)
+- Move M/L tasks to `tasks-done.md` (only @meto-tester does that — XS/S go straight to done after self-validation)
 - Hardcode scaffold content in source — always read from templates
 - Commit with `console.log`, `any` types, or commented-out code
 

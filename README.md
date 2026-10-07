@@ -202,8 +202,6 @@ your-project/
 │   │   ├── product-vision.md
 │   │   ├── tech-stack.md
 │   │   └── test-log.md
-│   ├── contracts/
-│   │   └── slice-NNN-contract.md  # sprint contract per slice
 │   ├── handoff/
 │   │   └── current.md             # session handoff artifact
 │   ├── rubric/
@@ -371,7 +369,7 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 | `meto-cli init --no-ai` | Scaffold using static prompts only, skip AI generation |
 | `meto-cli init --dry-run` | Preview the generated file tree without writing to disk |
 | `meto-cli audit` | Scan an existing project against the methodology blueprint and fix gaps interactively |
-| `meto-cli audit --rubric` | Check the last 5 completed slices for sprint contracts, rubric scores, and passing tests |
+| `meto-cli audit --rubric` | Check the last 5 completed slices for rubric scores and passing tests |
 | `meto-cli doctor` | Check methodology health of the current project |
 | `meto-cli status` | Show swarm progress dashboard (reads SWARM_AWARENESS.md) |
 | `meto-cli compact` | Summarise closed tasks in `tasks-done.md` using Claude Haiku to shrink agent context load |

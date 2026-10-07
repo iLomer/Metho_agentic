@@ -25,9 +25,9 @@ describe("rubricHasFailed", () => {
     const results: RubricSliceResult[] = [
       {
         sliceId: "slice-010",
-        checkType: "contract",
+        checkType: "verification",
         status: "pass",
-        message: "Found contract",
+        message: "`npx vitest run` exited 0",
         fixInstruction: undefined,
       },
       {
@@ -45,9 +45,9 @@ describe("rubricHasFailed", () => {
     const results: RubricSliceResult[] = [
       {
         sliceId: "slice-010",
-        checkType: "contract",
+        checkType: "verification",
         status: "pass",
-        message: "Found contract",
+        message: "`npx vitest run` exited 0",
         fixInstruction: undefined,
       },
       {
@@ -75,9 +75,9 @@ describe("displayRubricResults", () => {
     const results: RubricSliceResult[] = [
       {
         sliceId: "slice-010",
-        checkType: "contract",
+        checkType: "verification",
         status: "pass",
-        message: "Found contract",
+        message: "`npx vitest run` exited 0",
         fixInstruction: undefined,
       },
       {
@@ -99,9 +99,9 @@ describe("displayRubricResults", () => {
     const results: RubricSliceResult[] = [
       {
         sliceId: "slice-010",
-        checkType: "contract",
+        checkType: "verification",
         status: "pass",
-        message: "Found contract",
+        message: "`npx vitest run` exited 0",
         fixInstruction: undefined,
       },
       {
@@ -130,10 +130,10 @@ describe("displayRubricResults", () => {
     const results: RubricSliceResult[] = [
       {
         sliceId: "slice-042",
-        checkType: "contract",
+        checkType: "score",
         status: "fail",
-        message: "Missing contract",
-        fixInstruction: "Create ai/contracts/slice-042-contract.md",
+        message: "Missing score",
+        fixInstruction: "Create ai/rubric/slice-042-score.md",
       },
     ];
 
@@ -141,7 +141,7 @@ describe("displayRubricResults", () => {
     expect(summary.failed).toBe(1);
     // The function surfaces fix instructions — check via the lines array
     const hasFixInstruction = summary.lines.some((line) =>
-      line.includes("ai/contracts/slice-042-contract.md"),
+      line.includes("ai/rubric/slice-042-score.md"),
     );
     expect(hasFixInstruction).toBe(true);
   });

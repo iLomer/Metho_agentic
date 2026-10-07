@@ -82,15 +82,15 @@ Score each dimension on a 1–3 scale using the criteria below. Every score belo
 
 | Score | Criteria |
 |-------|----------|
-| 3 | Sprint contract exists at `ai/contracts/slice-{{SLICE_ID}}-contract.md` and is signed by both agents, task definition was followed exactly, no out-of-scope work delivered |
-| 2 | Sprint contract exists and is signed but has one minor gap (e.g. an edge case that was agreed verbally but not written into the contract), or a very small out-of-scope addition with clear justification |
-| 1 | No sprint contract, contract not signed before code was written, significant out-of-scope work delivered, or task definition was materially deviated from |
+| 3 | Every acceptance criterion in the task block is met and has a test, tests were written first, no out-of-scope work delivered |
+| 2 | One criterion is met but only covered indirectly by tests, or a very small out-of-scope addition with clear justification |
+| 1 | An acceptance criterion is unmet or untested, significant out-of-scope work delivered, or task definition was materially deviated from |
 
 **Score:** ___
 
 **Critique (required if score < 3):**
 
-<!-- One sentence. Example: "ai/contracts/slice-088-contract.md was not signed before implementation began — retroactive sign-off does not satisfy the contract-first rule." -->
+<!-- One sentence. Example: "AC 3 (returns 401 when token is missing) has no test — add one in auth.test.ts." -->
 
 ---
 

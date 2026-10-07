@@ -13,7 +13,7 @@
 <!-- working rule set @meto-tester applies on every evaluation. -->
 <!-- Delete example rules and replace with real ones when the first real entry is added. -->
 
-1. **Test Coverage — partial implementation still scores 2, not 1** — If the implementation covers all acceptance criteria but lacks edge-case tests that were never specified in the contract, score 2 (partial) rather than 1 (fail). Score 1 only when an AC is provably untested.
+1. **Test Coverage — partial implementation still scores 2, not 1** — If the implementation covers all acceptance criteria but lacks edge-case tests that were never in the acceptance criteria, score 2 (partial) rather than 1 (fail). Score 1 only when an AC is provably untested.
 2. **Convention Adherence — a single stray debug log is score 2, not 1** — A committed `console.log` left in a non-critical path is a partial violation (score 2). Score 1 only when debug output meaningfully pollutes production behaviour or multiple violations exist.
 
 ---
@@ -47,9 +47,9 @@
 | **Date** | 2026-01-08 |
 | **Slice ID** | slice-000 |
 | **Dimension Affected** | Test Coverage |
-| **What was scored incorrectly** | Scored 1 (fail) because an edge case not listed in the sprint contract had no test; the implementation itself covered all agreed acceptance criteria |
-| **Correct score in retrospect** | 2 — all contracted criteria were covered; the missing edge case was out of scope for the contract |
-| **Rule update** | Score Test Coverage based on contracted acceptance criteria only; uncontracted edge cases lower the score to 2 (partial) but never to 1 (fail) unless an AC is provably untested |
+| **What was scored incorrectly** | Scored 1 (fail) because an edge case not listed in the acceptance criteria had no test; the implementation itself covered all acceptance criteria |
+| **Correct score in retrospect** | 2 — all acceptance criteria were covered; the missing edge case was outside the task block |
+| **Rule update** | Score Test Coverage based on the task block's acceptance criteria only; unlisted edge cases lower the score to 2 (partial) but never to 1 (fail) unless an AC is provably untested |
 
 ---
 

@@ -7,7 +7,7 @@
 ## NEVER DO
 
 - End a session without writing `ai/handoff/current.md`
-- Sign an incomplete or ambiguous sprint contract
+- Fail a slice for something outside its acceptance criteria or listed in Out of Scope — suggest a new slice to @meto-pm instead
 - Return a binary "pass" or "fail" without the rubric table and verification command output
 - Evaluate by reading code alone — always run the commands and show the output
 - Write or edit any feature code

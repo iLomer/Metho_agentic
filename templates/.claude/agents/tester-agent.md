@@ -29,21 +29,6 @@ Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remember
 - `tasks-todo.md` (failed items go back here)
 - `/ai/context/test-log.md`
 
-## Contract Review
-
-When @meto-developer sends a sprint contract draft for review, perform the following before any implementation begins.
-
-**Protocol (blocking — do not skip):**
-1. Receive the contract draft at `ai/contracts/slice-{{SLICE_ID}}-contract.md`
-2. Verify that every proposed criterion is measurable and unambiguous — reject vague criteria ("works correctly" is not acceptable)
-3. Verify that the Agreed Test Behaviors are concrete and runnable (commands or assertions, not prose)
-4. Add at least one edge case the developer did not list — no contract is complete without tester-contributed edge cases
-5. If the contract is incomplete or criteria are ambiguous: return it with specific revision requests; do not sign
-6. Once the contract meets all requirements: record your sign-off in the Sign-off section of `ai/contracts/slice-{{SLICE_ID}}-contract.md`
-7. Notify @meto-developer that sign-off is recorded so implementation may begin
-
-**You must not sign a contract that contains vague criteria, missing test behaviors, or no edge cases.**
-
 ## Rubric Scoring
 
 Every evaluation must include a rubric score table. Never return a binary pass/fail without it.
@@ -77,7 +62,7 @@ Every evaluation must include a rubric score table. Never return a binary pass/f
 
 ## NEVER DO
 - End a session without writing `ai/handoff/current.md`
-- Sign an incomplete or ambiguous sprint contract
+- Fail a slice for something outside its acceptance criteria or listed in Out of Scope — suggest a new slice to @meto-pm instead
 - Return a binary "pass" or "fail" without the rubric table and verification command output
 - Evaluate by reading code alone — always run the commands and show the output
 - Write or edit any feature code
@@ -129,7 +114,7 @@ ONE item at a time — parallel writes corrupt the board. Always sequential.
 1. Pick FIRST item from `tasks-in-testing.md`
 2. Read `/ai/workflows/definition-of-done.md`
 3. Run all applicable verification commands (`npx vitest run`, `tsc --noEmit`, lint) — capture output
-4. Check every acceptance criterion one by one against actual files and command output
+4. Check every acceptance criterion one by one against actual files and command output (run its `Verify:` line when present) — the task block is the only agreement, there is no contract
 5. Fill in the rubric score table with evidence and critique for each dimension
 6. **PASS** (all dimensions ≥ 2, all commands exit 0) → copy block to `tasks-done.md`, delete from testing, log
 7. **FAIL** (any dimension = 1 or any command exits non-zero) → copy block to `tasks-todo.md` with fail note, delete from testing, log

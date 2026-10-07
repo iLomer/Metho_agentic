@@ -2,9 +2,8 @@
  * Rubric compliance checker for the `meto audit --rubric` flag.
  *
  * Reads the last N completed slices from tasks-done.md and checks each one for:
- * 1. Sprint contract file at ai/contracts/slice-NNN-contract.md
- * 2. Rubric score file at ai/rubric/slice-NNN-score.md
- * 3. Verification commands listed in the rubric score file (run live)
+ * 1. Rubric score file at ai/rubric/slice-NNN-score.md
+ * 2. Verification commands listed in the rubric score file (run live)
  */
 
 import { readFile, stat } from "node:fs/promises";
@@ -16,7 +15,7 @@ import { spawnSync } from "node:child_process";
 // ---------------------------------------------------------------------------
 
 /** The kind of check performed for a slice. */
-export type RubricCheckType = "contract" | "score" | "verification";
+export type RubricCheckType = "score" | "verification";
 
 /** Outcome of a single rubric check. */
 export type RubricCheckStatus = "pass" | "fail";
@@ -153,7 +152,6 @@ export async function extractLastSlices(
  * Runs rubric compliance checks for the given slice IDs.
  *
  * For each slice:
- * - Checks contract file exists at ai/contracts/slice-NNN-contract.md
  * - Checks rubric score file exists at ai/rubric/slice-NNN-score.md
  * - If score file exists, parses and runs verification commands live
  *
@@ -168,27 +166,7 @@ export async function buildRubricChecks(
   for (const sliceId of sliceIds) {
     const sliceNum = sliceId.replace("slice-", "");
 
-    // Check 1: contract file
-    const contractPath = join(
-      projectDir,
-      "ai",
-      "contracts",
-      `slice-${sliceNum}-contract.md`,
-    );
-    const contractExists = await fileExists(contractPath);
-    results.push({
-      sliceId,
-      checkType: "contract",
-      status: contractExists ? "pass" : "fail",
-      message: contractExists
-        ? `Found ai/contracts/slice-${sliceNum}-contract.md`
-        : `Missing ai/contracts/slice-${sliceNum}-contract.md`,
-      fixInstruction: contractExists
-        ? undefined
-        : `Create ai/contracts/slice-${sliceNum}-contract.md from the sprint contract template before work begins`,
-    });
-
-    // Check 2: rubric score file
+    // Check 1: rubric score file
     const scorePath = join(
       projectDir,
       "ai",
@@ -208,7 +186,7 @@ export async function buildRubricChecks(
         : `@meto-tester must create ai/rubric/slice-${sliceNum}-score.md after evaluating slice-${sliceNum}`,
     });
 
-    // Check 3: verification commands in score file (only if score file exists)
+    // Check 2: verification commands in score file (only if score file exists)
     if (scoreExists) {
       const scoreContent = await readFileOrNull(scorePath);
       const commands = scoreContent

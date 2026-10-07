@@ -63,6 +63,7 @@ As a [user], I want to [action], so that [outcome].
 
 **Acceptance Criteria**
 - [ ] Criterion 1
+  Verify: `test name or command`   (optional)
 - [ ] Criterion 2
 - [ ] Criterion 3
 
@@ -72,6 +73,8 @@ As a [user], I want to [action], so that [outcome].
 ```
 
 **Sizes:** XS <1h · S 1–3h · M 3–6h · L 6–12h · Larger must be broken down.
+
+**Every criterion must be checkable.** Write an observable outcome ("returns 401 when the token is missing"), never a vague one ("handles auth properly"). Add a `Verify:` line when the proof isn't obvious. The task block is the only agreement between developer and tester — there is no separate contract.
 
 ## Moving Backlog → Todo
 Move only when:

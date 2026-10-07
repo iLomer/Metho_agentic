@@ -100,7 +100,7 @@ function printAuditHelp(): void {
       "",
       "Options:",
       "  --help, -h    Show this help message",
-      "  --rubric      Also check the last 5 completed slices for contract and rubric score files",
+      "  --rubric      Also check the last 5 completed slices for rubric score files",
     ].join("\n"),
     "Help",
   );
