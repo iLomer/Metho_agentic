@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   getCodeGuidelines,
   getDefinitionOfDone,
@@ -278,7 +279,7 @@ export function resolveTemplatesDir(): string {
   const currentFileUrl = new URL(import.meta.url);
   // At runtime: dist/cli/renderer.js -> package root is ../../
   const packageRoot = new URL("../../", currentFileUrl);
-  return join(decodeURIComponent(packageRoot.pathname), "templates");
+  return join(fileURLToPath(packageRoot), "templates");
 }
 
 /**

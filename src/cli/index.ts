@@ -2,6 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import { collectProjectBrief } from "./prompts.js";
 import { InterruptionHandler } from "./interruption.js";
@@ -45,7 +46,7 @@ import { runReady } from "./board/run-ready.js";
 function resolvePackageRoot(): string {
   const currentFileUrl = new URL(import.meta.url);
   const packageRoot = new URL("../../", currentFileUrl);
-  return decodeURIComponent(packageRoot.pathname);
+  return fileURLToPath(packageRoot);
 }
 
 /**
