@@ -142,6 +142,15 @@ describe("meto-cli init (integration)", () => {
     expect(claudeMd).toContain(projectName);
     expect(claudeMd).not.toContain("{{PROJECT_NAME}}");
 
+    // Pressing Enter on optional prompts must use the default, never the
+    // placeholder example text (regression: @clack/core 0.4.2 did this)
+    const productVision = await readFile(
+      join(outputDir, "ai", "context", "product-vision.md"),
+      "utf-8",
+    );
+    expect(productVision).toContain("To be filled in later");
+    expect(productVision).not.toContain("Managing tasks across multiple tools is chaotic");
+
     // Verify .claude/settings.json contains the agent teams env key
     const settingsJson = await readFile(
       join(outputDir, ".claude", "settings.json"),
