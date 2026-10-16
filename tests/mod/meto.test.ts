@@ -65,17 +65,62 @@ test('parses the swarm epics table', () => {
 
 test('parses domains and skips placeholders', () => {
   expect(parseDomains(DOMAINS)).toEqual({
-    E1: ['src/profile', 'src/lib'],
-    E2: ['src/share'],
-    E3: ['src/lib/receiver', 'src/receiver'],
+    E1: { owns: ['src/profile', 'src/lib'], shared: [] },
+    E2: { owns: ['src/share'], shared: [] },
+    E3: { owns: ['src/lib/receiver', 'src/receiver'], shared: [] },
   })
 })
 
 test('finds overlapping domains at segment boundaries', () => {
   const d = parseDomains(DOMAINS)
-  expect(domainOverlap(d.E1 ?? [], d.E3 ?? [])).toEqual(['src/lib', 'src/lib/receiver'])
-  expect(domainOverlap(d.E1 ?? [], d.E2 ?? [])).toBeUndefined()
+  expect(domainOverlap(d.E1?.owns ?? [], d.E3?.owns ?? [])).toEqual(['src/lib', 'src/lib/receiver'])
+  expect(domainOverlap(d.E1?.owns ?? [], d.E2?.owns ?? [])).toBeUndefined()
   expect(domainOverlap(['src/share'], ['src/shared'])).toBeUndefined()
+})
+
+// Rows as a real swarm project (Hellow) writes them: file globs, notes, shared files.
+const REAL_DOMAINS = `## Epic Domains
+
+| Epic ID | Epic Name | Owns | Shared With |
+|---|---|---|---|
+| E1 | Foundation | \`.github/\` (incl. the DB test workflow, slice-049), \`supabase/tests/e1_*.sql\`, \`src/app/_layout.tsx\` | \`package.json\` (all) |
+| E2 | Auth | \`src/app/(auth)/\`, \`supabase/migrations/*_e2_*.sql\`, \`supabase/functions/account-*/\` | \`src/types/database.ts\`, \`src/app/_layout.tsx\` (auth gate) |
+| E3 | Share | \`supabase/migrations/*_e3_*.sql\`, \`src/app/share/\` | none |
+`
+
+test('matches file globs in a real domain map', () => {
+  const d = parseDomains(REAL_DOMAINS)
+  expect(d.E1?.shared).toEqual(['package.json'])
+  expect(d.E3?.shared).toEqual([])
+  const e2 = [...(d.E2?.owns ?? []), ...(d.E2?.shared ?? [])]
+  expect(mayWrite('supabase/migrations/20261001_e2_profiles.sql', e2, 'E2')).toBe(true)
+  expect(mayWrite('supabase/functions/account-export/index.ts', e2, 'E2')).toBe(true)
+  expect(mayWrite('src/types/database.ts', e2, 'E2')).toBe(true)
+  expect(mayWrite('supabase/migrations/20261001_e3_cards.sql', e2, 'E2')).toBe(false)
+  expect(domainOverlap(d.E2?.owns ?? [], d.E3?.owns ?? [])).toBeUndefined()
+  expect(domainOverlap(d.E1?.owns ?? [], d.E2?.owns ?? [])).toBeUndefined()
+})
+
+test('reads per-author ids, suffixes and none-with-a-note blockers', () => {
+  const slices = parseSlices(`## [Lom_Slice-0016] -- Export consents
+**Epic:** E4 | **Size:** M
+**Needs:** slice-152a, Lom_Slice-0012
+
+## [slice-019 follow-up 1] -- Retry`)
+  expect(slices.map(s => s.id)).toEqual(['Lom_Slice-0016', 'slice-019 follow-up 1'])
+  expect(slices[0]?.needs).toEqual(['slice-152a', 'Lom_Slice-0012'])
+  const epics = parseEpics(`## [swarm:epics]
+| Epic ID | Name | Agent | Status | Tasks Done | Blocker |
+|---|---|---|---|---|---|
+| E2 | Auth | meto-epic-E2 | on-track | 22 | none (slice-152 PASS) |`)
+  expect(epics[0]?.blocker).toBe('')
+})
+
+test('numbers ids per prefix', () => {
+  const board = ['## [slice-172]', '## [Lom_Slice-0042]', 'Needs: Lom_Slice-0016']
+  expect(highestSlice(board, 'Lom_Slice')).toEqual({ max: 42, width: 4 })
+  expect(highestSlice(board).max).toBe(172)
+  expect(sliceId(43, 4, 'Lom_Slice')).toBe('Lom_Slice-0043')
 })
 
 test('lets an epic agent write its domain and the board only', () => {

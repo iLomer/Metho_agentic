@@ -5,5 +5,13 @@
   "types": "./types/index.d.ts",
   "author": {
     "name": "Ionut Lomer"
+  },
+  "userConfig": {
+    "idPrefix": {
+      "type": "string",
+      "title": "Slice ID prefix",
+      "description": "Prefix /meto-slice uses for new IDs: slice gives slice-173, Lom_Slice gives Lom_Slice-0043. Set your own so two people never take the same ID.",
+      "default": "slice"
+    }
   }
 }

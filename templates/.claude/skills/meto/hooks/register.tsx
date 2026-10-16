@@ -1,4 +1,4 @@
-import { atom, read, update } from 'claude-code'
+// Type imports only: a runtime import of 'claude-code' would fail a project's own import linting.
 import type { EngineInterface, Register } from 'claude-code'
 
 import {
@@ -24,12 +24,16 @@ import {
 const PANE = 'meto-board'
 const REFRESH_MS = 15_000
 
-const isMeto = atom({ plugin: 'meto', key: 'isMeto' } as const, false)
-const board = atom({ plugin: 'meto', key: 'board' } as const, [])
-const epics = atom({ plugin: 'meto', key: 'epics' } as const, [])
-const startedAt = atom({ plugin: 'meto', key: 'startedAt' } as const, 0)
-const isTouched = atom({ plugin: 'meto', key: 'isTouched' } as const, false)
-const isHandoffStale = atom({ plugin: 'meto', key: 'isHandoffStale' } as const, false)
+const IS_METO = { plugin: 'meto', key: 'isMeto' } as const
+const BOARD = { plugin: 'meto', key: 'board' } as const
+const EPICS = { plugin: 'meto', key: 'epics' } as const
+const STARTED_AT = { plugin: 'meto', key: 'startedAt' } as const
+const IS_TOUCHED = { plugin: 'meto', key: 'isTouched' } as const
+const IS_HANDOFF_STALE = { plugin: 'meto', key: 'isHandoffStale' } as const
+
+async function isMetoProject($: EngineInterface): Promise<boolean> {
+  return (await $.state.get(IS_METO)).value === true
+}
 
 async function readOr($: EngineInterface, path: string): Promise<string> {
   try {
@@ -43,19 +47,19 @@ async function readOr($: EngineInterface, path: string): Promise<string> {
 async function refresh($: EngineInterface): Promise<void> {
   const texts: Record<string, string> = {}
   for (const { key, file } of TASK_FILES) texts[key] = await readOr($, file)
-  await update($, board, () => columnsFrom(texts))
+  await $.state.set(BOARD, columnsFrom(texts))
   const swarm = await readOr($, SWARM_FILE)
-  await update($, epics, () => parseEpics(swarm))
+  await $.state.set(EPICS, parseEpics(swarm))
 
-  const since = await read($, startedAt)
+  const since = (await $.state.get(STARTED_AT)).value ?? 0
   let handoffAt = 0
   try {
     handoffAt = (await $.fs.stat(HANDOFF_FILE)).mtimeMs
   } catch {
     handoffAt = 0
   }
-  const touched = await read($, isTouched)
-  await update($, isHandoffStale, () => touched && handoffAt < since)
+  const touched = (await $.state.get(IS_TOUCHED)).value === true
+  await $.state.set(IS_HANDOFF_STALE, touched && handoffAt < since)
 }
 
 /** The live agent that owns this loop, when it is a subagent or teammate. */
@@ -74,10 +78,10 @@ async function overlapReason($: EngineInterface, subagentType: string | undefine
   if (same) return `meto-epic-${epicId} is already running (${same.id}). One agent per epic — wait for it to finish.`
 
   const domains = parseDomains(await readOr($, DOMAIN_FILE))
-  const mine = domains[epicId] ?? []
+  const mine = domains[epicId]?.owns ?? []
   for (const other of running) {
     const otherId = epicOf(other.type) ?? ''
-    const clash = domainOverlap(mine, domains[otherId] ?? [])
+    const clash = domainOverlap(mine, domains[otherId]?.owns ?? [])
     if (clash) {
       return `meto-epic-${epicId} and the running meto-epic-${otherId} both own ${clash[0]} / ${clash[1]} (ai/swarm/domain-map.md). Run them one after the other.`
     }
@@ -97,7 +101,7 @@ async function overlapReason($: EngineInterface, subagentType: string | undefine
 }
 
 /** Next free slice IDs, checked against the local board, origin's board and this machine's reservations. */
-async function reserveSlices($: EngineInterface, count: number): Promise<string> {
+async function reserveSlices($: EngineInterface, count: number, prefix: string): Promise<string> {
   const texts = [] as string[]
   for (const { file } of TASK_FILES) texts.push(await readOr($, file))
 
@@ -115,26 +119,28 @@ async function reserveSlices($: EngineInterface, count: number): Promise<string>
   }
 
   const cwd = await $.session.cwd()
-  const key = `reserved:${cwd}`
+  const key = `reserved:${cwd}:${prefix}`
   const reserved = Number((await $.store.get(key)) ?? 0)
-  const { max, width } = highestSlice(texts)
+  const { max, width } = highestSlice(texts, prefix)
   const first = Math.max(max, reserved) + 1
-  const ids = Array.from({ length: count }, (_, i) => sliceId(first + i, width))
+  const ids = Array.from({ length: count }, (_, i) => sliceId(first + i, width, prefix))
   await $.store.set(key, first + count - 1)
 
   const checked = remote === '' ? 'the local board (origin could not be reached)' : `the local board and ${remote}`
   return `Next free ${count === 1 ? 'ID' : 'IDs'}: ${ids.join(', ')} — checked ${checked}, and reserved on this machine. Commit and push the new task blocks soon so other sessions see them.`
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const defaultPrefix = typeof options.idPrefix === 'string' && options.idPrefix !== '' ? options.idPrefix : 'slice'
+
   on('session.start', async ($, e, next) => {
     const result = await next(e)
     if (!(await $.fs.exists(TASK_FILES[1].file))) return result
 
-    await update($, isMeto, () => true)
+    await $.state.set(IS_METO, true)
     const now = await $.clock.now()
-    await update($, startedAt, () => now)
-    await update($, isTouched, () => false)
+    await $.state.set(STARTED_AT, now)
+    await $.state.set(IS_TOUCHED, false)
     await $.command.register({ name: 'meto-board', description: 'Show the meto board in a pane' })
     await $.command.register({
       name: 'meto-slice',
@@ -154,20 +160,23 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'meto-slice' }, async ($, e) => {
-    const count = Math.min(Math.max(Number.parseInt(e.args, 10) || 1, 1), 20)
-    return { text: await reserveSlices($, count) }
+    const words = e.args.trim().split(/\s+/).filter(word => word !== '')
+    const number = words.find(word => /^\d+$/.test(word))
+    const prefix = words.find(word => /^[A-Za-z][\w]*$/.test(word)) ?? defaultPrefix
+    const count = Math.min(Math.max(Number.parseInt(number ?? '1', 10), 1), 20)
+    return { text: await reserveSlices($, count, prefix) }
   })
 
   // Overlap guard: one agent per epic, no shared files, no split feature.
   on('tool.call', { tool: 'Agent' }, async ($, e, next) => {
-    if (!(await read($, isMeto))) return next(e)
+    if (!(await isMetoProject($))) return next(e)
     const reason = await overlapReason($, e.subagent_type)
     return reason ? { deny: `meto: ${reason}` } : next(e)
   })
 
   // One report per agent: a meto subagent's final answer is its report.
   on('tool.call', { tool: 'SendMessage' }, async ($, e, next) => {
-    if (!(await read($, isMeto))) return next(e)
+    if (!(await isMetoProject($))) return next(e)
     const caller = await callerOf($, e.agentId)
     if (caller && (isMetoAgent(caller.type) || isMetoAgent(caller.name))) {
       return {
@@ -179,24 +188,24 @@ export const register: Register = on => {
 
   // Domain guard: an epic agent writes only inside its domain.
   on('tool.call', { tool: ['Edit', 'Write', 'NotebookEdit'] }, async ($, e, next) => {
-    if (!(await read($, isMeto))) return next(e)
+    if (!(await isMetoProject($))) return next(e)
     const target = e.tool === 'NotebookEdit' ? e.notebook_path : e.tool === 'Edit' || e.tool === 'Write' ? e.file_path : ''
     const path = relativeTo(target, await $.session.cwd())
 
     const caller = await callerOf($, e.agentId)
     const epicId = epicOf(caller?.type)
     if (epicId !== undefined) {
-      const owns = parseDomains(await readOr($, DOMAIN_FILE))[epicId]
-      if (owns !== undefined && owns.length > 0 && !mayWrite(path, owns, epicId)) {
+      const domain = parseDomains(await readOr($, DOMAIN_FILE))[epicId]
+      if (domain !== undefined && !mayWrite(path, [...domain.owns, ...domain.shared], epicId)) {
         return {
-          deny: `meto: ${path} is outside meto-epic-${epicId}'s domain (${owns.join(', ')}). Log the conflict in ${SWARM_FILE}, set your status to blocked, and stop.`,
+          deny: `meto: ${path} is outside meto-epic-${epicId}'s domain in ${DOMAIN_FILE}. Log the conflict in ${SWARM_FILE}, set your status to blocked, and stop.`,
         }
       }
     }
 
     const ran = await next(e)
     if (ran.deny === undefined && ran.isError !== true) {
-      if (path !== HANDOFF_FILE) await update($, isTouched, () => true)
+      if (path !== HANDOFF_FILE) await $.state.set(IS_TOUCHED, true)
       await refresh($)
     }
     return ran
@@ -204,7 +213,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e)
-    const columns = await read($, board)
+    const columns = (await $.state.get(BOARD)).value ?? []
     const width = Math.max(20, e.props.bodyColumns)
     const room = Math.max(4, (e.viewport?.rows ?? 24) - 6)
     const cut = (text: string) => (text.length > width - 2 ? `${text.slice(0, width - 3)}…` : text)
@@ -235,9 +244,9 @@ export const register: Register = on => {
 
   // Swarm band and handoff reminder above the prompt.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey || !(await read($, isMeto))) return next(e)
-    const list = await read($, epics)
-    const stale = await read($, isHandoffStale)
+    if (e.props.hasSurvey || !(await isMetoProject($))) return next(e)
+    const list = (await $.state.get(EPICS)).value ?? []
+    const stale = (await $.state.get(IS_HANDOFF_STALE)).value === true
     if (list.length === 0 && !stale) return next(e)
 
     const { Box, Text } = $.ui.resolve(e)
@@ -253,7 +262,7 @@ export const register: Register = on => {
               <Text key={epic.id} color={color(epic.status)}>
                 {i > 0 ? ' · ' : ''}
                 {epic.id} {epic.status}
-                {epic.blocker ? `: ${epic.blocker}` : ` ${epic.done}`}
+                {epic.blocker ? `: ${epic.blocker.length > 40 ? `${epic.blocker.slice(0, 39)}…` : epic.blocker}` : ` ${epic.done}`}
               </Text>
             ))}
           </Text>

@@ -34,13 +34,16 @@ export function isMetoAgent(name: string | undefined): boolean {
   return /(?:^|:)meto-/.test(name ?? '')
 }
 
-/** Reads `## [slice-NNN] -- Title` blocks with their Epic, Size and Needs lines. */
+/** A slice reference: `slice-012`, `slice-152a`, or a per-author `Lom_Slice-0016`. */
+const SLICE_REF = /\b(?:[A-Za-z]+_)?[Ss]lice-\d+[a-z]?\b/g
+
+/** Reads `## [slice-NNN] -- Title` blocks (any bracketed id) with their Epic, Size and Needs lines. */
 export function parseSlices(md: string): Slice[] {
   const slices: Slice[] = []
   let current: Slice | undefined
 
   for (const line of md.split(/\r?\n/)) {
-    const head = line.match(/^##\s+\[(slice-\d+)\]\s*(?:[-—–]+\s*)?(.*)$/)
+    const head = line.match(/^##\s+\[([^\]]+)\]\s*(?:[-—–]+\s*)?(.*)$/)
     if (head) {
       const next: Slice = { id: head[1] ?? '', title: (head[2] ?? '').trim(), needs: [] }
       current = next
@@ -54,7 +57,7 @@ export function parseSlices(md: string): Slice[] {
     const size = line.match(/\*\*Size:\*\*\s*(XS|S|M|L)\b/)
     if (size?.[1]) current.size = size[1]
     const needs = line.match(/\*\*Needs:\*\*\s*(.*)$/)
-    if (needs?.[1] !== undefined) current.needs = needs[1].match(/slice-\d+/g) ?? []
+    if (needs?.[1] !== undefined) current.needs = needs[1].match(SLICE_REF) ?? []
   }
 
   return slices
@@ -88,18 +91,26 @@ export function parseEpics(md: string): Epic[] {
       name,
       status,
       done: Number.parseInt(done, 10) || 0,
-      blocker: blocker === 'none' ? '' : blocker,
+      blocker: /^none\b/i.test(blocker) ? '' : blocker,
     }))
 }
 
-/** The `Epic Domains` table of domain-map.md: epic id → owned paths. */
-export function parseDomains(md: string): Record<string, string[]> {
-  const domains: Record<string, string[]> = {}
-  for (const [id = '', , owns = ''] of tableRows(section(md, '## Epic Domains'))) {
-    if (isPlaceholder(id) || isPlaceholder(owns)) continue
-    const ticked = owns.match(/`([^`]+)`/g)?.map(p => p.slice(1, -1))
-    const paths = ticked ?? owns.split(',')
-    domains[id] = paths.map(normalize).filter(p => p !== '')
+/** Paths in a table cell: the backticked ones, else the comma-separated list; `none` is empty. */
+function cellPaths(cell: string): string[] {
+  if (isPlaceholder(cell) || /^none\b/i.test(cell)) return []
+  const ticked = cell.match(/`([^`]+)`/g)?.map(p => p.slice(1, -1))
+  return (ticked ?? cell.split(',')).map(normalize).filter(p => p !== '')
+}
+
+export type Domain = { owns: string[]; shared: string[] }
+
+/** The `Epic Domains` table of domain-map.md: epic id → owned and shared paths. */
+export function parseDomains(md: string): Record<string, Domain> {
+  const domains: Record<string, Domain> = {}
+  for (const [id = '', , owns = '', shared = ''] of tableRows(section(md, '## Epic Domains'))) {
+    if (isPlaceholder(id)) continue
+    const domain = { owns: cellPaths(owns), shared: cellPaths(shared) }
+    if (domain.owns.length > 0) domains[id] = domain
   }
   return domains
 }
@@ -123,11 +134,32 @@ export function relativeTo(file: string, cwd: string): string {
   return under ? path.slice(root.length + 1) : path
 }
 
-/** True when one path is the other or contains it, at a segment boundary. */
+const hasGlob = (path: string) => path.includes('*')
+
+const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** A path pattern as a regex: `**` any depth, `*` within one segment. */
+function globRegex(pattern: string): RegExp {
+  const body = pattern
+    .split(/(\*\*|\*)/)
+    .map(part => (part === '**' ? '.*' : part === '*' ? '[^/]*' : escapeRegex(part)))
+    .join('')
+  return new RegExp(`^${body}(/.*)?$`)
+}
+
+/** Whether `path` is `pattern`, lies under it, or matches its glob. */
+export function matchesPath(pattern: string, path: string): boolean {
+  const p = normalize(pattern)
+  const f = normalize(path)
+  if (p === '') return true
+  if (hasGlob(p)) return globRegex(p).test(f)
+  return f === p || f.startsWith(`${p}/`)
+}
+
+/** True when two owned paths can name the same file. Globs compare by a sample of each. */
 export function pathsOverlap(a: string, b: string): boolean {
-  const x = normalize(a)
-  const y = normalize(b)
-  return x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`) || x === '' || y === ''
+  const sample = (path: string) => normalize(path).replace(/\*+/g, 'x')
+  return matchesPath(a, sample(b)) || matchesPath(b, sample(a))
 }
 
 /** The first pair of overlapping paths between two domains, if any. */
@@ -144,10 +176,7 @@ export function domainOverlap(a: string[], b: string[]): [string, string] | unde
 export function mayWrite(file: string, owns: string[], epicId: string): boolean {
   const path = normalize(file)
   const own = [...owns, ...BOARD_PATHS, `.claude/agent-memory/meto-epic-${epicId}/`]
-  return own.some(root => {
-    const r = normalize(root)
-    return path === r || path.startsWith(`${r}/`)
-  })
+  return own.some(root => matchesPath(root, path))
 }
 
 /** Todo slices of `epicId` that need a slice still in progress or testing. */
@@ -160,12 +189,13 @@ export function blockedByOpenWork(todo: Slice[], open: Slice[], epicId: string):
   return undefined
 }
 
-/** The highest slice number named anywhere in `texts`, and the digit width in use. */
-export function highestSlice(texts: string[]): { max: number; width: number } {
+/** The highest number under `prefix` (`slice`, `Lom_Slice`) named in `texts`, and its digit width. */
+export function highestSlice(texts: string[], prefix = 'slice'): { max: number; width: number } {
+  const pattern = new RegExp(`(?<![A-Za-z_])${escapeRegex(prefix)}-(\\d+)`, 'g')
   let max = 0
-  let width = 3
+  let width = prefix === 'slice' ? 3 : 4
   for (const text of texts) {
-    for (const match of text.matchAll(/slice-(\d+)/g)) {
+    for (const match of text.matchAll(pattern)) {
       const digits = match[1] ?? '0'
       max = Math.max(max, Number.parseInt(digits, 10))
       width = Math.max(width, digits.length)
@@ -174,8 +204,8 @@ export function highestSlice(texts: string[]): { max: number; width: number } {
   return { max, width }
 }
 
-export function sliceId(n: number, width: number): string {
-  return `slice-${String(n).padStart(width, '0')}`
+export function sliceId(n: number, width: number, prefix = 'slice'): string {
+  return `${prefix}-${String(n).padStart(width, '0')}`
 }
 
 export function columnsFrom(texts: Record<string, string>): BoardColumn[] {
