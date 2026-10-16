@@ -4,6 +4,8 @@ import {
   blockedByOpenWork,
   domainOverlap,
   epicOf,
+  formatTokens,
+  parseShortstat,
   highestSlice,
   isMetoAgent,
   mayWrite,
@@ -158,4 +160,17 @@ test('picks the next slice id above every board', () => {
   expect(max).toBe(172)
   expect(width).toBe(4)
   expect(sliceId(max + 1, 3)).toBe('slice-173')
+})
+
+test('formats token counts like the status line', () => {
+  expect(formatTokens(512)).toBe('512')
+  expect(formatTokens(61_234)).toBe('61k')
+  expect(formatTokens(1_000_000)).toBe('1M')
+  expect(formatTokens(1_234_567)).toBe('1.2M')
+})
+
+test('reads git diff --shortstat', () => {
+  expect(parseShortstat(' 3 files changed, 10 insertions(+), 2 deletions(-)')).toEqual({ added: 10, removed: 2 })
+  expect(parseShortstat(' 1 file changed, 1 deletion(-)')).toEqual({ added: 0, removed: 1 })
+  expect(parseShortstat('')).toEqual({ added: 0, removed: 0 })
 })

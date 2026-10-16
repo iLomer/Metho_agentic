@@ -8,6 +8,8 @@ import {
   TASK_FILES,
   blockedByOpenWork,
   columnsFrom,
+  formatTokens,
+  parseShortstat,
   domainOverlap,
   epicOf,
   highestSlice,
@@ -30,6 +32,9 @@ const EPICS = { plugin: 'meto', key: 'epics' } as const
 const STARTED_AT = { plugin: 'meto', key: 'startedAt' } as const
 const IS_TOUCHED = { plugin: 'meto', key: 'isTouched' } as const
 const IS_HANDOFF_STALE = { plugin: 'meto', key: 'isHandoffStale' } as const
+const SESSION = { plugin: 'meto', key: 'session' } as const
+const TOKENS_IN = { plugin: 'meto', key: 'tokensIn' } as const
+const TOKENS_OUT = { plugin: 'meto', key: 'tokensOut' } as const
 
 function epicColor(status: string): 'error' | 'warning' | 'success' | undefined {
   return status === 'blocked' ? 'error' : status === 'testing-ready' ? 'warning' : status === 'complete' ? 'success' : undefined
@@ -48,7 +53,40 @@ async function readOr($: EngineInterface, path: string): Promise<string> {
 }
 
 /** Re-reads the board, the swarm table and the handoff's age into state. */
+async function git($: EngineInterface, args: string[]): Promise<string> {
+  try {
+    const ran = await $.process.run(['git', ...args], { timeoutMs: 5_000 })
+    return ran.exitCode === 0 ? ran.stdout.trim() : ''
+  } catch {
+    return ''
+  }
+}
+
+/** What the status line showed: model, context, branch and changes, tokens, folder, cost. */
+async function refreshSession($: EngineInterface): Promise<void> {
+  const [model, usage, branch, stat, cwd] = await Promise.all([
+    $.session.model(),
+    $.session.usage(),
+    git($, ['rev-parse', '--abbrev-ref', 'HEAD']),
+    git($, ['diff', '--shortstat', 'HEAD']),
+    $.session.cwd(),
+  ])
+  await $.state.set(SESSION, {
+    model,
+    percent: usage.context.percent,
+    tokens: usage.context.tokens,
+    window: usage.context.window,
+    usd: usage.cost?.usd,
+    branch,
+    ...parseShortstat(stat),
+    input: (await $.state.get(TOKENS_IN)).value ?? 0,
+    output: (await $.state.get(TOKENS_OUT)).value ?? 0,
+    folder: cwd.replace(/\\/g, '/').split('/').pop() ?? cwd,
+  })
+}
+
 async function refresh($: EngineInterface): Promise<void> {
+  await refreshSession($)
   const texts: Record<string, string> = {}
   for (const { key, file } of TASK_FILES) texts[key] = await readOr($, file)
   await $.state.set(BOARD, columnsFrom(texts))
@@ -167,6 +205,20 @@ export const register: Register = (on, options) => {
     return result
   })
 
+  // Session token totals, as the status line counted them, refreshed after every turn.
+  on('turn.complete', async ($, e, next) => {
+    const result = await next(e)
+    if (!(await isMetoProject($))) return result
+    const usage = result.usage
+    if (usage) {
+      const input = usage.input_tokens + usage.cache_read_input_tokens + (usage.cache_creation_input_tokens ?? 0)
+      await $.state.set(TOKENS_IN, ((await $.state.get(TOKENS_IN)).value ?? 0) + input)
+      await $.state.set(TOKENS_OUT, ((await $.state.get(TOKENS_OUT)).value ?? 0) + usage.output_tokens)
+    }
+    await refreshSession($)
+    return result
+  })
+
   on('command.run', { command: 'meto-board' }, async $ => {
     await refresh($)
     const opened = await $.ui.open({ id: PANE, title: 'meto board' })
@@ -228,15 +280,37 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e)
     const columns = (await $.state.get(BOARD)).value ?? []
+    const session = (await $.state.get(SESSION)).value ?? null
     const list = (await $.state.get(EPICS)).value ?? []
     const width = Math.max(20, e.props.bodyColumns)
-    const room = Math.max(4, (e.viewport?.rows ?? 24) - 6 - (list.length > 0 ? list.length + 2 : 0))
+    const room = Math.max(4, (e.viewport?.rows ?? 24) - 6 - (list.length > 0 ? list.length + 2 : 0) - (session ? 4 : 0))
     const cut = (text: string) => (text.length > width - 2 ? `${text.slice(0, width - 3)}…` : text)
     const lists = columns.filter(c => c.key === 'in-progress' || c.key === 'testing' || c.key === 'todo')
     let left = room
 
     return (
       <Box flexDirection="column">
+        {session && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text>
+              <Text color="cyan">{session.model}</Text>
+              <Text dimColor>
+                {' · ctx '}
+                {session.percent === undefined ? '—' : `${session.percent}%`}
+                {session.tokens === undefined ? '' : ` (${formatTokens(session.tokens)}/${formatTokens(session.window)})`}
+                {session.usd === undefined ? '' : ` · $${session.usd.toFixed(2)}`}
+              </Text>
+            </Text>
+            <Text>
+              <Text color="magenta">{session.branch || 'no git'}</Text>
+              {session.added + session.removed > 0 && <Text color="yellow">{` +${session.added} -${session.removed}`}</Text>}
+              <Text dimColor>{` · ${session.folder}`}</Text>
+            </Text>
+            <Text dimColor>
+              {`in ${formatTokens(session.input)} · out ${formatTokens(session.output)} · total ${formatTokens(session.input + session.output)}`}
+            </Text>
+          </Box>
+        )}
         <Text>{cut(columns.map(c => `${c.label} ${c.count}`).join(' · '))}</Text>
         {list.length > 0 && (
           <Box flexDirection="column" marginTop={1}>

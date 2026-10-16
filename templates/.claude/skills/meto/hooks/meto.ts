@@ -208,6 +208,20 @@ export function sliceId(n: number, width: number, prefix = 'slice'): string {
   return `${prefix}-${String(n).padStart(width, '0')}`
 }
 
+/** `1234567` → `1.2M`, `61234` → `61k`, `512` → `512`. */
+export function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (n >= 1_000) return `${Math.round(n / 1_000)}k`
+  return String(n)
+}
+
+/** Insertions and deletions from `git diff --shortstat`. */
+export function parseShortstat(text: string): { added: number; removed: number } {
+  const added = Number(text.match(/(\d+) insertion/)?.[1] ?? 0)
+  const removed = Number(text.match(/(\d+) deletion/)?.[1] ?? 0)
+  return { added, removed }
+}
+
 export function columnsFrom(texts: Record<string, string>): BoardColumn[] {
   return TASK_FILES.map(({ key, label }) => {
     const slices = parseSlices(texts[key] ?? '')
