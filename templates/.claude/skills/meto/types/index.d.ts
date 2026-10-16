@@ -1,7 +1,20 @@
 export type Slice = { id: string; title: string; epic?: string; size?: string; needs: string[] }
 export type BoardColumn = { key: string; label: string; count: number; slices: Slice[] }
 export type Epic = { id: string; name: string; status: string; done: number; blocker: string }
-export type Session = { model: string; percent?: number; branch: string; added: number; removed: number }
+export type Session = {
+  model: string
+  user: string
+  percent?: number
+  tokens?: number
+  window: number
+  usd?: number
+  branch: string
+  added: number
+  removed: number
+  input: number
+  output: number
+  folder: string
+}
 
 declare module 'claude-code' {
   interface PluginState {
@@ -13,6 +26,8 @@ declare module 'claude-code' {
       isTouched: boolean
       isHandoffStale: boolean
       session: Session | null
+      tokensIn: number
+      tokensOut: number
     }
   }
 }

@@ -244,7 +244,7 @@ your-project/
 - **Kanban board** -- task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
 - **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
 - **Agent memory** -- persistent memory files so agents retain context across sessions
-- **meto mod** -- `.claude/skills/meto/`, a Claude Code plugin loaded automatically: board pane (`/meto-board`), clash-free slice IDs (`/meto-slice`), guards against overlapping epic agents, out-of-domain edits and duplicate agent reports, in a minimal board pane — nothing added around the prompt. `meto audit --fix` installs it into existing projects
+- **meto mod** -- `.claude/skills/meto/`, a Claude Code plugin loaded automatically: board pane (`/meto-board`), clash-free slice IDs (`/meto-slice`), guards against overlapping epic agents, out-of-domain edits and duplicate agent reports, plus swarm status, session info and a handoff reminder in the board pane — nothing added around the prompt. `meto audit --fix` installs it into existing projects
 - **Stack-aware permissions** -- `.claude/settings.json` pre-configured with the right permission allowlist for your tech stack
 - **Project MCP integrations** -- optional `.mcp.json` with GitHub, Sentry, or PostgreSQL servers ready to activate
 - **Product context** -- vision, tech stack, and decisions captured in structured files
@@ -280,7 +280,7 @@ Every project ships with the **meto mod** in `.claude/skills/meto/` -- a Claude 
 
 | Command | What it does |
 |---|---|
-| `/meto-board` | Opens a minimal board in a side pane: one session line (model, context used, branch and changes), one count line, what is in progress and testing, the next 3 slices, and `!` lines only for what needs you (an epic blocked or ready to test, the handoff due) |
+| `/meto-board` | Opens the board in a side pane: session (model, context used, cost, git user, branch and changes, tokens), column counts, swarm status, in progress, testing, next up, and a handoff reminder when one is due |
 | `/meto-slice [count] [prefix]` | Reserves the next free slice IDs, checked against the local board and `origin`, e.g. `/meto-slice 2 Lom_Slice` → `Lom_Slice-0044, Lom_Slice-0045` |
 
 **Guards** -- each refuses the tool call and tells the agent why:

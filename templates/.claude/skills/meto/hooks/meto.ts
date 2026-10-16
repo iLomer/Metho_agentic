@@ -1,6 +1,6 @@
 // Pure parsing and matching for the meto mod: no `$`, so tests cover it directly.
 
-import type { BoardColumn, Epic, Session, Slice } from '../types'
+import type { BoardColumn, Epic, Slice } from '../types'
 
 export const TASK_FILES = [
   { key: 'backlog', label: 'Backlog', file: 'ai/tasks/tasks-backlog.md' },
@@ -208,6 +208,13 @@ export function sliceId(n: number, width: number, prefix = 'slice'): string {
   return `${prefix}-${String(n).padStart(width, '0')}`
 }
 
+/** `1234567` → `1.2M`, `61234` → `61k`, `512` → `512`. */
+export function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (n >= 1_000) return `${Math.round(n / 1_000)}k`
+  return String(n)
+}
+
 /** Insertions and deletions from `git diff --shortstat`. */
 export function parseShortstat(text: string): { added: number; removed: number } {
   const added = Number(text.match(/(\d+) insertion/)?.[1] ?? 0)
@@ -220,42 +227,4 @@ export function columnsFrom(texts: Record<string, string>): BoardColumn[] {
     const slices = parseSlices(texts[key] ?? '')
     return { key, label, count: slices.length, slices: key === 'done' || key === 'backlog' ? [] : slices.slice(0, 8) }
   })
-}
-
-export type BoardView = {
-  session: string
-  counts: string
-  rows: { key: string; text: string }[]
-  alerts: string[]
-}
-
-/** The minimal board as lines: session, counts, what is moving (up to `room` rows), what needs the person. */
-export function boardView(columns: BoardColumn[], session: Session | null, epics: Epic[], isHandoffStale: boolean, room: number): BoardView {
-  const column = (key: string) => columns.find(c => c.key === key)
-  const changes = session && session.added + session.removed > 0 ? ` +${session.added} -${session.removed}` : ''
-  const sessionLine = session
-    ? [session.model, session.percent === undefined ? '' : `ctx ${session.percent}%`, session.branch === '' ? '' : `${session.branch}${changes}`]
-        .filter(part => part !== '')
-        .join(' · ')
-    : ''
-  const counts = `todo ${column('todo')?.count ?? 0} · doing ${column('in-progress')?.count ?? 0} · testing ${column('testing')?.count ?? 0} · done ${column('done')?.count ?? 0}`
-
-  const groups = [
-    { label: 'now', slices: column('in-progress')?.slices ?? [] },
-    { label: 'test', slices: column('testing')?.slices ?? [] },
-    { label: 'next', slices: (column('todo')?.slices ?? []).slice(0, 3) },
-  ]
-  const rows = groups
-    .flatMap(group =>
-      group.slices.map((slice, i) => ({ key: `${group.label}:${slice.id}`, text: `${(i === 0 ? group.label : '').padEnd(6)}${slice.id}  ${slice.title}` })),
-    )
-    .slice(0, Math.max(0, room))
-
-  const alerts = [
-    ...epics.filter(epic => epic.status === 'blocked').map(epic => `${epic.id} blocked${epic.blocker ? `: ${epic.blocker}` : ''}`),
-    ...epics.filter(epic => epic.status === 'testing-ready').map(epic => `${epic.id} ready to test`),
-    ...(isHandoffStale ? ['handoff due'] : []),
-  ]
-
-  return { session: sessionLine, counts, rows, alerts }
 }
