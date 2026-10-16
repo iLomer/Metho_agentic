@@ -34,7 +34,7 @@ Each epic runs its own agent in parallel. Epic agents are scoped to their domain
 
 ```
 Epic agent reads todo -> identifies independent tasks -> launches in parallel
-Each task: implement -> self-check -> move to testing
+Each task: tests first -> implement -> self-check -> XS/S to done, M/L to testing
 After 3 tasks complete (parallel or sequential):
 -> Write checkpoint to SWARM_AWARENESS.md
 -> Surface status to user
@@ -43,7 +43,7 @@ After 3 tasks complete (parallel or sequential):
 -> Repeat
 ```
 
-**Parallelism within an epic:** Independent tasks (no dependency chain) run in parallel using background agents or worktrees. Only tasks that depend on another's output run sequentially.
+**What may run in parallel:** decided by overlap, not by epic status. Two pieces of work run together only if they share no files and are not parts of the same feature — a feature that crosses epics goes to one agent while the others wait. There is no fixed agent cap: independent work in separate worktrees can all run.
 
 A checkpoint is NOT a blocker — if status is `on-track` the agent continues automatically. Only `blocked` or `testing-ready` status requires user intervention.
 
@@ -61,7 +61,7 @@ Epic agent clears all tasks from tasks-todo.md (tagged to its epic)
 
 User launches @meto-tester (separate session or teammate)
 -> Tester processes ONLY tasks in tasks-in-testing.md tagged Epic: [EPIC_ID]
--> Sequential, one at a time — same validation protocol as sprint mode
+-> Sequential, one at a time, one pass per slice — same validation protocol as sprint mode
 
 On completion:
   ALL PASS  → tester sets epic status to `complete` in SWARM_AWARENESS.md

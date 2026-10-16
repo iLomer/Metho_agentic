@@ -10,14 +10,13 @@ memory: false
 ## Session Start
 1. **Read `ai/handoff/current.md`** — understand current sprint state and next action before reading anything else
    > **Fallback:** If `ai/handoff/current.md` does not exist, read `ai/tasks/tasks-in-progress.md` and your memory file instead.
-2. Read `CLAUDE.md`
-3. Read `.claude/agent-memory/meto-developer/MEMORY.md`
-4. Read `/ai/workflows/code-guidelines.md` — enforce these during implementation
-5. Proceed with task pickup
+2. Read `.claude/agent-memory/meto-developer/MEMORY.md`
+3. Read `/ai/workflows/code-guidelines.md` — enforce these during implementation
+4. Proceed with task pickup
 
 ## Session End
-**[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written.**
-> If context is near the limit, write the handoff before doing anything else — it is the most important session-end action.
+Your final reply is your report: slices moved, files changed, verification output, blockers. The main session folds it into `ai/handoff/current.md` — if you ARE the main session, write the handoff yourself.
+> If context is near the limit, report before doing anything else.
 
 Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remembering.
 
@@ -28,7 +27,7 @@ Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remem
 - `package.json`, config files
 
 ## NEVER DO
-- End a session without writing `ai/handoff/current.md`
+- End a session without a final report
 - Start a slice whose `Needs` are not all in `tasks-done.md`
 - Cherry-pick — always take the TOP ready item(s) from `tasks-todo.md`
 - Modify `/ai/backlog/`, `/ai/context/`, `/ai/workflows/`
@@ -38,9 +37,9 @@ Update `.claude/agent-memory/meto-developer/MEMORY.md` with anything worth remem
 - Commit with `console.log`, `any` types, or commented-out code
 
 ## Parallel Operation
-When running as a teammate: you read CLAUDE.md and this file fresh -- you do NOT have the lead's conversation history.
+When running as a teammate: you do NOT have the lead's conversation history.
 Only write files listed under "What I Own".
-When a task is ready for testing, message @meto-tester directly (e.g., "tell @meto-tester slice-X is in testing").
+Don't message @meto-tester — moving the block to `tasks-in-testing.md` is the hand-off.
 Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.md`, or `tasks-done.md`.
 
 ## Context Budget
@@ -50,12 +49,14 @@ Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.m
 - Check Codebase Map in your memory file before reading files — it may already have what you need
 
 ## Task Pickup Protocol
+**Returned slice?** If the block has a `FAILED VALIDATION` note, fix only the listed criteria — don't redo the passing ones.
+
 1. Read `tasks-todo.md` — take TOP item (or batch of consecutive items in batch mode)
 2. Copy full task block(s) to `tasks-in-progress.md`, add `Started: [date]`
 3. Delete the task block(s) from `tasks-todo.md`
 4. Write the failing tests first — one per acceptance criterion (use its `Verify:` line when present)
 5. Implement until they pass
-6. Run self-check
+6. Run self-check — paste the test/typecheck/lint output into the block as `Verified:` so nobody re-derives it
 7. Route by size:
    - **XS/S:** Copy to `tasks-done.md` with `Completed: [date]`, `Files changed: [list]`, and `Self-validated: PASS`
    - **M/L:** Copy to `tasks-in-testing.md` with `Completed: [date]` and `Files changed: [list]`
@@ -63,6 +64,7 @@ Never write to `/ai/backlog/`, `/ai/context/`, `tasks-backlog.md`, `tasks-todo.m
 9. Commit once at the end of the batch: `feat(scope): description [dev-agent]`
 
 ## Self-Check Before Moving to Testing
+You own these checks — the tester does not repeat them by hand.
 - [ ] All acceptance criteria implemented
 - [ ] TypeScript compiles — no errors
 - [ ] No `any` types

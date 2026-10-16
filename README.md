@@ -150,7 +150,7 @@ Every scaffolded project includes `ai/workflows/code-guidelines.md` — enforced
 | Nesting depth | 3 levels max |
 | Circular imports | Not allowed |
 
-Guidelines include stack-specific rules (e.g., "never call Supabase directly from components" for Next.js, "always check error returns" for Go). The developer agent reads these at session start, and the tester agent verifies them before sign-off.
+Guidelines include stack-specific rules (e.g., "never call Supabase directly from components" for Next.js, "always check error returns" for Go). The developer agent reads these at session start and checks them before handing off; the tester runs the lint and typecheck commands instead of re-checking them by hand.
 
 ---
 
@@ -189,10 +189,6 @@ your-project/
 │   │   ├── meto-developer/MEMORY.md
 │   │   ├── meto-pm/MEMORY.md
 │   │   └── meto-tester/MEMORY.md
-│   ├── rules/
-│   │   ├── agent-developer.md    # quick NEVER DO / ALWAYS rules card
-│   │   ├── agent-pm.md
-│   │   └── agent-tester.md
 │   └── settings.json             # stack-aware permission allowlist
 ├── ai/
 │   ├── backlog/
@@ -246,7 +242,6 @@ your-project/
 - **CLAUDE.md** -- project instructions that Claude Code reads every session, pre-filled with your vision, stack, and conventions
 - **Kanban board** -- task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
 - **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
-- **Agent quick-rules** -- `.claude/rules/` compact "NEVER DO / ALWAYS" cards Claude Code loads as context for each agent role
 - **Agent memory** -- persistent memory files so agents retain context across sessions
 - **Stack-aware permissions** -- `.claude/settings.json` pre-configured with the right permission allowlist for your tech stack
 - **Project MCP integrations** -- optional `.mcp.json` with GitHub, Sentry, or PostgreSQL servers ready to activate
@@ -299,7 +294,7 @@ This reads `SWARM_AWARENESS.md` and prints a formatted dashboard -- epic progres
 3. Launch agents in separate Claude Code sessions -- they work in parallel
 4. Agents checkpoint every 3 tasks and flag conflicts for shared files
 5. When an epic finishes all its tasks, it sets status to `testing-ready` and pauses
-6. Launch `@meto-tester` scoped to that epic -- it validates all tasks before marking the epic `complete`
+6. Launch `@meto-tester` scoped to that epic -- it validates the M/L tasks (XS/S are self-validated) before marking the epic `complete`
 7. Run `npx meto-cli status` anytime to see the swarm state
 
 The generated `CLAUDE.md` enforces swarm mode from the first session -- it prevents Claude from defaulting to `@meto-pm` (sprint behaviour) and directs it to read `SWARM_AWARENESS.md` and launch epic agents instead.
@@ -317,7 +312,7 @@ Meto is optimized for Claude Code's **1M token context window**. With 5x more ro
 - **Less frequent `/compact`** -- use it when responses slow down, not proactively
 - **Memory files still matter** -- they persist across sessions, not just within them
 
-Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Every session also ends by writing `ai/handoff/current.md` — a structured snapshot of sprint state, completed steps, blockers, and the single next action. The next agent reads this before anything else. Git history preserves the full audit trail of handoffs.
+Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Every session also ends with the main session writing `ai/handoff/current.md` once (subagents report in their final reply) — a structured snapshot of sprint state, completed steps, blockers, and the single next action. The next agent reads this before anything else. Git history preserves the full audit trail of handoffs.
 
 **Board compaction:** On long-running projects, `tasks-done.md` accumulates closed task definitions and starts adding noise to agent context. Run `meto-cli compact` to replace each closed task with a 2–3 sentence Claude Haiku summary — same information, a fraction of the tokens. Use `--dry-run` to preview before writing, and `--min-tasks=N` to skip compaction on short projects (default threshold: 20 tasks).
 

@@ -10,7 +10,7 @@ This directory holds the tester rubric and related evaluation artifacts for the 
 |------|---------|
 | `tester-rubric.md` | Blank rubric template — copy and fill in for each slice evaluation |
 | `tester-calibration-log.md` | Running log of past misjudgments and corrected thresholds (added in slice-090) |
-| `slice-NNN-score.md` | Completed rubric for slice NNN — created by @meto-tester after each evaluation |
+| `slice-NNN-score.md` | Completed rubric for slice NNN — created by @meto-tester after each M/L evaluation (XS/S are self-validated and have none) |
 
 ---
 
@@ -27,10 +27,11 @@ This directory holds the tester rubric and related evaluation artifacts for the 
 ## Workflow
 
 1. @meto-tester copies `tester-rubric.md` to `ai/rubric/slice-NNN-score.md` (where NNN is the slice ID).
-2. Tester runs all verification commands (`npx vitest run`, `npx tsc --noEmit`, lint) and records exit codes in the rubric table.
-3. Tester scores each of the 5 dimensions, writes critiques for any dimension below 3.
-4. Tester writes the overall outcome (PASS / CONDITIONAL PASS / FAIL) and signs off.
-5. Tester moves the task to `tasks-done.md` (PASS / CONDITIONAL PASS) or back to `tasks-todo.md` (FAIL), attaching the completed rubric file path in the task block.
+2. Tester runs the verification commands once (`npx vitest run`, `npx tsc --noEmit`, lint) and records exit codes in the rubric table.
+3. Tester scores each of the 5 dimensions, writes critiques only for dimensions below 3.
+4. Tester writes the overall outcome (PASS / CONDITIONAL PASS / FAIL).
+5. Tester moves the task to `tasks-done.md` (PASS / CONDITIONAL PASS) or back to `tasks-todo.md` (FAIL), attaching the rubric file path in the task block. A FAIL lists only the failed criteria.
+6. On retest, the tester writes a new score file covering only the failed criteria plus a fresh command run.
 
 ---
 

@@ -8,10 +8,9 @@ memory: false
 # PM Agent
 
 ## Session Start
-1. Read `CLAUDE.md`
-2. Read `.claude/agent-memory/meto-pm/MEMORY.md`
-3. Read `/ai/context/product-vision.md`, `tech-stack.md`, `decisions.md`
-4. Proceed with requested action
+1. Read `.claude/agent-memory/meto-pm/MEMORY.md`
+2. Read `/ai/context/product-vision.md`, `tech-stack.md`, `decisions.md`
+3. Proceed with requested action
 
 ## Session End
 Update `.claude/agent-memory/meto-pm/MEMORY.md` with anything worth remembering.
@@ -40,9 +39,9 @@ If `/ai/backlog/epics.md` has no real epics yet:
 - Run bash commands
 
 ## Parallel Operation
-When running as a teammate: you read CLAUDE.md and this file fresh -- you do NOT have the lead's conversation history.
+When running as a teammate: you do NOT have the lead's conversation history.
 Only write files listed under "What I Own".
-If you need developer or tester action, message them directly (e.g., "tell @meto-developer the backlog is ready").
+Don't message other agents — a task in `tasks-todo.md` is the hand-off. Say in your final reply what is ready.
 Never write to `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md`, or `tasks-done.md`.
 
 ## Context Budget

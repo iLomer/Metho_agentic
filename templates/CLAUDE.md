@@ -46,9 +46,10 @@ tasks-backlog → tasks-todo → tasks-in-progress → tasks-in-testing → task
 - **The task block is the agreement:** acceptance criteria + Out of Scope define done. No separate contract or sign-off before coding.
 - **XS/S slices:** developer self-validates and moves straight to done (no tester)
 - **M/L slices:** must go through `@meto-tester` before done
-- Only `@meto-tester` moves tasks backwards (testing → todo on fail)
+- Only `@meto-tester` moves tasks backwards (testing → todo on fail) — the fail note lists the failed criteria, and the retest checks only those plus the full test run
+- **The board is the status:** agents don't message each other — their final reply is the report, and the next agent reads the board
 - **Batch mode:** developer may process multiple slices per session, committing once at the end
-- **Parallel work:** independent slices (no `Needs` between them, no shared files) may run at the same time — use `meto ready` to find them
+- **Parallel work:** slices may run at the same time only when nothing links them — no `Needs` between them, no shared files, and not parts of the same feature. Use `meto ready` to find candidates. No fixed agent cap: independent slices in separate worktrees can all run
 
 See `/ai/workflows/definition-of-done.md` for done criteria.
 
@@ -90,9 +91,7 @@ This project supports Agent Teams. The lead agent can spawn teammates using `@me
 
 Each agent writes only its own memory file in `.claude/agent-memory/` -- never another agent's.
 
-Teammates do NOT inherit the lead's conversation history. Each teammate reads CLAUDE.md and its agent definition fresh.
-
-**Per-agent rules live in `.claude/rules/` — Claude Code loads them automatically based on which agent is active.**
+Teammates do NOT inherit the lead's conversation history. Their rules live only in their agent definition (`.claude/agents/`), which loads when the agent runs.
 
 ---
 
@@ -102,12 +101,11 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 - **Session start — checklist (run in order):**
   1. **Read `ai/handoff/current.md`** — understand current sprint state and next action before reading anything else
      > **Fallback:** If `ai/handoff/current.md` does not exist, read `ai/tasks/tasks-in-progress.md` and the memory file for your agent role instead.
-  2. Read `CLAUDE.md`
-  3. Read your agent memory file (`.claude/agent-memory/<your-role>/MEMORY.md`)
-  4. Read the board (`ai/tasks/tasks-in-progress.md`) — then act
+  2. Read your agent memory file (`.claude/agent-memory/<your-role>/MEMORY.md`)
+  3. Read the board (`ai/tasks/tasks-in-progress.md`) — then act
 - **Session end — blocking steps (must complete before closing the session):**
-  1. **[BLOCKING] Write `ai/handoff/current.md` using the handoff template — do not end the session until this file is written**
-  2. Update your memory file with decisions, patterns, and what to pick up next
+  1. **[BLOCKING] The main session writes `ai/handoff/current.md` once, using the handoff template.** Subagents don't write it — their final reply goes into it.
+  2. Each agent that ran updates its own memory file with decisions, patterns, and what to pick up next
   > **Context limit reminder:** If context is near the limit, write the handoff before doing anything else — it is the most important session-end action.
 - **Context budget:** Grep before reading full files; read targeted line ranges; max 10 files open before acting
 - **Red flag:** If you re-read a file you already read this session, note key info in memory instead
@@ -121,18 +119,6 @@ Teammates do NOT inherit the lead's conversation history. Each teammate reads CL
 - **Systematic debugging:** Root-cause first — read the error, trace the call, form a hypothesis. If 3 distinct fixes fail, stop and re-plan rather than trying a fourth.
 - **Verify before done:** Never mark a task complete without running the verification command in the current session. No verbal claims — show the output.
 - **Minimal impact:** Changes touch only what's necessary. No temporary fixes — find root causes.
-
----
-
-## NEVER DO — @meto-developer
-
-- End a session without writing `ai/handoff/current.md`
-- Start a slice whose `Needs` are not all in `tasks-done.md`
-- Cherry-pick — always take the TOP ready item(s) from `tasks-todo.md`
-- Modify backlog or todo files (owned by @meto-pm)
-- Move M/L tasks to `tasks-done.md` (only @meto-tester does that — XS/S go straight to done after self-validation)
-- Hardcode scaffold content in source — always read from templates
-- Commit with `console.log`, `any` types, or commented-out code
 
 ---
 

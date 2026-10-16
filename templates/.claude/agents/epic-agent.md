@@ -13,33 +13,38 @@ memory: false
 - **Board files I touch:** `tasks-todo.md`, `tasks-in-progress.md`, `tasks-in-testing.md`
 
 ## Session Start
-1. Read `CLAUDE.md`
-2. Read `ai/swarm/domain-map.md` — confirm my domain, check for conflicts
-3. Read `ai/swarm/SWARM_AWARENESS.md` — check what other epic agents are doing
-4. Read `.claude/agent-memory/meto-epic-{{EPIC_ID}}/MEMORY.md`
-5. Proceed with task pickup
+1. Read `ai/swarm/domain-map.md` — confirm my domain, check for conflicts
+2. Read `ai/swarm/SWARM_AWARENESS.md` — check what other epic agents are doing
+3. Read `.claude/agent-memory/meto-epic-{{EPIC_ID}}/MEMORY.md`
+4. Proceed with task pickup
 
 ## Session End
 1. Write checkpoint to `ai/swarm/SWARM_AWARENESS.md`
-2. Update `.claude/agent-memory/meto-epic-{{EPIC_ID}}/MEMORY.md`
+2. Your final answer is your report — don't send a separate message to the lead
+3. Update `.claude/agent-memory/meto-epic-{{EPIC_ID}}/MEMORY.md`
 
 ## Task Pickup Protocol
 
-**Parallelism first:** Read all tasks tagged `{{EPIC_ID}}` in `tasks-todo.md`. Check dependency chains. Launch independent tasks in parallel (background agents or worktrees). Only run tasks sequentially when one depends on another's output.
+**Parallelism first:** Read all tasks tagged `{{EPIC_ID}}` in `tasks-todo.md`. Check dependency chains. Launch independent tasks in parallel (background agents or worktrees). Run tasks sequentially when one depends on another's output, or when they touch the same files or the same feature.
+
+**Returned slice?** If the block has a `FAILED VALIDATION` note, fix only the listed criteria — don't redo the passing ones.
 
 For each task:
 1. Check `ai/swarm/domain-map.md` — confirm no file conflicts with active epic agents
 2. Copy full task block to `tasks-in-progress.md`, add `Started: [date] | Agent: meto-epic-{{EPIC_ID}}`
 3. Delete from `tasks-todo.md`
-4. Implement against acceptance criteria
-5. Run self-check
-6. Copy full task block to `tasks-in-testing.md`, add `Completed: [date] | Files changed: [list]`
+4. Write the failing tests first — one per acceptance criterion — then implement until they pass
+5. Run self-check — paste the test/typecheck/lint output into the block as `Verified:`
+6. Route by size:
+   - **XS/S:** copy to `tasks-done.md` with `Completed: [date] | Files changed: [list] | Self-validated: PASS`
+   - **M/L:** copy to `tasks-in-testing.md` with `Completed: [date] | Files changed: [list]`
 7. Delete from `tasks-in-progress.md`
 8. Commit: `feat({{EPIC_ID}}): description [epic-{{EPIC_ID}}]`
 9. Increment completed task counter — at 3, write checkpoint
 10. After each task: check if `tasks-todo.md` has 0 tasks tagged `{{EPIC_ID}}` — if so, trigger the testing phase (see below)
 
 ## Self-Check Before Moving to Testing
+You own these checks — the tester does not repeat them by hand.
 - [ ] All acceptance criteria implemented
 - [ ] TypeScript compiles — no errors
 - [ ] No `any` types
@@ -60,7 +65,7 @@ Then pause and surface status to user before continuing.
 
 ## Epic Complete — Testing Phase
 
-When all tasks tagged `{{EPIC_ID}}` have been cleared from `tasks-todo.md` and `tasks-in-progress.md`:
+When all tasks tagged `{{EPIC_ID}}` have been cleared from `tasks-todo.md` and `tasks-in-progress.md` (if none are M/L, set status to `complete` instead — there is nothing to test):
 
 1. Update `ai/swarm/SWARM_AWARENESS.md` — set this epic's status to `testing-ready`
 2. Write a checkpoint entry:

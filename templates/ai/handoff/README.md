@@ -44,9 +44,9 @@ If `ai/handoff/current.md` does not exist (new project, or first session ever), 
 
 ---
 
-## All Agents Must Write This File at Session End
+## The Main Session Writes This File at Session End
 
-Before ending a session, every agent must overwrite `current.md` with the latest state. Copy `templates/ai/handoff/current.md`, fill in every section, commit it.
+Before ending a session, the main session (the one the user talks to) overwrites `current.md` once with the latest state. Subagents don't write it — their final reply is their report, and the main session folds those reports in. If an agent runs as the main session, it writes the handoff itself. Copy `templates/ai/handoff/current.md`, fill in every section, commit it.
 
 **The handoff write is not optional.** It is the last action of every session, before the session closes. If context is approaching the limit, write the handoff before doing anything else.
 
@@ -68,6 +68,7 @@ The blank template lives at `templates/ai/handoff/current.md`. Copy it, replace 
 ## NEVER DO
 
 - End a session without overwriting `current.md`
+- Have each subagent write its own handoff — one write per session, by the main session
 - Append to `current.md` instead of overwriting it
 - Create numbered files (`handoff-001.md`, `handoff-2026-03-29.md`) — git history is the archive
 - Leave placeholder tokens (`{{SLICE_ID}}`) unfilled in a committed handoff

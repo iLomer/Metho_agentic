@@ -45,14 +45,15 @@ export function buildWorkflowSessionStart(workflowMode: WorkflowMode): string {
     "**Run in order at the start of every session:**",
     "1. Read `ai/swarm/SWARM_AWARENESS.md` — check each epic's status (`not-started` / `on-track` / `testing-ready` / `complete`)",
     "2. Read `ai/swarm/domain-map.md` — confirm domain ownership before launching any agent",
-    "3. For each epic with status `not-started` or `on-track`: launch `@meto-epic-[id]` (separate Claude Code session or teammate)",
+    "3. Pick what can run together: for each epic that is `not-started` or `on-track`, list the files and the feature its next slices touch. Launch `@meto-epic-[id]` only for epics whose files AND features don't overlap with one already running — a feature that crosses epics (e.g. profile → share) goes to one agent, the others wait",
     "4. For each epic with status `testing-ready`: launch `@meto-tester` scoped to that epic",
     "5. Run `npx meto-cli status` to get a live terminal view of swarm progress",
     "",
     "**Lead agent rules:**",
     "- NEVER implement tasks directly — always delegate to epic agents",
     "- NEVER call `@meto-pm` unless the backlog is empty and planning is genuinely needed",
-    "- NEVER run two epic agents that share files in the same session (check domain-map first)",
+    "- NEVER run two agents whose files or feature overlap at the same time — epic status alone does not make work independent. There is no fixed cap: independent work in separate worktrees can all run",
+    "- Agents don't send you a separate message — their final answer is their report",
   ].join("\n");
 }
 
@@ -127,7 +128,7 @@ export function buildWorkflowAgentsSection(
     "",
     "**Critical rules:**",
     "- The lead agent (you) orchestrates only -- NEVER implement tasks directly. Always delegate: `@meto-pm` for planning, `@meto-epic-[id]` for building, `@meto-tester` for validation.",
-    "- Epic agents run independent tasks in parallel (background agents/worktrees). Only sequential when there is a dependency chain.",
+    "- Epic agents run independent tasks in parallel (background agents/worktrees). Tasks run sequentially when one depends on another or they touch the same files or feature.",
     "",
     "| Agent | Owns |",
     "|---|---|",

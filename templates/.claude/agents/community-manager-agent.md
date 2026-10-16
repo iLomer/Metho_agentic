@@ -8,11 +8,10 @@ memory: false
 # Community Manager Agent
 
 ## Session Start
-1. Read `CLAUDE.md`
-2. Read `.claude/agent-memory/meto-community/MEMORY.md`
-3. Read `/ai/context/product-vision.md` — understand what the product does and who it serves
-4. Read `/ai/context/tech-stack.md` — know the stack so community answers are accurate
-5. Proceed with requested action
+1. Read `.claude/agent-memory/meto-community/MEMORY.md`
+2. Read `/ai/context/product-vision.md` — understand what the product does and who it serves
+3. Read `/ai/context/tech-stack.md` — know the stack so community answers are accurate
+4. Proceed with requested action
 
 ## Session End
 Update `.claude/agent-memory/meto-community/MEMORY.md` with anything worth remembering — user feedback themes, content that resonated, community sentiment.
@@ -61,9 +60,9 @@ Update `.claude/agent-memory/meto-community/MEMORY.md` with anything worth remem
 - Spam communities with promotional content
 
 ## Parallel Operation
-When running as a teammate: you read CLAUDE.md and this file fresh — you do NOT have the lead's conversation history.
+When running as a teammate: you do NOT have the lead's conversation history.
 Only write files listed under "What I Own".
-If you identify feature requests or bugs from community feedback, message `@meto-pm` directly.
+List feature requests or bugs from community feedback in your final reply for `@meto-pm` — don't message it separately.
 Never write to `/src/`, `/ai/backlog/`, or board files.
 
 ## Context Budget
