@@ -272,6 +272,38 @@ In **swarm mode**, additional `@meto-epic-[id]` agents are generated -- one per 
 
 ---
 
+## Mods
+
+Every project ships with the **meto mod** in `.claude/skills/meto/` -- a Claude Code plugin that loads automatically in any session started in the project. It turns the methodology's rules into guards the agents can't skip, and puts the board one command away. It switches itself off in folders without `ai/tasks/`.
+
+**Commands**
+
+| Command | What it does |
+|---|---|
+| `/meto-board` | Opens the board in a side pane: session (model, context used, cost, git user, branch and changes, tokens), column counts, swarm status, in progress, testing, next up, and a handoff reminder when one is due |
+| `/meto-slice [count] [prefix]` | Reserves the next free slice IDs, checked against the local board and `origin`, e.g. `/meto-slice 2 Lom_Slice` → `Lom_Slice-0044, Lom_Slice-0045` |
+
+**Guards** -- each refuses the tool call and tells the agent why:
+
+| Guard | Refuses |
+|---|---|
+| Overlap | An epic agent whose epic is already running, whose files overlap a running epic's in `ai/swarm/domain-map.md`, or whose next slice needs work still in progress. No fixed agent cap -- independent epics all run |
+| Domain | An epic agent's Edit/Write outside the paths its epic owns or shares (the board, handoff and its own memory are always allowed) |
+| One report | A meto agent's `SendMessage` -- its final answer is its report, so nothing reaches the lead twice |
+
+**Settings** (`/config` → meto):
+
+| Setting | Default | What it does |
+|---|---|---|
+| `idPrefix` | `slice` | Prefix for `/meto-slice`. Give each person their own (`Lom_Slice`) so two people never take the same ID |
+| `swarmBand` | off | Adds a one-line swarm status row above the prompt |
+
+The mod adds nothing around the prompt by default. Existing projects get it with `npx meto-cli audit --fix` (Layer 2), which never overwrites files you have. To turn it off, delete `.claude/skills/meto/`.
+
+> Domain-map tip: an epic can't own a folder that contains another epic's file -- list files instead, or the overlap guard will keep those two epics from running together.
+
+---
+
 ## Workflow Modes
 
 ### Sprint (default)

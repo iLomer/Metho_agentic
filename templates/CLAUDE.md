@@ -56,7 +56,7 @@ See `/ai/workflows/definition-of-done.md` for done criteria.
 ### meto mod (`.claude/skills/meto/`)
 
 Claude Code loads it automatically. It enforces the rules above instead of trusting prompts:
-- `/meto-board` — the board in a side pane, topped by the session: model, context, branch and changes, tokens, cost; `/meto-slice [count]` — the next free slice IDs, checked against origin so two sessions never take the same number
+- `/meto-board` — the board in a side pane, topped by the session: model, context, cost, git user, branch and changes, tokens; `/meto-slice [count]` — the next free slice IDs, checked against origin so two sessions never take the same number
 - Refuses an epic agent that is already running, shares files with a running one (`ai/swarm/domain-map.md`), or needs a slice still in progress
 - Refuses an epic agent's edit outside its domain, and any meto agent's separate message — the final answer is the report
 - Nothing above or below the prompt: swarm status and the handoff reminder live in `/meto-board`; the `swarmBand` setting in `/config` adds a swarm row above the prompt

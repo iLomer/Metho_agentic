@@ -3,6 +3,7 @@ export type BoardColumn = { key: string; label: string; count: number; slices: S
 export type Epic = { id: string; name: string; status: string; done: number; blocker: string }
 export type Session = {
   model: string
+  user: string
   percent?: number
   tokens?: number
   window: number

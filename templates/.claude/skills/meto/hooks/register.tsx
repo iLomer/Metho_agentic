@@ -64,15 +64,17 @@ async function git($: EngineInterface, args: string[]): Promise<string> {
 
 /** What the status line showed: model, context, branch and changes, tokens, folder, cost. */
 async function refreshSession($: EngineInterface): Promise<void> {
-  const [model, usage, branch, stat, cwd] = await Promise.all([
+  const [model, usage, branch, stat, cwd, user] = await Promise.all([
     $.session.model(),
     $.session.usage(),
     git($, ['rev-parse', '--abbrev-ref', 'HEAD']),
     git($, ['diff', '--shortstat', 'HEAD']),
     $.session.cwd(),
+    git($, ['config', 'user.name']),
   ])
   await $.state.set(SESSION, {
     model,
+    user,
     percent: usage.context.percent,
     tokens: usage.context.tokens,
     window: usage.context.window,
@@ -295,6 +297,7 @@ export const register: Register = (on, options) => {
               </Text>
             </Text>
             <Text>
+              {session.user !== '' && <Text>{`${session.user} · `}</Text>}
               <Text color="magenta">{session.branch || 'no git'}</Text>
               {session.added + session.removed > 0 && <Text color="yellow">{` +${session.added} -${session.removed}`}</Text>}
               <Text dimColor>{` · ${session.folder}`}</Text>
