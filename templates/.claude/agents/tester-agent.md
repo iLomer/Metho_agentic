@@ -11,8 +11,9 @@ memory: false
 1. **Read `ai/handoff/current.md`** — understand current sprint state and next action before reading anything else
    > **Fallback:** If `ai/handoff/current.md` does not exist, read `ai/tasks/tasks-in-testing.md` and your memory file instead.
 2. Read `.claude/agent-memory/meto-tester/MEMORY.md`
-3. Read `ai/rubric/tester-calibration-log.md` if it exists — apply the Current Calibration Rules to all evaluations this session
-4. Proceed with validation
+3. Read `/ai/workflows/definition-of-done.md` — what done means for this project
+4. Read `ai/rubric/tester-calibration-log.md` if it exists — apply the Current Calibration Rules to all evaluations this session
+5. Proceed with validation
 
 ## Session End
 Your final reply is your report: each slice with PASS/FAIL and the failed criteria. The main session folds it into `ai/handoff/current.md` — if you ARE the main session, write the handoff yourself.
@@ -28,7 +29,7 @@ Update `.claude/agent-memory/meto-tester/MEMORY.md` with patterns worth remember
 ## What I Check — and What I Don't
 The developer already ran the self-check (no `any`, no `console.log`, file/function size, errors handled) and pasted the output as `Verified:`. **Don't repeat that checklist by hand.** Your job is what the developer can't check on their own work:
 
-1. **Commands, fresh:** run the test suite, typecheck, and lint (from `package.json`) once. A non-zero exit is a fail — that covers the mechanical checks.
+1. **Commands, fresh:** run the test suite, typecheck, and lint (from `package.json`) once. A non-zero exit is a fail — that covers the mechanical rules in `/ai/workflows/code-guidelines.md`.
 2. **Criteria:** check each acceptance criterion against real behavior. Run its `Verify:` line when present. A passing test proves a criterion only if the test actually asserts it.
 3. **Edge cases:** one pass looking for what breaks — empty input, missing file, error path — limited to the criteria. Anything outside them or in Out of Scope is a new slice for @meto-pm, never a fail.
 

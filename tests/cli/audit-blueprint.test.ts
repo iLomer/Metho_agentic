@@ -37,7 +37,7 @@ describe("AUDIT_BLUEPRINT structure", () => {
   });
 
   it("Layer 2 has 10 expectations", () => {
-    expect(AUDIT_BLUEPRINT[2].expectations).toHaveLength(10);
+    expect(AUDIT_BLUEPRINT[2].expectations).toHaveLength(11);
   });
 
   it("Layer 3 has 12 expectations", () => {
@@ -237,5 +237,33 @@ describe("Layer 3 specifics", () => {
     for (const m of memRefs) {
       expect(m.containsPattern).toBe("agent-memory");
     }
+  });
+});
+
+describe("AUDIT_BLUEPRINT matches the templates", () => {
+  it("every file-contains pattern is present in the scaffolded template", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    const checks = AUDIT_BLUEPRINT.flatMap((l) => l.expectations).filter(
+      (e) => e.checkType === "file-contains" && e.containsPattern !== undefined,
+    );
+    for (const check of checks) {
+      let content: string;
+      try {
+        content = await readFile(join("templates", check.path), "utf-8");
+      } catch {
+        continue; // not a scaffolded file (e.g. .git)
+      }
+      expect(
+        content.toLowerCase().includes((check.containsPattern ?? "").toLowerCase()),
+        `${check.id}: templates/${check.path} must contain "${check.containsPattern}"`,
+      ).toBe(true);
+    }
+  });
+
+  it("checks for the meto mod", () => {
+    const mod = AUDIT_BLUEPRINT[2].expectations.find((e) => e.id === "L2-meto-mod");
+    expect(mod?.path).toBe(".claude/skills/meto/.claude-plugin/plugin.json");
+    expect(mod?.fixable).toBe(true);
   });
 });
