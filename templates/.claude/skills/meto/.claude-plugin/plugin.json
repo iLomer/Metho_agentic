@@ -1,6 +1,6 @@
 {
   "name": "meto",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Guards and views for meto projects: overlap and domain guards, one report per agent, board pane, swarm band, slice IDs, handoff reminder",
   "types": "./types/index.d.ts",
   "author": {
@@ -12,6 +12,12 @@
       "title": "Slice ID prefix",
       "description": "Prefix /meto-slice uses for new IDs: slice gives slice-173, Lom_Slice gives Lom_Slice-0043. Set your own so two people never take the same ID.",
       "default": "slice"
+    },
+    "swarmBand": {
+      "type": "boolean",
+      "title": "Swarm row above the prompt",
+      "description": "Show each epic's status above the prompt. Off by default; /meto-board always shows it.",
+      "default": false
     }
   }
 }

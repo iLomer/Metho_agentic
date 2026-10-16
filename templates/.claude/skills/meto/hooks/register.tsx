@@ -31,6 +31,10 @@ const STARTED_AT = { plugin: 'meto', key: 'startedAt' } as const
 const IS_TOUCHED = { plugin: 'meto', key: 'isTouched' } as const
 const IS_HANDOFF_STALE = { plugin: 'meto', key: 'isHandoffStale' } as const
 
+function epicColor(status: string): 'error' | 'warning' | 'success' | undefined {
+  return status === 'blocked' ? 'error' : status === 'testing-ready' ? 'warning' : status === 'complete' ? 'success' : undefined
+}
+
 async function isMetoProject($: EngineInterface): Promise<boolean> {
   return (await $.state.get(IS_METO)).value === true
 }
@@ -132,6 +136,7 @@ async function reserveSlices($: EngineInterface, count: number, prefix: string):
 
 export const register: Register = (on, options) => {
   const defaultPrefix = typeof options.idPrefix === 'string' && options.idPrefix !== '' ? options.idPrefix : 'slice'
+  const showSwarmBand = options.swarmBand === true
 
   on('session.start', async ($, e, next) => {
     const result = await next(e)
@@ -214,8 +219,9 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e)
     const columns = (await $.state.get(BOARD)).value ?? []
+    const list = (await $.state.get(EPICS)).value ?? []
     const width = Math.max(20, e.props.bodyColumns)
-    const room = Math.max(4, (e.viewport?.rows ?? 24) - 6)
+    const room = Math.max(4, (e.viewport?.rows ?? 24) - 6 - (list.length > 0 ? list.length + 2 : 0))
     const cut = (text: string) => (text.length > width - 2 ? `${text.slice(0, width - 3)}…` : text)
     const lists = columns.filter(c => c.key === 'in-progress' || c.key === 'testing' || c.key === 'todo')
     let left = room
@@ -223,6 +229,16 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Text>{cut(columns.map(c => `${c.label} ${c.count}`).join(' · '))}</Text>
+        {list.length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            <Text bold>Swarm</Text>
+            {list.map(epic => (
+              <Text key={epic.id} color={epicColor(epic.status)}>
+                {cut(`${epic.id} ${epic.status} ${epic.blocker ? `— ${epic.blocker}` : `(${epic.done} done)`}`)}
+              </Text>
+            ))}
+          </Box>
+        )}
         {lists.map(column => {
           const shown = column.slices.slice(0, Math.max(0, Math.min(column.key === 'todo' ? 3 : 8, left)))
           left -= shown.length + 1
@@ -242,16 +258,14 @@ export const register: Register = (on, options) => {
     )
   })
 
-  // Swarm band and handoff reminder above the prompt.
+  // Above the prompt: the handoff reminder when it is due, and the swarm row only when `swarmBand` is on.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || !(await isMetoProject($))) return next(e)
-    const list = (await $.state.get(EPICS)).value ?? []
+    const list = showSwarmBand ? ((await $.state.get(EPICS)).value ?? []) : []
     const stale = (await $.state.get(IS_HANDOFF_STALE)).value === true
     if (list.length === 0 && !stale) return next(e)
 
     const { Box, Text } = $.ui.resolve(e)
-    const color = (status: string) =>
-      status === 'blocked' ? 'error' : status === 'testing-ready' ? 'warning' : status === 'complete' ? 'success' : undefined
 
     return (
       <Box flexDirection="column">
@@ -259,10 +273,9 @@ export const register: Register = (on, options) => {
           <Text>
             <Text dimColor>swarm </Text>
             {list.map((epic, i) => (
-              <Text key={epic.id} color={color(epic.status)}>
+              <Text key={epic.id} color={epicColor(epic.status)}>
                 {i > 0 ? ' · ' : ''}
                 {epic.id} {epic.status}
-                {epic.blocker ? `: ${epic.blocker.length > 40 ? `${epic.blocker.slice(0, 39)}…` : epic.blocker}` : ` ${epic.done}`}
               </Text>
             ))}
           </Text>
