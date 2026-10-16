@@ -290,6 +290,14 @@ const LAYER_2_EXPECTATIONS: BlueprintExpectation[] = [
     layer: 2,
     fixable: true,
   },
+  {
+    id: "L2-meto-mod",
+    description: "meto Claude Code mod (board, guards, slice IDs)",
+    checkType: "file-exists",
+    path: ".claude/skills/meto/.claude-plugin/plugin.json",
+    layer: 2,
+    fixable: true,
+  },
 ];
 
 // ---------------------------------------------------------------------------

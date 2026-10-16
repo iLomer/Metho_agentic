@@ -163,6 +163,13 @@ describe("audit integration -- fully scaffolded project", () => {
     await mkdir(join(dir, ".claude/agent-memory/meto-tester"), {
       recursive: true,
     });
+    await mkdir(join(dir, ".claude/skills/meto/.claude-plugin"), {
+      recursive: true,
+    });
+    await writeFile(
+      join(dir, ".claude/skills/meto/.claude-plugin/plugin.json"),
+      '{ "name": "meto" }\n',
+    );
 
     // Layer 3: governance (content already embedded above)
     await writeFile(

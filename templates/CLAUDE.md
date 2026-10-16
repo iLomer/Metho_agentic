@@ -53,6 +53,14 @@ tasks-backlog → tasks-todo → tasks-in-progress → tasks-in-testing → task
 
 See `/ai/workflows/definition-of-done.md` for done criteria.
 
+### meto mod (`.claude/skills/meto/`)
+
+Claude Code loads it automatically. It enforces the rules above instead of trusting prompts:
+- `/meto-board` — the board in a side pane; `/meto-slice [count]` — the next free slice IDs, checked against origin so two sessions never take the same number
+- Refuses an epic agent that is already running, shares files with a running one (`ai/swarm/domain-map.md`), or needs a slice still in progress
+- Refuses an epic agent's edit outside its domain, and any meto agent's separate message — the final answer is the report
+- Shows swarm status and a handoff reminder above the prompt
+
 ### Task Definition Format
 
 Each task block uses this structure:

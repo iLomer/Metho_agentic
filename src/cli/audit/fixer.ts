@@ -9,6 +9,7 @@ import {
 import type { TokenMap } from "../renderer.js";
 import type { WorkflowMode } from "../types.js";
 import type { ScanResult, LayerScanResult } from "./scanner.js";
+import { installMetoMod, METO_MOD_DIR } from "./mod-install.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -485,6 +486,30 @@ export async function fixLayerTwo(
           scanResult: failed,
           outcome: "error",
           message: `Failed to create ${expectation.path}/: ${reason}`,
+        };
+        fixes.push(result);
+        p.log.error(result.message);
+      }
+      continue;
+    }
+
+    // The mod is a folder of files, installed together
+    if (expectation.id === "L2-meto-mod") {
+      try {
+        const written = await installMetoMod(projectDir);
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "created",
+          message: `Installed ${METO_MOD_DIR}/ (${written.length} files)`,
+        };
+        fixes.push(result);
+        p.log.success(result.message);
+      } catch (err: unknown) {
+        const reason = err instanceof Error ? err.message : "Unknown error";
+        const result: FixResult = {
+          scanResult: failed,
+          outcome: "error",
+          message: `Failed to install ${METO_MOD_DIR}/: ${reason}`,
         };
         fixes.push(result);
         p.log.error(result.message);
