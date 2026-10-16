@@ -2,9 +2,9 @@ import { expect, test } from 'vitest'
 
 import {
   blockedByOpenWork,
+  boardView,
   domainOverlap,
   epicOf,
-  formatTokens,
   parseShortstat,
   highestSlice,
   isMetoAgent,
@@ -162,15 +162,50 @@ test('picks the next slice id above every board', () => {
   expect(sliceId(max + 1, 3)).toBe('slice-173')
 })
 
-test('formats token counts like the status line', () => {
-  expect(formatTokens(512)).toBe('512')
-  expect(formatTokens(61_234)).toBe('61k')
-  expect(formatTokens(1_000_000)).toBe('1M')
-  expect(formatTokens(1_234_567)).toBe('1.2M')
-})
 
 test('reads git diff --shortstat', () => {
   expect(parseShortstat(' 3 files changed, 10 insertions(+), 2 deletions(-)')).toEqual({ added: 10, removed: 2 })
   expect(parseShortstat(' 1 file changed, 1 deletion(-)')).toEqual({ added: 0, removed: 1 })
   expect(parseShortstat('')).toEqual({ added: 0, removed: 0 })
+})
+
+const BOARD = [
+  { key: 'backlog', label: 'Backlog', count: 11, slices: [] },
+  { key: 'todo', label: 'Todo', count: 4, slices: parseSlices(`## [slice-160] -- Contacts export
+## [slice-161] -- Follow-up reminders
+## [Lom_Slice-0044] -- Pro page copy
+## [slice-162] -- Fourth`) },
+  { key: 'in-progress', label: 'In progress', count: 1, slices: parseSlices('## [slice-159] -- Share sheet') },
+  { key: 'testing', label: 'Testing', count: 0, slices: [] },
+  { key: 'done', label: 'Done', count: 206, slices: [] },
+]
+
+test('builds the minimal board', () => {
+  const view = boardView(
+    BOARD,
+    { model: 'Opus 5.5', percent: 6, branch: 'lom-ro-copy', added: 106, removed: 539 },
+    [
+      { id: 'E1', name: 'Foundation', status: 'testing-ready', done: 20, blocker: '' },
+      { id: 'E2', name: 'Auth', status: 'on-track', done: 22, blocker: '' },
+      { id: 'E4', name: 'Receiver', status: 'blocked', done: 33, blocker: 'needs E2 export' },
+    ],
+    true,
+    10,
+  )
+  expect(view.session).toBe('Opus 5.5 · ctx 6% · lom-ro-copy +106 -539')
+  expect(view.counts).toBe('todo 4 · doing 1 · testing 0 · done 206')
+  expect(view.rows.map(r => r.text)).toEqual([
+    'now   slice-159  Share sheet',
+    'next  slice-160  Contacts export',
+    '      slice-161  Follow-up reminders',
+    '      Lom_Slice-0044  Pro page copy',
+  ])
+  expect(view.alerts).toEqual(['E4 blocked: needs E2 export', 'E1 ready to test', 'handoff due'])
+})
+
+test('keeps the board quiet when nothing needs you', () => {
+  const view = boardView(BOARD, { model: 'Opus 5.5', branch: 'main', added: 0, removed: 0 }, [], false, 1)
+  expect(view.session).toBe('Opus 5.5 · main')
+  expect(view.rows).toHaveLength(1)
+  expect(view.alerts).toEqual([])
 })
