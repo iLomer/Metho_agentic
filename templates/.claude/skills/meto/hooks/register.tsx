@@ -91,8 +91,7 @@ async function refresh($: EngineInterface): Promise<void> {
   for (const { key, file } of TASK_FILES) texts[key] = await readOr($, file)
   await $.state.set(BOARD, columnsFrom(texts))
   const swarm = await readOr($, SWARM_FILE)
-  const epics = parseEpics(swarm)
-  await $.state.set(EPICS, epics)
+  await $.state.set(EPICS, parseEpics(swarm))
 
   const since = (await $.state.get(STARTED_AT)).value ?? 0
   let handoffAt = 0
@@ -104,13 +103,6 @@ async function refresh($: EngineInterface): Promise<void> {
   const touched = (await $.state.get(IS_TOUCHED)).value === true
   const stale = touched && handoffAt < since
   await $.state.set(IS_HANDOFF_STALE, stale)
-
-  // One short status-line segment, only while something needs the person.
-  const flags = epics
-    .filter(epic => epic.status === 'blocked' || epic.status === 'testing-ready')
-    .map(epic => `${epic.id} ${epic.status === 'blocked' ? 'blocked' : 'ready to test'}`)
-  if (stale) flags.push('handoff due')
-  $.ui.status(flags.length > 0 ? `meto: ${flags.join(' · ')}` : undefined)
 }
 
 /** The live agent that owns this loop, when it is a subagent or teammate. */
@@ -282,6 +274,7 @@ export const register: Register = (on, options) => {
     const columns = (await $.state.get(BOARD)).value ?? []
     const session = (await $.state.get(SESSION)).value ?? null
     const list = (await $.state.get(EPICS)).value ?? []
+    const stale = (await $.state.get(IS_HANDOFF_STALE)).value === true
     const width = Math.max(20, e.props.bodyColumns)
     const room = Math.max(4, (e.viewport?.rows ?? 24) - 6 - (list.length > 0 ? list.length + 2 : 0) - (session ? 4 : 0))
     const cut = (text: string) => (text.length > width - 2 ? `${text.slice(0, width - 3)}…` : text)
@@ -312,6 +305,7 @@ export const register: Register = (on, options) => {
           </Box>
         )}
         <Text>{cut(columns.map(c => `${c.label} ${c.count}`).join(' · '))}</Text>
+        {stale && <Text color="warning">{cut(`Handoff not written this session — update ${HANDOFF_FILE}`)}</Text>}
         {list.length > 0 && (
           <Box flexDirection="column" marginTop={1}>
             <Text bold>Swarm</Text>

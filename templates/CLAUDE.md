@@ -59,7 +59,7 @@ Claude Code loads it automatically. It enforces the rules above instead of trust
 - `/meto-board` — the board in a side pane, topped by the session: model, context, branch and changes, tokens, cost; `/meto-slice [count]` — the next free slice IDs, checked against origin so two sessions never take the same number
 - Refuses an epic agent that is already running, shares files with a running one (`ai/swarm/domain-map.md`), or needs a slice still in progress
 - Refuses an epic agent's edit outside its domain, and any meto agent's separate message — the final answer is the report
-- Nothing above the prompt: one short status-line note appears only when something needs you (an epic blocked or ready to test, the handoff due). Full swarm status is in `/meto-board`; the `swarmBand` setting in `/config` adds a row above the prompt
+- Nothing above or below the prompt: swarm status and the handoff reminder live in `/meto-board`; the `swarmBand` setting in `/config` adds a swarm row above the prompt
 
 ### Task Definition Format
 

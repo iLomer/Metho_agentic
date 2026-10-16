@@ -244,7 +244,7 @@ your-project/
 - **Kanban board** -- task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
 - **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
 - **Agent memory** -- persistent memory files so agents retain context across sessions
-- **meto mod** -- `.claude/skills/meto/`, a Claude Code plugin loaded automatically: board pane (`/meto-board`), clash-free slice IDs (`/meto-slice`), guards against overlapping epic agents, out-of-domain edits and duplicate agent reports, plus a one-line status note only when something needs you (blocked epic, epic ready to test, handoff due). `meto audit --fix` installs it into existing projects
+- **meto mod** -- `.claude/skills/meto/`, a Claude Code plugin loaded automatically: board pane (`/meto-board`), clash-free slice IDs (`/meto-slice`), guards against overlapping epic agents, out-of-domain edits and duplicate agent reports, plus swarm status, session info and a handoff reminder in the board pane — nothing added around the prompt. `meto audit --fix` installs it into existing projects
 - **Stack-aware permissions** -- `.claude/settings.json` pre-configured with the right permission allowlist for your tech stack
 - **Project MCP integrations** -- optional `.mcp.json` with GitHub, Sentry, or PostgreSQL servers ready to activate
 - **Product context** -- vision, tech stack, and decisions captured in structured files
