@@ -53,7 +53,8 @@ async function refresh($: EngineInterface): Promise<void> {
   for (const { key, file } of TASK_FILES) texts[key] = await readOr($, file)
   await $.state.set(BOARD, columnsFrom(texts))
   const swarm = await readOr($, SWARM_FILE)
-  await $.state.set(EPICS, parseEpics(swarm))
+  const epics = parseEpics(swarm)
+  await $.state.set(EPICS, epics)
 
   const since = (await $.state.get(STARTED_AT)).value ?? 0
   let handoffAt = 0
@@ -63,7 +64,15 @@ async function refresh($: EngineInterface): Promise<void> {
     handoffAt = 0
   }
   const touched = (await $.state.get(IS_TOUCHED)).value === true
-  await $.state.set(IS_HANDOFF_STALE, touched && handoffAt < since)
+  const stale = touched && handoffAt < since
+  await $.state.set(IS_HANDOFF_STALE, stale)
+
+  // One short status-line segment, only while something needs the person.
+  const flags = epics
+    .filter(epic => epic.status === 'blocked' || epic.status === 'testing-ready')
+    .map(epic => `${epic.id} ${epic.status === 'blocked' ? 'blocked' : 'ready to test'}`)
+  if (stale) flags.push('handoff due')
+  $.ui.status(flags.length > 0 ? `meto: ${flags.join(' · ')}` : undefined)
 }
 
 /** The live agent that owns this loop, when it is a subagent or teammate. */
@@ -258,30 +267,24 @@ export const register: Register = (on, options) => {
     )
   })
 
-  // Above the prompt: the handoff reminder when it is due, and the swarm row only when `swarmBand` is on.
+  // The full swarm row above the prompt, only when the `swarmBand` setting is on.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey || !(await isMetoProject($))) return next(e)
-    const list = showSwarmBand ? ((await $.state.get(EPICS)).value ?? []) : []
-    const stale = (await $.state.get(IS_HANDOFF_STALE)).value === true
-    if (list.length === 0 && !stale) return next(e)
+    if (!showSwarmBand || e.props.hasSurvey || !(await isMetoProject($))) return next(e)
+    const list = (await $.state.get(EPICS)).value ?? []
+    if (list.length === 0) return next(e)
 
-    const { Box, Text } = $.ui.resolve(e)
+    const { Text } = $.ui.resolve(e)
 
     return (
-      <Box flexDirection="column">
-        {list.length > 0 && (
-          <Text>
-            <Text dimColor>swarm </Text>
-            {list.map((epic, i) => (
-              <Text key={epic.id} color={epicColor(epic.status)}>
-                {i > 0 ? ' · ' : ''}
-                {epic.id} {epic.status}
-              </Text>
-            ))}
+      <Text>
+        <Text dimColor>swarm </Text>
+        {list.map((epic, i) => (
+          <Text key={epic.id} color={epicColor(epic.status)}>
+            {i > 0 ? ' · ' : ''}
+            {epic.id} {epic.status}
           </Text>
-        )}
-        {stale && <Text color="warning">Handoff not written this session — update {HANDOFF_FILE} before you stop.</Text>}
-      </Box>
+        ))}
+      </Text>
     )
   })
 }
