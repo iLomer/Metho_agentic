@@ -40,6 +40,18 @@ function epicColor(status: string): 'error' | 'warning' | 'success' | undefined 
   return status === 'blocked' ? 'error' : status === 'testing-ready' ? 'warning' : status === 'complete' ? 'success' : undefined
 }
 
+function columnColor(key: string): 'suggestion' | 'warning' | 'success' | 'subtle' | undefined {
+  return key === 'in-progress' ? 'suggestion' : key === 'testing' ? 'warning' : key === 'done' ? 'success' : key === 'backlog' ? 'subtle' : undefined
+}
+
+function contextColor(percent: number | undefined): 'success' | 'warning' | 'error' | 'subtle' {
+  return percent === undefined ? 'subtle' : percent < 50 ? 'success' : percent < 80 ? 'warning' : 'error'
+}
+
+function sizeColor(size: string): 'subtle' | 'suggestion' | 'warning' {
+  return size === 'L' ? 'warning' : size === 'M' ? 'suggestion' : 'subtle'
+}
+
 async function isMetoProject($: EngineInterface): Promise<boolean> {
   return (await $.state.get(IS_METO)).value === true
 }
@@ -278,57 +290,96 @@ export const register: Register = (on, options) => {
     const list = (await $.state.get(EPICS)).value ?? []
     const stale = (await $.state.get(IS_HANDOFF_STALE)).value === true
     const width = Math.max(20, e.props.bodyColumns)
-    const room = Math.max(4, (e.viewport?.rows ?? 24) - 6 - (list.length > 0 ? list.length + 2 : 0) - (session ? 4 : 0))
-    const cut = (text: string) => (text.length > width - 2 ? `${text.slice(0, width - 3)}…` : text)
+    const room = Math.max(4, (e.viewport?.rows ?? 24) - 10 - (list.length > 0 ? list.length + 2 : 0) - (session ? 5 : 0))
+    const cut = (text: string, by = 0) => (text.length > width - 2 - by ? `${text.slice(0, Math.max(1, width - 3 - by))}…` : text)
     const lists = columns.filter(c => c.key === 'in-progress' || c.key === 'testing' || c.key === 'todo')
     let left = room
+
+    // A divider across the pane, with an optional label: ── Swarm ─────────
+    const rule = (label?: string) =>
+      label === undefined ? (
+        <Text color="subtle">{'─'.repeat(width - 1)}</Text>
+      ) : (
+        <Text>
+          <Text color="subtle">{'── '}</Text>
+          <Text bold color="claude">
+            {label}
+          </Text>
+          <Text color="subtle">{` ${'─'.repeat(Math.max(2, width - label.length - 5))}`}</Text>
+        </Text>
+      )
 
     return (
       <Box flexDirection="column">
         {session && (
-          <Box flexDirection="column" marginBottom={1}>
+          <Box flexDirection="column">
+            {rule('Session')}
             <Text>
-              <Text color="cyan">{session.model}</Text>
-              <Text dimColor>
-                {' · ctx '}
-                {session.percent === undefined ? '—' : `${session.percent}%`}
-                {session.tokens === undefined ? '' : ` (${formatTokens(session.tokens)}/${formatTokens(session.window)})`}
-                {session.usd === undefined ? '' : ` · $${session.usd.toFixed(2)}`}
+              <Text bold color="suggestion">
+                {session.model}
               </Text>
+              <Text color="subtle">{' · ctx '}</Text>
+              <Text color={contextColor(session.percent)}>{session.percent === undefined ? '—' : `${session.percent}%`}</Text>
+              <Text color="subtle">
+                {session.tokens === undefined ? '' : ` (${formatTokens(session.tokens)}/${formatTokens(session.window)})`}
+                {session.usd === undefined ? '' : ' · '}
+              </Text>
+              {session.usd !== undefined && <Text color="success">{`$${session.usd.toFixed(2)}`}</Text>}
             </Text>
             <Text>
-              {session.user !== '' && <Text>{`${session.user} · `}</Text>}
-              <Text color="magenta">{session.branch || 'no git'}</Text>
-              {session.added + session.removed > 0 && <Text color="yellow">{` +${session.added} -${session.removed}`}</Text>}
-              <Text dimColor>{` · ${session.folder}`}</Text>
+              {session.user !== '' && <Text>{`${session.user}`}</Text>}
+              {session.user !== '' && <Text color="subtle">{' · '}</Text>}
+              <Text color="autoAccept">{session.branch || 'no git'}</Text>
+              {session.added > 0 && <Text color="success">{` +${session.added}`}</Text>}
+              {session.removed > 0 && <Text color="error">{` -${session.removed}`}</Text>}
+              <Text color="subtle">{` · ${session.folder}`}</Text>
             </Text>
-            <Text dimColor>
+            <Text color="subtle">
               {`in ${formatTokens(session.input)} · out ${formatTokens(session.output)} · total ${formatTokens(session.input + session.output)}`}
             </Text>
           </Box>
         )}
-        <Text>{cut(columns.map(c => `${c.label} ${c.count}`).join(' · '))}</Text>
-        {stale && <Text color="warning">{cut(`Handoff not written this session — update ${HANDOFF_FILE}`)}</Text>}
+
+        {rule('Board')}
+        <Text>
+          {columns.map((c, i) => (
+            <Text key={c.key}>
+              {i > 0 && <Text color="subtle">{' · '}</Text>}
+              <Text color="subtle">{`${c.label} `}</Text>
+              <Text bold color={columnColor(c.key)}>
+                {String(c.count)}
+              </Text>
+            </Text>
+          ))}
+        </Text>
+        {stale && <Text color="warning">{cut(`⚠ Handoff not written this session — update ${HANDOFF_FILE}`)}</Text>}
+
         {list.length > 0 && (
           <Box flexDirection="column" marginTop={1}>
-            <Text bold>Swarm</Text>
+            {rule('Swarm')}
             {list.map(epic => (
-              <Text key={epic.id} color={epicColor(epic.status)}>
-                {cut(`${epic.id} ${epic.status} ${epic.blocker ? `— ${epic.blocker}` : `(${epic.done} done)`}`)}
+              <Text key={epic.id}>
+                <Text color={epicColor(epic.status) ?? 'subtle'}>{'● '}</Text>
+                <Text bold>{`${epic.id} `}</Text>
+                <Text color={epicColor(epic.status)}>{epic.status}</Text>
+                <Text color="subtle">{cut(epic.blocker ? ` — ${epic.blocker}` : `  ${epic.done} done`, epic.id.length + epic.status.length + 3)}</Text>
               </Text>
             ))}
           </Box>
         )}
+
         {lists.map(column => {
           const shown = column.slices.slice(0, Math.max(0, Math.min(column.key === 'todo' ? 3 : 8, left)))
-          left -= shown.length + 1
+          left -= shown.length + 2
           return (
             <Box key={column.key} flexDirection="column" marginTop={1}>
-              <Text bold>{column.key === 'todo' ? 'Next up' : column.label}</Text>
-              {shown.length === 0 && <Text dimColor>—</Text>}
+              {rule(column.key === 'todo' ? 'Next up' : column.label)}
+              {shown.length === 0 && <Text color="subtle">  nothing here</Text>}
               {shown.map(slice => (
                 <Text key={slice.id}>
-                  {cut(`${slice.id} ${slice.size ? `[${slice.size}] ` : ''}${slice.title}`)}
+                  <Text color={columnColor(column.key)}>{slice.id}</Text>
+                  {slice.size !== undefined && <Text color={sizeColor(slice.size)}>{` ${slice.size}`}</Text>}
+                  <Text>{cut(` ${slice.title}`, slice.id.length + (slice.size?.length ?? 0) + 1)}</Text>
                 </Text>
               ))}
             </Box>
