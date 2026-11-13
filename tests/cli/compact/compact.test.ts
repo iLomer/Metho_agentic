@@ -123,7 +123,7 @@ describe("compactDone", () => {
       }
     });
 
-    it("calls messages.create with model claude-haiku-4-5", async () => {
+    it("calls messages.create with model claude-haiku-5-5", async () => {
       mockSummaryResponse("Fixed summary.");
 
       const filePath = makeTempFile(buildFixtureContent());
@@ -132,7 +132,7 @@ describe("compactDone", () => {
       const calls = mockMessagesCreate.mock.calls;
       expect(calls.length).toBeGreaterThan(0);
       for (const call of calls) {
-        expect(call[0].model).toBe("claude-haiku-4-5");
+        expect(call[0].model).toBe("claude-haiku-5-5");
       }
     });
   });

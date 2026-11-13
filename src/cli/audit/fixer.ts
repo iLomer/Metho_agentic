@@ -591,7 +591,6 @@ export async function fixLayerTwo(
  */
 const GOVERNANCE_FILE_IDS = new Set([
   "L3-dod-exists",
-  "L3-session-checkpoint",
   "L3-code-guidelines-exists",
 ]);
 
@@ -634,41 +633,16 @@ const AGENT_REFERENCE_PATCHES: Record<string, string> = {
     "- Validate against `/ai/workflows/definition-of-done.md` for every task",
     "",
   ].join("\n"),
-  "L3-pm-agent-refs-memory": [
-    "",
-    "## Memory",
-    "- Read `.claude/agent-memory/meto-pm/MEMORY.md` at session start",
-    "- Update `.claude/agent-memory/meto-pm/MEMORY.md` at session end",
-    "",
-  ].join("\n"),
-  "L3-developer-agent-refs-memory": [
-    "",
-    "## Memory",
-    "- Read `.claude/agent-memory/meto-developer/MEMORY.md` at session start",
-    "- Update `.claude/agent-memory/meto-developer/MEMORY.md` at session end",
-    "",
-  ].join("\n"),
-  "L3-tester-agent-refs-memory": [
-    "",
-    "## Memory",
-    "- Read `.claude/agent-memory/meto-tester/MEMORY.md` at session start",
-    "- Update `.claude/agent-memory/meto-tester/MEMORY.md` at session end",
-    "",
-  ].join("\n"),
   "L3-developer-agent-refs-guidelines": [
     "",
     "## Code Guidelines",
-    "- Read `/ai/workflows/code-guidelines.md` at session start",
-    "- Enforce file size limits (300 lines max), function length (50 lines max)",
-    "- No file should exceed 500 lines -- hard stop",
+    "- Follow `ai/workflows/code-guidelines.md` while implementing",
     "",
   ].join("\n"),
   "L3-tester-agent-refs-guidelines": [
     "",
     "## Code Guidelines",
-    "- Read `/ai/workflows/code-guidelines.md` during validation",
-    "- Check changed files with `wc -l` -- no file over 300 lines",
-    "- Verify no function exceeds 50 lines",
+    "- The project's lint, typecheck and test commands cover `ai/workflows/code-guidelines.md`; run them fresh",
     "",
   ].join("\n"),
 };
@@ -691,6 +665,51 @@ const COMMIT_CONVENTIONS_PATCH = [
   "",
 ].join("\n");
 
+/** Expectation IDs fixed by setting `memory: project` in the agent's frontmatter. */
+const MEMORY_REFERENCE_IDS = new Set([
+  "L3-pm-agent-refs-memory",
+  "L3-developer-agent-refs-memory",
+  "L3-tester-agent-refs-memory",
+]);
+
+/**
+ * Sets `memory: project` in an agent definition's frontmatter, so Claude Code
+ * loads `.claude/agent-memory/<agent>/MEMORY.md` into the agent by itself.
+ * Replaces an existing `memory:` line (older scaffolds wrote `memory: false`,
+ * which Claude Code ignores) or adds the line.
+ *
+ * @returns the updated content, or undefined when the file has no frontmatter
+ */
+export function setProjectMemory(content: string): string | undefined {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (match === null || match[1] === undefined) {
+    return undefined;
+  }
+  const eol = content.includes("\r\n") ? "\r\n" : "\n";
+  const body = match[1];
+  const updated = /^memory:.*$/m.test(body)
+    ? body.replace(/^memory:.*$/m, "memory: project")
+    : `${body}${eol}memory: project`;
+  return content.replace(body, () => updated);
+}
+
+/**
+ * Rewrites an agent definition so it uses project memory.
+ * Returns false if the file is missing or has no frontmatter.
+ */
+async function enableProjectMemory(filePath: string): Promise<boolean> {
+  try {
+    const updated = setProjectMemory(await readFile(filePath, "utf-8"));
+    if (updated === undefined) {
+      return false;
+    }
+    await writeFile(filePath, updated, "utf-8");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Appends content to the end of an existing file.
  * Returns false if the file does not exist.
@@ -712,7 +731,7 @@ async function appendToFile(
  * Runs the interactive fixer for Layer 3 (Governance).
  *
  * Layer 3 differs from other layers because it has three fix strategies:
- * 1. Missing governance files (definition-of-done, session-checkpoint):
+ * 1. Missing governance files (definition-of-done, code-guidelines):
  *    created from templates, same as Layer 1.
  * 2. CLAUDE.md missing commit conventions section:
  *    appends a commit format section to the existing file.
@@ -909,8 +928,9 @@ export async function fixLayerThree(
         continue;
       }
 
+      const isMemoryFix = MEMORY_REFERENCE_IDS.has(expectation.id);
       const patch = AGENT_REFERENCE_PATCHES[expectation.id];
-      if (patch === undefined) {
+      if (patch === undefined && !isMemoryFix) {
         const result: FixResult = {
           scanResult: failed,
           outcome: "skipped",
@@ -922,7 +942,9 @@ export async function fixLayerThree(
       }
 
       const shouldFix = await p.confirm({
-        message: `Append ${expectation.description.toLowerCase()} to ${expectation.path}?`,
+        message: isMemoryFix
+          ? `Set memory: project in ${expectation.path}? (Claude Code then loads the agent's MEMORY.md by itself)`
+          : `Append ${expectation.description.toLowerCase()} to ${expectation.path}?`,
         initialValue: true,
       });
 
@@ -938,12 +960,16 @@ export async function fixLayerThree(
       }
 
       try {
-        const appended = await appendToFile(targetPath, patch);
+        const appended = isMemoryFix
+          ? await enableProjectMemory(targetPath)
+          : await appendToFile(targetPath, patch ?? "");
         if (appended) {
           const result: FixResult = {
             scanResult: failed,
             outcome: "created",
-            message: `Appended ${expectation.description.toLowerCase()} to ${expectation.path}`,
+            message: isMemoryFix
+              ? `Set memory: project in ${expectation.path}`
+              : `Appended ${expectation.description.toLowerCase()} to ${expectation.path}`,
           };
           fixes.push(result);
           p.log.success(result.message);

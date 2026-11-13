@@ -40,8 +40,8 @@ describe("AUDIT_BLUEPRINT structure", () => {
     expect(AUDIT_BLUEPRINT[2].expectations).toHaveLength(11);
   });
 
-  it("Layer 3 has 12 expectations", () => {
-    expect(AUDIT_BLUEPRINT[3].expectations).toHaveLength(12);
+  it("Layer 3 has 11 expectations", () => {
+    expect(AUDIT_BLUEPRINT[3].expectations).toHaveLength(11);
   });
 });
 
@@ -229,13 +229,13 @@ describe("Layer 3 specifics", () => {
     }
   });
 
-  it("references agent-memory in agent checks", () => {
+  it("requires project memory in agent checks", () => {
     const memRefs = layer3.expectations.filter((e) =>
       e.id.includes("refs-memory"),
     );
     expect(memRefs).toHaveLength(3); // PM, Developer, Tester
     for (const m of memRefs) {
-      expect(m.containsPattern).toBe("agent-memory");
+      expect(m.containsPattern).toBe("memory: project");
     }
   });
 });

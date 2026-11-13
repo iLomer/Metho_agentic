@@ -146,15 +146,15 @@ describe("audit integration -- fully scaffolded project", () => {
     );
     await writeFile(
       join(dir, ".claude/agents/pm-agent.md"),
-      "# PM Agent\n\nReferences definition-of-done and agent-memory/meto-pm\n",
+      "---\nname: meto-pm\nmemory: project\n---\n\n# PM Agent\n\nReferences definition-of-done\n",
     );
     await writeFile(
       join(dir, ".claude/agents/developer-agent.md"),
-      "# Developer Agent\n\nReferences commit conventions and agent-memory/meto-developer and code-guidelines\n",
+      "---\nname: meto-developer\nmemory: project\n---\n\n# Developer Agent\n\nReferences commit conventions and code-guidelines\n",
     );
     await writeFile(
       join(dir, ".claude/agents/tester-agent.md"),
-      "# Tester Agent\n\nReferences definition-of-done and agent-memory/meto-tester and code-guidelines\n",
+      "---\nname: meto-tester\nmemory: project\n---\n\n# Tester Agent\n\nReferences definition-of-done and code-guidelines\n",
     );
     await mkdir(join(dir, ".claude/agent-memory/meto-pm"), { recursive: true });
     await mkdir(join(dir, ".claude/agent-memory/meto-developer"), {
@@ -172,10 +172,6 @@ describe("audit integration -- fully scaffolded project", () => {
     );
 
     // Layer 3: governance (content already embedded above)
-    await writeFile(
-      join(dir, "ai/workflows/session-checkpoint.md"),
-      "# Session Checkpoint\n",
-    );
     await writeFile(
       join(dir, "ai/workflows/code-guidelines.md"),
       "# Code Guidelines\n",

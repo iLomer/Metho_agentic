@@ -242,7 +242,7 @@ describe("buildTokenMap", () => {
     expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("@meto-pm");
     expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("@meto-epic-[id]");
     expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("domain-map");
-    expect(tokens.WORKFLOW_AGENTS_SECTION).toContain("meto-cli status");
+    expect(tokens.WORKFLOW_SESSION_START).toContain("meto-cli status");
   });
 
   it("maps STARTER_EPICS token for custom stack with generic epics", () => {
@@ -431,20 +431,13 @@ describe("buildWorkflowAgentsSection", () => {
     expect(section).not.toContain("meto-cli status");
   });
 
-  it("swarm mode contains both agent tables and swarm references", () => {
+  it("swarm mode lists epic agents in place of the developer", () => {
     const section = buildWorkflowAgentsSection("swarm");
 
-    // Sprint agents still present
     expect(section).toContain("@meto-pm");
-    expect(section).toContain("@meto-developer");
     expect(section).toContain("@meto-tester");
-
-    // Swarm agent table
     expect(section).toContain("@meto-epic-[id]");
-
-    // Swarm references
+    expect(section).not.toContain("@meto-developer");
     expect(section).toContain("ai/swarm/domain-map.md");
-    expect(section).toContain("ai/workflows/swarm-workflow.md");
-    expect(section).toContain("npx meto-cli status");
   });
 });

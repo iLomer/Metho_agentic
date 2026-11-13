@@ -1,4 +1,4 @@
-export type McpSelection = "github" | "sentry" | "postgres";
+export type McpSelection = "github" | "sentry" | "postgres" | "context7";
 
 interface McpServerDefinition {
   command: string;
@@ -28,6 +28,11 @@ const MCP_SERVER_DEFINITIONS: Record<McpSelection, McpServerDefinition> = {
     env: {
       DATABASE_URL: "${DATABASE_URL}",
     },
+  },
+  context7: {
+    command: "npx",
+    args: ["-y", "@upstash/context7-mcp@latest"],
+    env: {},
   },
 };
 

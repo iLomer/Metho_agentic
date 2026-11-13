@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   parseEpics,
   generateEpicAgents,
-  generateSwarmSettings,
 } from "../../src/cli/swarm.js";
 
 describe("parseEpics", () => {
@@ -97,7 +96,7 @@ describe("generateEpicAgents", () => {
       ".claude/agent-memory/meto-epic-E1/MEMORY.md",
     );
     expect(memoryFiles[0].content).toContain("Project Setup (E1)");
-    expect(memoryFiles[0].content).toContain("not-started");
+    expect(memoryFiles[0].content).toContain("@meto-epic-E1");
   });
 
   it("returns empty array when no epics found", () => {
@@ -116,44 +115,5 @@ describe("generateEpicAgents", () => {
     expect(agentFile?.content).not.toContain("{{EPIC_ID}}");
     expect(agentFile?.content).not.toContain("{{EPIC_NAME}}");
     expect(agentFile?.content).not.toContain("{{EPIC_DOMAIN}}");
-  });
-});
-
-describe("generateSwarmSettings", () => {
-  it("generates settings with agent entries", () => {
-    const settings = generateSwarmSettings(["E1", "E2", "E3"]);
-    const parsed = JSON.parse(settings) as Record<string, unknown>;
-
-    expect(parsed).toHaveProperty("env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS", "1");
-    expect(parsed).toHaveProperty("agents");
-
-    const agents = parsed.agents as Array<{ slug: string; file: string }>;
-    // 3 epic agents + 1 tester agent always appended
-    expect(agents).toHaveLength(4);
-    expect(agents[0]).toEqual({
-      slug: "meto-epic-e1",
-      file: ".claude/agents/epic-agent-E1.md",
-    });
-    expect(agents[2]).toEqual({
-      slug: "meto-epic-e3",
-      file: ".claude/agents/epic-agent-E3.md",
-    });
-    expect(agents[3]).toEqual({
-      slug: "meto-tester",
-      file: ".claude/agents/tester-agent.md",
-    });
-  });
-
-  it("always includes tester agent even with no epics", () => {
-    const settings = generateSwarmSettings([]);
-    const parsed = JSON.parse(settings) as Record<string, unknown>;
-
-    expect(parsed).toHaveProperty("env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS", "1");
-    const agents = parsed.agents as Array<{ slug: string; file: string }>;
-    expect(agents).toHaveLength(1);
-    expect(agents[0]).toEqual({
-      slug: "meto-tester",
-      file: ".claude/agents/tester-agent.md",
-    });
   });
 });

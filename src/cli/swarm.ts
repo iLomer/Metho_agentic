@@ -70,17 +70,11 @@ export function generateEpicAgents(
     const memoryContent = [
       `# Epic Agent Memory -- ${epic.name} (${epic.id})`,
       "",
-      "*Read at session start. Update at session end. Keep it concise.*",
+      `Claude Code loads this file into @meto-epic-${epic.id}. Only the first 200 lines load, so keep it short.`,
       "",
-      "---",
+      "## Codebase Map",
       "",
-      "## Current State",
-      "- **Status:** not-started",
-      "- **Tasks completed:** 0",
-      "- **Checkpoint count:** 0",
-      "",
-      "## Session Log",
-      "*(no sessions yet)*",
+      "## Watch Out",
       "",
     ].join("\n");
 
@@ -104,30 +98,4 @@ export async function readEpicAgentTemplate(
 ): Promise<string> {
   const templatePath = join(templatesDir, ".claude", "agents", "epic-agent.md");
   return readFile(templatePath, "utf-8");
-}
-
-/**
- * Generates a settings.json content with epic agent entries.
- * Merges the base settings with agent file references for swarm mode.
- *
- * @param epicIds - Array of epic IDs (e.g. ["E1", "E2", "E3"])
- * @returns Formatted JSON string for .claude/settings.json
- */
-export function generateSwarmSettings(epicIds: string[]): string {
-  const settings: Record<string, unknown> = {
-    env: {
-      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-    },
-    agents: [
-      ...epicIds.map((id) => ({
-        slug: `meto-epic-${id.toLowerCase()}`,
-        file: `.claude/agents/epic-agent-${id}.md`,
-      })),
-      {
-        slug: "meto-tester",
-        file: ".claude/agents/tester-agent.md",
-      },
-    ],
-  };
-  return JSON.stringify(settings, null, 2) + "\n";
 }

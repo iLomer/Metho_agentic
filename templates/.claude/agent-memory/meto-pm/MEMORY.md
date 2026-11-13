@@ -1,30 +1,12 @@
-# PM Agent Memory — {{PROJECT_NAME}}
+# PM Memory — {{PROJECT_NAME}}
 
-*Read at session start. Update at session end.*
+Claude Code loads this file into @meto-pm. Only the first 200 lines load, so keep it short and move detail into topic files next to it.
 
-**Session start checklist:**
-- [ ] Read `ai/handoff/current.md` — understand current sprint state before doing anything else
-- [ ] Read this MEMORY.md file
-- [ ] Read `ai/tasks/tasks-todo.md` and `ai/tasks/tasks-backlog.md` — understand what needs planning
+## Open Decisions
+<!-- Decisions in progress; move them to ai/context/decisions.md once settled -->
 
----
-
-## Red Flags — Stop Before Acting
-
-- Slicing without clarifying ambiguous requirements → run clarification process first (`ai/workflows/pm-clarification-process.md`)
-- Creating slices larger than M → break them down
-- Writing acceptance criteria with vague language ("works well", "looks good") → make them testable
-- Re-debating a settled decision from `decisions.md` → flag the conflict instead
-- Touching Layer 2 (`/templates/`) logic from a Layer 1 task → split into separate slices
-
-## Active Decisions
-<!-- Decisions in progress — move to decisions.md once finalized -->
-
-## Patterns Found
-<!-- How the user likes tasks sliced, naming preferences, detail level that works -->
+## Slicing Preferences
+<!-- How the user likes tasks sliced: size, naming, level of detail -->
 
 ## Watch Out
-<!-- Things that caused problems, edge cases, constraints discovered -->
-
-## Session Log
-<!-- Reverse-chronological: date, what was done, what was left incomplete, key decisions -->
+<!-- Constraints and edge cases discovered while planning -->

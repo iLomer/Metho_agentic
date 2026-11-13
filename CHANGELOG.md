@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.23.0] - 2026-11-13
+
+### Added
+
+- `meto-cli audit --upgrade`: brings an older scaffold's agents, `CLAUDE.md` sections, hooks, rubric and mod up to the current templates while keeping the project's own content (`--yes` skips the prompts)
+- meto mod 0.3.0: role guard refuses a PM, tester or community agent's edit outside its own files
+
+### Changed
+
+- Templates rewritten for current Claude Code: about half the words, no context-budget rules, no repeated session checklists, no `NEVER DO` blocks
+- Agents use `memory: project` (was the invalid `memory: false`), so Claude Code loads each agent's `MEMORY.md` by itself
+- `.claude/settings.json` keeps its hooks in both modes and swarm mode now gets the permission allowlist
+- `SessionStart` hook loads `ai/handoff/current.md` into new sessions; `PreCompact` hook steers the compaction summary
+- Tester and community agents can write their own files (score files, board, drafts)
+- Checks point at the stack's definition of done instead of hardcoded TypeScript commands
+- `meto-cli audit` checks agents for `memory: project` and fixes older scaffolds in place
+- `meto-cli compact` uses `claude-haiku-5-5`
+- Context7 is an optional project MCP integration in `.mcp.json`
+
+### Removed
+
+- Writing MCP servers to `~/.claude/settings.json` (Claude Code never loaded them from there) and the Sequential Thinking MCP
+- `ai/workflows/session-checkpoint.md`, `ai/handoff/README.md`, `ai/context/test-log.md`, and the audit check for the session checkpoint
+- The undocumented `agents` key in swarm settings
+
 ## [0.7.0] - 2026-03-05
 
 ### Added

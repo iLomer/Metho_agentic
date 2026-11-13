@@ -181,6 +181,22 @@ describe("generateClaudeSettings", () => {
     expect(parsed.permissions.allow).not.toContain("Bash(python *)");
   });
 
+  it("keeps the hooks and env of the settings template", () => {
+    const base = JSON.stringify({
+      env: { OTHER: "x" },
+      hooks: { SessionStart: [{ matcher: "startup", hooks: [] }] },
+    });
+    const parsed = JSON.parse(generateClaudeSettings("go", base)) as {
+      env: Record<string, string>;
+      hooks: Record<string, unknown>;
+      permissions: { allow: string[] };
+    };
+    expect(parsed.hooks).toHaveProperty("SessionStart");
+    expect(parsed.env.OTHER).toBe("x");
+    expect(parsed.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS).toBe("1");
+    expect(parsed.permissions.allow).toContain("Bash(go test *)");
+  });
+
   it("output has a permissions.allow array", () => {
     const parsed = JSON.parse(generateClaudeSettings("nodejs-cli")) as Record<string, unknown>;
     expect(parsed).toHaveProperty("permissions");

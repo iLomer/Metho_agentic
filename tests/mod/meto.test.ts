@@ -8,8 +8,10 @@ import {
   parseShortstat,
   highestSlice,
   isMetoAgent,
+  mayRoleWrite,
   mayWrite,
   parseDomains,
+  roleOf,
   parseEpics,
   parseSlices,
   relativeTo,
@@ -132,6 +134,28 @@ test('lets an epic agent write its domain and the board only', () => {
   expect(mayWrite('.claude/agent-memory/meto-epic-E2/MEMORY.md', owns, 'E2')).toBe(true)
   expect(mayWrite('src/shared/x.ts', owns, 'E2')).toBe(false)
   expect(mayWrite('package.json', owns, 'E2')).toBe(false)
+})
+
+test('keeps the pm, tester and community agents out of source code', () => {
+  expect(roleOf('meto-tester')).toBe('tester')
+  expect(roleOf('plugin:meto-pm')).toBe('pm')
+  expect(roleOf('meto-developer')).toBeUndefined()
+  expect(roleOf('meto-epic-E2')).toBeUndefined()
+  expect(roleOf(undefined)).toBeUndefined()
+
+  expect(mayRoleWrite('ai/tasks/tasks-done.md', 'tester')).toBe(true)
+  expect(mayRoleWrite('ai/rubric/slice-012-score.md', 'tester')).toBe(true)
+  expect(mayRoleWrite('.claude/agent-memory/meto-tester/MEMORY.md', 'tester')).toBe(true)
+  expect(mayRoleWrite('src/share/link.ts', 'tester')).toBe(false)
+  expect(mayRoleWrite('ai/context/decisions.md', 'tester')).toBe(false)
+
+  expect(mayRoleWrite('ai/context/decisions.md', 'pm')).toBe(true)
+  expect(mayRoleWrite('.claude/agents/epic-agent-E1.md', 'pm')).toBe(true)
+  expect(mayRoleWrite('src/index.ts', 'pm')).toBe(false)
+  expect(mayRoleWrite('.claude/agent-memory/meto-tester/MEMORY.md', 'pm')).toBe(false)
+
+  expect(mayRoleWrite('ai/community/launch-post.md', 'community')).toBe(true)
+  expect(mayRoleWrite('ai/tasks/tasks-todo.md', 'community')).toBe(false)
 })
 
 test('makes paths relative to the project, Windows drives included', () => {

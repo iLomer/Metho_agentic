@@ -1,7 +1,7 @@
 {
   "name": "meto",
-  "version": "0.2.0",
-  "description": "Guards and views for meto projects: overlap and domain guards, one report per agent, board pane, swarm band, slice IDs, handoff reminder",
+  "version": "0.3.0",
+  "description": "Guards and views for meto projects: overlap, domain and role guards, one report per agent, board pane, swarm band, slice IDs, handoff reminder",
   "types": "./types/index.d.ts",
   "author": {
     "name": "Ionut Lomer"

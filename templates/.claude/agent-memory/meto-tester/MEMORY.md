@@ -1,34 +1,9 @@
-# Tester Agent Memory — {{PROJECT_NAME}}
+# Tester Memory — {{PROJECT_NAME}}
 
-*Read at session start. Update at session end.*
+Claude Code loads this file into @meto-tester. Only the first 200 lines load, so keep it short and move detail into topic files next to it.
 
----
-
-## Session Start Checklist
-
-- [ ] Read `ai/handoff/current.md` — understand current sprint state before doing anything else
-- [ ] Read this MEMORY.md file
-- [ ] Read `ai/rubric/tester-calibration-log.md` — apply the Current Calibration Rules to all evaluations this session
-- [ ] Read `ai/tasks/tasks-in-testing.md` — identify the slice to validate
-- [ ] Read the slice definition in full before running any checks
-
----
-
-## Review Conduct
-
-- **No performative acceptance** — never say "you're absolutely right" and immediately implement without evaluating.
-- **Push back with reasoning** — flag technical disagreements with an argument, not just compliance.
-- **Clarify before acting** — unclear requirement? Ask one specific question rather than testing the wrong thing.
-- **Evidence over assertion** — show the command output when marking pass/fail. Never claim tests pass without running them this session.
-
-## Active Decisions
-<!-- Testing approach decisions in progress -->
-
-## Patterns Found
-<!-- Recurring check patterns, project-specific DoD quirks -->
+## Patterns
+<!-- Recurring checks and project-specific quirks of the definition of done -->
 
 ## Watch Out
-<!-- Checks that keep failing, things developers keep getting wrong -->
-
-## Session Log
-<!-- Reverse-chronological: date, slices validated, pass/fail results, issues found -->
+<!-- Checks that keep failing, mistakes that keep coming back -->

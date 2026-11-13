@@ -1,46 +1,27 @@
 # Code Guidelines — {{PROJECT_NAME}}
 
-These guidelines are enforced by `@meto-developer` during implementation and verified by `@meto-tester` before sign-off.
+`@meto-developer` follows these while implementing. `@meto-tester` verifies them through the project's lint, typecheck and test commands rather than by hand, so a rule worth keeping is worth a lint rule.
 
-## File Size Limits
+## Size limits
 
-| Scope | Max Lines | Action |
+| Scope | Max lines | Action |
 |---|---|---|
-| Single file | 300 | Split into focused modules |
-| Single function/method | 50 | Extract helper functions |
-| Single React component | 200 | Break into sub-components |
+| File | 300 | Split into focused modules |
+| Function or method | 50 | Extract helpers |
 
-If a file exceeds these limits, refactor before adding more code. Never let a file grow past 500 lines — that is a hard stop.
+Refactor before adding to a file that is over the limit.
 
-## Structure Rules
+## Structure
 
-- **One responsibility per file** — if a file does two things, split it
-- **No god files** — a file that everything imports from is a design smell
-- **No circular imports** — if A imports B and B imports A, introduce a shared module or restructure
-- **Flat over nested** — prefer 2 levels of directory nesting max; deeply nested trees are hard to navigate
-- **Co-locate related code** — tests next to source, types next to usage
+- One responsibility per file
+- No circular imports: introduce a shared module instead
+- Tests live next to the code they cover
 
-## Naming
+## Hygiene
 
-- Files: `kebab-case.ts` (e.g., `user-service.ts`)
-- Classes/Types: `PascalCase` (e.g., `UserService`)
-- Functions/Variables: `camelCase` (e.g., `getUserById`)
-- Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_RETRIES`)
-- Boolean variables: prefix with `is`, `has`, `should` (e.g., `isLoading`)
-
-## Code Hygiene
-
-- No `console.log` in committed code — use a proper logger
-- No commented-out code — delete it, git has history
-- No `any` types (TypeScript) — use `unknown` and narrow
-- No magic numbers — extract to named constants
-- No deeply nested conditionals (3+ levels) — use early returns or extract functions
-
-## Error Handling
-
-- Handle errors at the boundary, not in every function
-- Never swallow errors silently (`catch (e) {}`)
-- Use typed errors where the language supports it
-- User-facing errors must be human-readable, not stack traces
+- No debug output or commented-out code in commits
+- Handle errors at the boundary; never swallow them silently
+- Errors shown to users are readable messages, not stack traces
+- No hardcoded secrets
 
 {{CODE_GUIDELINES_STACK}}

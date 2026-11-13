@@ -29,7 +29,7 @@ export interface RenderedFile {
 /**
  * Generates a session-start directive for CLAUDE.md based on workflow mode.
  * Sprint mode returns an empty string (no banner needed).
- * Swarm mode returns a prominent directive that prevents Claude from defaulting to @meto-pm.
+ * Swarm mode tells the lead session to orchestrate instead of implementing.
  */
 export function buildWorkflowSessionStart(workflowMode: WorkflowMode): string {
   if (workflowMode === "sprint") {
@@ -37,113 +37,78 @@ export function buildWorkflowSessionStart(workflowMode: WorkflowMode): string {
   }
 
   return [
-    "## Session Start — Swarm Mode",
+    "## Swarm Mode",
     "",
-    "> **This project uses swarm mode.** Do NOT start with `@meto-pm` or pick tasks as `@meto-developer`.",
-    "> Your role as lead agent is to orchestrate — read state, then launch the right epic agent.",
+    "This project uses swarm mode: the main session orchestrates and the epic agents write the code, each inside its own domain. Implementing a task in the main session bypasses the domain guard, so delegate it instead.",
     "",
-    "**Run in order at the start of every session:**",
-    "1. Read `ai/swarm/SWARM_AWARENESS.md` — check each epic's status (`not-started` / `on-track` / `testing-ready` / `complete`)",
-    "2. Read `ai/swarm/domain-map.md` — confirm domain ownership before launching any agent",
-    "3. Pick what can run together: for each epic that is `not-started` or `on-track`, list the files and the feature its next slices touch. Launch `@meto-epic-[id]` only for epics whose files AND features don't overlap with one already running — a feature that crosses epics (e.g. profile → share) goes to one agent, the others wait",
-    "4. For each epic with status `testing-ready`: launch `@meto-tester` scoped to that epic",
-    "5. Run `npx meto-cli status` to get a live terminal view of swarm progress",
+    "At the start of a session:",
+    "1. Read `ai/swarm/SWARM_AWARENESS.md` for each epic's status and `ai/swarm/domain-map.md` for who owns which files",
+    "2. For each epic that is `not-started` or `on-track`, launch `@meto-epic-[id]`, as long as its next slices share no files and no feature with an epic already running. A feature that crosses epics goes to one agent while the others wait",
+    "3. For each epic that is `testing-ready`, launch `@meto-tester` scoped to that epic",
     "",
-    "**Lead agent rules:**",
-    "- NEVER implement tasks directly — always delegate to epic agents",
-    "- NEVER call `@meto-pm` unless the backlog is empty and planning is genuinely needed",
-    "- NEVER run two agents whose files or feature overlap at the same time — epic status alone does not make work independent. There is no fixed cap: independent work in separate worktrees can all run",
-    "- Agents don't send you a separate message — their final answer is their report",
+    "Call `@meto-pm` when the backlog needs planning. `npx meto-cli status` prints swarm progress at any time.",
   ].join("\n");
 }
 
 /**
- * Generates the Daily Workflow section for CLAUDE.md based on workflow mode.
- * Sprint mode shows the standard @meto-pm → @meto-developer → @meto-tester flow.
- * Swarm mode shows the epic-agent-first flow.
+ * Generates the workflow summary for CLAUDE.md based on workflow mode.
+ * Sprint mode shows the @meto-pm → @meto-developer → @meto-tester flow.
+ * Swarm mode shows the epic-agent flow.
  */
 export function buildWorkflowDailyWorkflow(workflowMode: WorkflowMode): string {
   if (workflowMode === "sprint") {
     return [
       "```",
-      "cd your-project && claude          # start a session",
-      "→ @meto-pm                         # plan: populate backlog, slice epics",
-      "→ @meto-developer                  # build: picks from todo, implements, commits",
-      "→ @meto-tester                     # validate: M/L slices only",
-      "/compact                           # compress context when it feels heavy",
-      "Esc Esc → /rewind                  # undo if something went wrong",
+      "@meto-pm          plan: populate the backlog, slice epics",
+      "@meto-developer   build: takes from todo, implements, commits",
+      "@meto-tester      validate: M/L slices only",
       "```",
     ].join("\n");
   }
 
   return [
     "```",
-    "cd your-project && claude              # start a session",
-    "→ read SWARM_AWARENESS.md             # check which epics are ready",
-    "→ @meto-epic-[id]                     # launch per-epic agent (one per epic, separate session)",
-    "→ @meto-tester                        # when an epic is testing-ready",
-    "npx meto-cli status                   # check swarm progress at any time",
-    "/compact                              # compress context when it feels heavy",
+    "@meto-epic-[id]       build: one agent per epic, inside its domain",
+    "@meto-tester          validate: when an epic is testing-ready",
+    "npx meto-cli status   swarm progress at any time",
     "```",
     "",
-    "- **One session per epic** — each `@meto-epic-[id]` runs in its own Claude Code window",
-    "- **Lead orchestrates, never implements** — read SWARM_AWARENESS.md, launch agents, monitor",
-    "- **Commit frequently** — epic agents commit after each task",
+    "Epic agents commit after each task. See `ai/workflows/swarm-workflow.md` for the full rhythm.",
   ].join("\n");
 }
 
 /**
  * Generates the Agents section for CLAUDE.md based on workflow mode.
- * Sprint mode includes the standard 3-agent table.
- * Swarm mode adds a swarm agent table with epic-agent references and swarm file references.
+ * Sprint mode lists the standard agents and the files each one writes.
+ * Swarm mode adds the epic agents.
  */
 export function buildWorkflowAgentsSection(
   workflowMode: WorkflowMode,
 ): string {
-  const sprintSection = [
-    "## Agents",
-    "",
-    "Human orchestrator reads the board and calls the right agent.",
-    "",
-    "| Agent | Owns |",
-    "|---|---|",
-    "| `@meto-pm` | `/ai/backlog/`, `tasks-backlog.md`, `tasks-todo.md` |",
-    "| `@meto-developer` | `/src/`, `tasks-in-progress.md`, `tasks-in-testing.md` |",
-    "| `@meto-tester` | `tasks-in-testing.md` → done or back to todo |",
-    "| `@meto-community` | Community engagement, user communication, market awareness |",
-    "",
-    "Each agent has a memory file in `.claude/agent-memory/` — read at session start, update at session end.",
+  const rows = [
+    "| `@meto-pm` | `ai/context/`, `ai/backlog/`, `tasks-backlog.md`, `tasks-todo.md` |",
+    "| `@meto-developer` | Source code, config files, `tasks-in-progress.md`, `tasks-in-testing.md` |",
+    "| `@meto-tester` | `tasks-in-testing.md` → `tasks-done.md` or back to `tasks-todo.md`, `ai/rubric/` |",
+    "| `@meto-community` | Drafts in `ai/community/` |",
   ];
 
-  if (workflowMode === "sprint") {
-    return sprintSection.join("\n");
+  if (workflowMode === "swarm") {
+    rows.splice(
+      1,
+      1,
+      "| `@meto-epic-[id]` | One per epic: its domain in `ai/swarm/domain-map.md`, plus the board |",
+    );
   }
 
-  const swarmSection = [
-    ...sprintSection,
+  return [
+    "## Agents",
     "",
-    "### Swarm Mode Agents",
+    "Each agent writes only its own files, because two agents editing one file overwrite each other.",
     "",
-    "This project uses **swarm mode** -- parallel epic agents working on independent domains.",
-    "",
-    "**Critical rules:**",
-    "- The lead agent (you) orchestrates only -- NEVER implement tasks directly. Always delegate: `@meto-pm` for planning, `@meto-epic-[id]` for building, `@meto-tester` for validation.",
-    "- Epic agents run independent tasks in parallel (background agents/worktrees). Tasks run sequentially when one depends on another or they touch the same files or feature.",
-    "",
-    "| Agent | Owns |",
+    "| Agent | Writes |",
     "|---|---|",
-    "| `@meto-pm` | Planning, epics, swarm init, `ai/swarm/domain-map.md` |",
-    "| `@meto-epic-[id]` | One per epic, scoped to its domain -- the ONLY agents that write code |",
-    "| `@meto-tester` | Validates all epics sequentially |",
-    "",
-    "See `ai/swarm/domain-map.md` for epic ownership.",
-    "",
-    "See `ai/workflows/swarm-workflow.md` for rhythm.",
-    "",
-    "Run `npx meto-cli status` at any time to see swarm progress in the terminal.",
-  ];
-
-  return swarmSection.join("\n");
+    ...rows,
+  ].join("\n");
 }
 
 /**

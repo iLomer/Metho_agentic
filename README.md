@@ -16,11 +16,17 @@ npx meto-cli init
 
 Answer a few questions, and Meto generates a fully structured repository in seconds -- with AI-powered content if Claude Code is installed.
 
-**Already have a project?** Run the audit to bring it up to standard:
+**Already have a project?** The audit installs Meto into it, one layer at a time, without overwriting anything you have:
 
 ```bash
 cd your-existing-project
 npx meto-cli audit
+```
+
+**Scaffolded with an older Meto?** Bring its agents, `CLAUDE.md` sections, hooks and mod up to the current version:
+
+```bash
+npx meto-cli audit --upgrade
 ```
 
 ---
@@ -32,15 +38,15 @@ Meto detects whether Claude Code is installed on your machine and offers two pat
 **With Claude Code (AI-powered):**
 1. You answer 5 questions -- project name, description, target users, tech stack, output directory
 2. Choose your workflow mode -- **Sprint** (sequential) or **Swarm** (parallel epic agents)
-3. Select any MCP integrations to pre-configure for your project (GitHub, Sentry, PostgreSQL)
+3. Select any MCP integrations to pre-configure for your project (GitHub, Sentry, PostgreSQL, Context7)
 4. Claude Code generates your product vision, problem statement, epics, and a sliced backlog with acceptance criteria
 5. Meto renders everything -- `.claude/settings.json` pre-configured with your stack's permission allowlist, `.mcp.json` generated if you selected integrations
-6. Context7, Sequential Thinking MCP, and ccstatusline are installed into your Claude Code environment automatically
+6. ccstatusline setup runs so your terminal shows session state
 
 **Without Claude Code (static):**
 1. You answer 10 questions -- the 5 above plus problem statement, success criteria, value proposition, out of scope, and code conventions
 2. Choose your workflow mode -- Sprint or Swarm
-3. Select any MCP integrations to pre-configure for your project (GitHub, Sentry, PostgreSQL)
+3. Select any MCP integrations to pre-configure for your project (GitHub, Sentry, PostgreSQL, Context7)
 4. Meto renders your answers into the same structured project -- `.claude/settings.json` pre-configured with your stack's permission allowlist, `.mcp.json` generated if you selected integrations
 
 Both paths produce the same project structure. The AI path just fills in more content so you spend less time on setup and more time building.
@@ -51,31 +57,31 @@ Use `--no-ai` to force the static path even when Claude Code is available.
 
 ## Claude Tooling Setup
 
-`meto init` automatically configures your Claude Code environment so your agents are better equipped from day one. No manual setup required.
+Every scaffold (and every `meto-cli audit` install) sets up Claude Code features in the project itself, in `.claude/settings.json` and the agent definitions:
 
-**What gets installed into `~/.claude/settings.json`:**
-
-| Tool | What it does |
+| Feature | What it does |
 |---|---|
-| **Context7 MCP** | Injects up-to-date library documentation into agent context — reduces hallucinated APIs and outdated patterns |
-| **Sequential Thinking MCP** | Gives agents a structured reasoning chain for complex, multi-step problems |
-| **ccstatusline** | Adds a status line to your Claude Code terminal showing session state at a glance |
+| **Handoff on session start** | A `SessionStart` hook prints `ai/handoff/current.md` into every new session, so nobody has to remember to read it |
+| **Compaction focus** | A `PreCompact` hook tells the summary to keep the active slice, unmet criteria and uncommitted files |
+| **Project memory** | Every agent has `memory: project`, so Claude Code loads its `.claude/agent-memory/<agent>/MEMORY.md` by itself |
+| **Permission allowlist** | The commands your stack needs, in sprint and swarm mode alike |
+| **Context7 MCP** (optional) | Up-to-date library documentation, written to the project's `.mcp.json` when you select it |
+| **ccstatusline** | A status line for your Claude Code terminal; the setup is interactive during `meto init` |
 
-Context7 and Sequential Thinking are registered as MCP servers and activate automatically in every Claude Code session. The ccstatusline setup is interactive — you'll configure it in your terminal during `meto init`.
-
-All three are installed with a deep merge: your existing `~/.claude/settings.json` is never overwritten, only extended.
+`meto init` no longer writes to `~/.claude/settings.json`: Claude Code does not read MCP servers from that file, so the old Context7 and Sequential Thinking entries there never loaded and can be deleted.
 
 ---
 
 ## Project MCP Integrations
 
-During `meto init`, you can pre-configure MCP servers scoped to your project. Unlike the global Claude Tooling above, these go into a `.mcp.json` at your project root -- they activate only when Claude Code is opened inside that project.
+During `meto init`, you can pre-configure MCP servers scoped to your project. They go into a `.mcp.json` at your project root, so they activate only when Claude Code is opened inside that project.
 
 | Integration | MCP server | Env var required |
 |---|---|---|
 | **GitHub** | `@modelcontextprotocol/server-github` | `GITHUB_TOKEN` |
 | **Sentry** | `@modelcontextprotocol/server-sentry` | `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` |
 | **PostgreSQL** | `@modelcontextprotocol/server-postgres` | `DATABASE_URL` |
+| **Context7** | `@upstash/context7-mcp` | none |
 
 Select one, many, or none -- you can always add more later by editing `.mcp.json` directly. Meto prints the required env var names at the end of `init` so you know exactly what to set.
 
@@ -130,9 +136,23 @@ Layer 3 — Governance              not reached
 | **Layer 0** | Git initialized, README exists, source code present |
 | **Layer 1** | CLAUDE.md, ai/ context files, kanban board, workflows |
 | **Layer 2** | Agent definitions (PM, developer, tester), agent memory, settings |
-| **Layer 3** | Governance: commit conventions, definition of done, code guidelines, session checkpoints, agent cross-references |
+| **Layer 3** | Governance: commit conventions, definition of done, code guidelines, project memory, agent cross-references |
 
 Each missing item offers a fix — create the file from Meto's templates, never overwriting existing content. Run it repeatedly to ratchet your project up one layer at a time.
+
+### Upgrading an older scaffold
+
+The audit never overwrites a file, so a project scaffolded by an older Meto keeps its old agent definitions. `meto-cli audit --upgrade` lists what it would change, then asks:
+
+| What | How it is upgraded |
+|---|---|
+| Agent definitions, rubric and workflow documents, the meto mod | Replaced by the current templates. Epic agents keep their epic id, name and domain |
+| `CLAUDE.md` | Meto's sections are re-rendered; your project name, vision, stack and code conventions are kept. Other edits you made to the file are not, so commit first |
+| `.claude/settings.json` | The session-start and compaction hooks are added. Your permissions, env and own hooks are kept |
+| Agent `MEMORY.md` files | Only the old checklist boilerplate is removed; what the agents wrote stays |
+| `session-checkpoint.md`, `ai/handoff/README.md` | Removed -- no longer used |
+
+The board, context files, definition of done, code guidelines and a filled-in handoff are never touched. Running it again when everything is current changes nothing.
 
 The audit also **auto-detects your tech stack** from `package.json`, `go.mod`, `pyproject.toml`, `pubspec.yaml`, or `Cargo.toml` to provide stack-specific templates.
 
@@ -140,17 +160,16 @@ The audit also **auto-detects your tech stack** from `package.json`, `go.mod`, `
 
 ## Code Guidelines
 
-Every scaffolded project includes `ai/workflows/code-guidelines.md` — enforced by both the developer and tester agents:
+Every scaffolded project includes `ai/workflows/code-guidelines.md`:
 
 | Rule | Limit |
 |---|---|
-| Max file length | 300 lines (hard stop at 500) |
+| Max file length | 300 lines |
 | Max function length | 50 lines |
-| Max component length | 200 lines (React/Flutter) |
-| Nesting depth | 3 levels max |
 | Circular imports | Not allowed |
+| Debug output, commented-out code, hardcoded secrets | Not in commits |
 
-Guidelines include stack-specific rules (e.g., "never call Supabase directly from components" for Next.js, "always check error returns" for Go). The developer agent reads these at session start and checks them before handing off; the tester runs the lint and typecheck commands instead of re-checking them by hand.
+Guidelines include stack-specific rules (e.g., "never call Supabase directly from components" for Next.js, "always check error returns" for Go). The developer agent follows them and pastes the check output into the task; the tester runs the project's lint, typecheck and test commands instead of re-checking by hand.
 
 ---
 
@@ -197,8 +216,7 @@ your-project/
 │   ├── context/
 │   │   ├── decisions.md
 │   │   ├── product-vision.md
-│   │   ├── tech-stack.md
-│   │   └── test-log.md
+│   │   └── tech-stack.md
 │   ├── handoff/
 │   │   └── current.md             # session handoff artifact
 │   ├── rubric/
@@ -213,8 +231,7 @@ your-project/
 │   └── workflows/
 │       ├── code-guidelines.md
 │       ├── commit-conventions.md
-│       ├── definition-of-done.md
-│       └── session-checkpoint.md
+│       └── definition-of-done.md
 ├── src/
 ├── .gitignore
 ├── .mcp.json                     # optional — generated if MCP integrations were selected
@@ -244,12 +261,12 @@ your-project/
 - **Kanban board** -- task pipeline (backlog, todo, in-progress, testing, done) ready for your first sprint
 - **4 agent definitions** -- PM, developer, tester, and community manager agents configured to follow your methodology from day one
 - **Agent memory** -- persistent memory files so agents retain context across sessions
-- **meto mod** -- `.claude/skills/meto/`, a Claude Code plugin loaded automatically: board pane (`/meto-board`), clash-free slice IDs (`/meto-slice`), guards against overlapping epic agents, out-of-domain edits and duplicate agent reports, plus swarm status, session info and a handoff reminder in the board pane — nothing added around the prompt. `meto audit --fix` installs it into existing projects
+- **meto mod** -- `.claude/skills/meto/`, a Claude Code plugin loaded automatically: board pane (`/meto-board`), clash-free slice IDs (`/meto-slice`), guards against overlapping epic agents, out-of-domain edits and duplicate agent reports, plus swarm status, session info and a handoff reminder in the board pane — nothing added around the prompt. `meto-cli audit` installs it into existing projects
 - **Stack-aware permissions** -- `.claude/settings.json` pre-configured with the right permission allowlist for your tech stack
 - **Project MCP integrations** -- optional `.mcp.json` with GitHub, Sentry, or PostgreSQL servers ready to activate
 - **Product context** -- vision, tech stack, and decisions captured in structured files
 - **Code guidelines** -- file size limits, naming conventions, and stack-specific rules enforced by agents
-- **Epics and workflows** -- definition of done, commit conventions, session checkpoints, and an epic backlog to plan against
+- **Epics and workflows** -- definition of done, commit conventions, code guidelines, and an epic backlog to plan against
 - **Agent Teams ready** -- four agents configured to work in parallel with file ownership boundaries
 - **Swarm mode** -- parallel epic agents with domain ownership, checkpoint rhythm, and a live status dashboard
 
@@ -261,12 +278,12 @@ Every scaffolded project comes with 4 pre-configured agents:
 
 | Agent | Role | Can write code? |
 |---|---|---|
-| `@meto-pm` | Planning, backlog management, epic definition, task slicing | No |
+| `@meto-pm` | Planning, backlog management, epic definition, task slicing | No -- planning files only |
 | `@meto-developer` | Code implementation -- picks tasks from todo, builds, tests | Yes |
-| `@meto-tester` | Validates completed work against acceptance criteria | No |
-| `@meto-community` | Community engagement, user communication, market awareness | No |
+| `@meto-tester` | Validates completed work against acceptance criteria | No -- board and score files only |
+| `@meto-community` | Community engagement, user communication, market awareness | No -- drafts in `ai/community/` only |
 
-The **community manager** understands the product and its market. It reads product context files, drafts Reddit posts, changelog summaries, and feature announcements, and surfaces user feedback themes back to `@meto-pm`. It never writes code or edits source files -- read-only access to the codebase.
+The **community manager** understands the product and its market. It reads product context files, drafts Reddit posts, changelog summaries, and feature announcements, and surfaces user feedback themes back to `@meto-pm`. It never writes code or posts anything itself: everything is a draft in `ai/community/` for you to review. The meto mod enforces the "No" column for all three agents.
 
 In **swarm mode**, additional `@meto-epic-[id]` agents are generated -- one per epic, each scoped to its own file domain.
 
@@ -289,6 +306,7 @@ Every project ships with the **meto mod** in `.claude/skills/meto/` -- a Claude 
 |---|---|
 | Overlap | An epic agent whose epic is already running, whose files overlap a running epic's in `ai/swarm/domain-map.md`, or whose next slice needs work still in progress. No fixed agent cap -- independent epics all run |
 | Domain | An epic agent's Edit/Write outside the paths its epic owns or shares (the board, handoff and its own memory are always allowed) |
+| Role | A PM, tester or community agent's Edit/Write outside its own files -- they plan, validate and draft, and never touch source code |
 | One report | A meto agent's `SendMessage` -- its final answer is its report, so nothing reaches the lead twice |
 
 **Settings** (`/config` → meto):
@@ -298,7 +316,7 @@ Every project ships with the **meto mod** in `.claude/skills/meto/` -- a Claude 
 | `idPrefix` | `slice` | Prefix for `/meto-slice`. Give each person their own (`Lom_Slice`) so two people never take the same ID |
 | `swarmBand` | off | Adds a one-line swarm status row above the prompt |
 
-The mod adds nothing around the prompt by default. Existing projects get it with `npx meto-cli audit --fix` (Layer 2), which never overwrites files you have. To turn it off, delete `.claude/skills/meto/`.
+The mod adds nothing around the prompt by default. Existing projects get it with `npx meto-cli audit` (Layer 2), which never overwrites files you have; `npx meto-cli audit --upgrade` replaces an older copy of the mod with the current one. To turn it off, delete `.claude/skills/meto/`.
 
 > Domain-map tip: an epic can't own a folder that contains another epic's file -- list files instead, or the overlap guard will keep those two epics from running together.
 
@@ -339,14 +357,13 @@ Best for projects with multiple independent epics where parallelism speeds thing
 
 ## Context & Sessions
 
-Meto is optimized for Claude Code's **1M token context window**. With 5x more room than before:
+Meto leaves context management to Claude Code, which compacts long sessions on its own, and makes sure the project state survives it:
 
-- **10-15 slices per session** before needing a fresh start
-- **Agents can hold more files** in context without degrading
-- **Less frequent `/compact`** -- use it when responses slow down, not proactively
-- **Memory files still matter** -- they persist across sessions, not just within them
+- **Handoff:** a `SessionStart` hook loads `ai/handoff/current.md` into every new session
+- **Compaction:** a `PreCompact` hook tells the summary to keep the active slice, unmet criteria and uncommitted files
+- **Memory:** each agent's `MEMORY.md` persists across sessions and is loaded for it
 
-Each agent has a memory file in `.claude/agent-memory/` that it reads at session start and updates at session end. Every session also ends with the main session writing `ai/handoff/current.md` once (subagents report in their final reply) — a structured snapshot of sprint state, completed steps, blockers, and the single next action. The next agent reads this before anything else. Git history preserves the full audit trail of handoffs.
+Each agent has a memory file in `.claude/agent-memory/` that Claude Code loads into it automatically (`memory: project`) and that the agent keeps current. Every session ends with the main session writing `ai/handoff/current.md` once (subagents report in their final reply) — a short snapshot of the active slice, what was finished, blockers, and the single next action. Git history preserves the full audit trail of handoffs.
 
 **Board compaction:** On long-running projects, `tasks-done.md` accumulates closed task definitions and starts adding noise to agent context. Run `meto-cli compact` to replace each closed task with a 2–3 sentence Claude Haiku summary — same information, a fraction of the tokens. Use `--dry-run` to preview before writing, and `--min-tasks=N` to skip compaction on short projects (default threshold: 20 tasks).
 
@@ -397,7 +414,8 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 | `meto-cli init` | Scaffold a new structured project (AI-powered if Claude Code is detected) |
 | `meto-cli init --no-ai` | Scaffold using static prompts only, skip AI generation |
 | `meto-cli init --dry-run` | Preview the generated file tree without writing to disk |
-| `meto-cli audit` | Scan an existing project against the methodology blueprint and fix gaps interactively |
+| `meto-cli audit` | Install Meto into an existing project: scan it against the methodology blueprint and fix gaps interactively |
+| `meto-cli audit --upgrade` | Bring Meto's own files in a project up to the installed version (add `--yes` to skip the prompts) |
 | `meto-cli audit --rubric` | Check the last 5 completed slices for rubric scores and passing tests |
 | `meto-cli doctor` | Check methodology health of the current project |
 | `meto-cli status` | Show swarm progress dashboard (reads SWARM_AWARENESS.md) |

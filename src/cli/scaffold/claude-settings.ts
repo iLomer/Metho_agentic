@@ -78,16 +78,32 @@ function getStackSpecificAllows(stack: TechStack): string[] {
 /**
  * Generates a `.claude/settings.json` content string pre-configured with
  * the permission allowlist for the given tech stack.
+ *
+ * When `baseSettings` (the rendered settings template) is given, its keys,
+ * such as the hooks, are kept and the allowlist is added on top.
  */
-export function generateClaudeSettings(stack: TechStack): string {
+export function generateClaudeSettings(
+  stack: TechStack,
+  baseSettings?: string,
+): string {
+  const base: Record<string, unknown> =
+    baseSettings === undefined
+      ? {}
+      : (JSON.parse(baseSettings) as Record<string, unknown>);
+  const baseEnv =
+    typeof base.env === "object" && base.env !== null
+      ? (base.env as Record<string, string>)
+      : {};
   const allow = [...UNIVERSAL_ALLOWS, ...getStackSpecificAllows(stack)];
   const settings = {
+    ...base,
     env: {
+      ...baseEnv,
       CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
     },
     permissions: {
       allow,
     },
   };
-  return JSON.stringify(settings, null, 2);
+  return JSON.stringify(settings, null, 2) + "\n";
 }

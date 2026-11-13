@@ -20,6 +20,7 @@ import {
 } from "./rubric-display.js";
 import type { LayerScanResult } from "./scanner.js";
 import type { RubricSliceResult } from "./rubric-check.js";
+import { runUpgrade } from "./upgrade.js";
 import type { TokenMap } from "../renderer.js";
 import { getCodeGuidelines, getDefinitionOfDone } from "../stacks.js";
 
@@ -96,11 +97,13 @@ function printAuditHelp(): void {
       "  Layer 0: Project Prerequisites (git, README, source dir) -- informational, never blocks",
       "  Layer 1: Methodology (CLAUDE.md, ai/ structure, task board, workflows)",
       "  Layer 2: Agents (.claude/ settings, agent definitions, agent memory)",
-      "  Layer 3: Governance (definition of done, commit conventions, session checkpoints)",
+      "  Layer 3: Governance (definition of done, commit conventions, code guidelines, agent memory)",
       "",
       "Options:",
       "  --help, -h    Show this help message",
       "  --rubric      Also check the last 5 completed slices for rubric score files",
+      "  --upgrade     Bring meto's own files (agents, CLAUDE.md sections, mod, hooks) up to this version",
+      "  --yes         With --upgrade: apply every change without asking",
     ].join("\n"),
     "Help",
   );
@@ -256,6 +259,12 @@ export async function runAudit(): Promise<LayerScanResult[]> {
     );
     p.outro("");
     process.exit(1);
+    return [];
+  }
+
+  if (args.includes("--upgrade")) {
+    await runUpgrade(projectDir, args.includes("--yes"));
+    p.outro("Run `meto-cli audit` to check the result.");
     return [];
   }
 

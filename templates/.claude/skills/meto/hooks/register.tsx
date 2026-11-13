@@ -15,8 +15,10 @@ import {
   highestSlice,
   isLive,
   isMetoAgent,
+  mayRoleWrite,
   mayWrite,
   parseDomains,
+  roleOf,
   parseEpics,
   parseSlices,
   relativeTo,
@@ -258,7 +260,7 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  // Domain guard: an epic agent writes only inside its domain.
+  // Write guards: an epic agent writes only inside its domain, a pm/tester/community agent only its own files.
   on('tool.call', { tool: ['Edit', 'Write', 'NotebookEdit'] }, async ($, e, next) => {
     if (!(await isMetoProject($))) return next(e)
     const target = e.tool === 'NotebookEdit' ? e.notebook_path : e.tool === 'Edit' || e.tool === 'Write' ? e.file_path : ''
@@ -272,6 +274,14 @@ export const register: Register = (on, options) => {
         return {
           deny: `meto: ${path} is outside meto-epic-${epicId}'s domain in ${DOMAIN_FILE}. Log the conflict in ${SWARM_FILE}, set your status to blocked, and stop.`,
         }
+      }
+    }
+
+    // Role guard: the planning, testing and community agents never write source code.
+    const role = roleOf(caller?.type)
+    if (role !== undefined && !mayRoleWrite(path, role)) {
+      return {
+        deny: `meto: ${path} is not one of meto-${role}'s files. Report what needs changing in your final answer instead of editing it.`,
       }
     }
 

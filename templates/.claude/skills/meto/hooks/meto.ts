@@ -179,6 +179,25 @@ export function mayWrite(file: string, owns: string[], epicId: string): boolean 
   return own.some(root => matchesPath(root, path))
 }
 
+/** What the agents that never write source code may write. The developer is not listed: it writes anywhere. */
+const ROLE_PATHS: Record<string, string[]> = {
+  pm: ['ai/', '.claude/agents/', 'CLAUDE.md'],
+  tester: ['ai/tasks/', 'ai/rubric/', SWARM_FILE],
+  community: ['ai/community/'],
+}
+
+/** `meto-tester` → `tester` for the roles with a write list; anything else → undefined. */
+export function roleOf(agentType: string | undefined): string | undefined {
+  const role = agentType?.match(/(?:^|:)meto-([a-z]+)$/)?.[1]
+  return role !== undefined && role in ROLE_PATHS ? role : undefined
+}
+
+/** Whether a planning, testing or community agent may write `file` (relative to the project root). */
+export function mayRoleWrite(file: string, role: string): boolean {
+  const own = [...(ROLE_PATHS[role] ?? []), `.claude/agent-memory/meto-${role}/`]
+  return own.some(root => matchesPath(root, normalize(file)))
+}
+
 /** Todo slices of `epicId` that need a slice still in progress or testing. */
 export function blockedByOpenWork(todo: Slice[], open: Slice[], epicId: string): [Slice, string] | undefined {
   const openIds = new Set(open.map(s => s.id))

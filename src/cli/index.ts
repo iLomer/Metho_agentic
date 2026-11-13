@@ -29,10 +29,9 @@ import type { AIGeneratedContent } from "./ai-parser.js";
 import {
   generateEpicAgents,
   readEpicAgentTemplate,
-  generateSwarmSettings,
   parseEpics,
 } from "./swarm.js";
-import { setupClaudeTooling, runCcstatusline } from "./init/setup-claude-tooling.js";
+import { runCcstatusline } from "./init/setup-claude-tooling.js";
 import { generateClaudeSettings } from "./scaffold/claude-settings.js";
 import { generateMcpConfig } from "./scaffold/mcp-config.js";
 import type { McpSelection } from "./scaffold/mcp-config.js";
@@ -80,7 +79,8 @@ function printHelp(): void {
       "  init              Scaffold a new structured project",
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
-      "  audit             Check project prerequisites and methodology compliance",
+      "  audit             Install meto in an existing project, or check an installed one",
+      "  audit --upgrade   Bring meto's own files in a project up to this version",
       "  compact           Compact tasks-done.md using Claude Haiku summarization",
       "  compact --dry-run Preview tasks that would be compacted without writing",
       "  ready             List unblocked tasks ready to start from tasks-todo.md",
@@ -183,6 +183,7 @@ async function main(): Promise<void> {
           { value: "github" as McpPromptOption, label: "GitHub", hint: "issues, PRs, code review — recommended" },
           { value: "sentry" as McpPromptOption, label: "Sentry", hint: "error monitoring" },
           { value: "postgres" as McpPromptOption, label: "PostgreSQL", hint: "database queries" },
+          { value: "context7" as McpPromptOption, label: "Context7", hint: "up-to-date library docs" },
           { value: "none" as McpPromptOption, label: "None / skip" },
         ],
         required: false,
@@ -312,37 +313,26 @@ async function main(): Promise<void> {
           epicAgentTemplate,
         );
         renderedFiles.push(...epicAgentFiles);
+      }
 
-        const epicIds = parseEpics(epicsContent).map((e) => e.id);
-        if (epicIds.length > 0) {
-          const swarmSettings = generateSwarmSettings(epicIds);
-          const settingsIndex = renderedFiles.findIndex(
-            (f) => f.relativePath.replace(/\\/g, "/") === ".claude/settings.json",
-          );
-          if (settingsIndex !== -1) {
-            renderedFiles[settingsIndex] = {
-              relativePath: ".claude/settings.json",
-              content: swarmSettings,
-            };
-          }
-        }
+      // Add the stack's permission allowlist to the settings template (keeps its hooks)
+      const settingsIndex = renderedFiles.findIndex(
+        (f) => f.relativePath.replace(/\\/g, "/") === ".claude/settings.json",
+      );
+      const claudeSettingsContent = generateClaudeSettings(
+        brief.techStack,
+        settingsIndex === -1 ? undefined : renderedFiles[settingsIndex].content,
+      );
+      if (settingsIndex !== -1) {
+        renderedFiles[settingsIndex] = {
+          relativePath: ".claude/settings.json",
+          content: claudeSettingsContent,
+        };
       } else {
-        // Sprint mode: overwrite .claude/settings.json with stack-aware permission allowlist
-        const claudeSettingsContent = generateClaudeSettings(brief.techStack);
-        const settingsIndex = renderedFiles.findIndex(
-          (f) => f.relativePath.replace(/\\/g, "/") === ".claude/settings.json",
-        );
-        if (settingsIndex !== -1) {
-          renderedFiles[settingsIndex] = {
-            relativePath: ".claude/settings.json",
-            content: claudeSettingsContent,
-          };
-        } else {
-          renderedFiles.push({
-            relativePath: ".claude/settings.json",
-            content: claudeSettingsContent,
-          });
-        }
+        renderedFiles.push({
+          relativePath: ".claude/settings.json",
+          content: claudeSettingsContent,
+        });
       }
 
       // Add .mcp.json if any MCP integrations were selected
@@ -397,16 +387,10 @@ async function main(): Promise<void> {
         }
       }
 
-      // Claude tooling setup
-      const toolingResult = await setupClaudeTooling();
-      if (toolingResult.success) {
-        p.log.success("Claude tooling installed (Context7, Sequential Thinking)");
-        if (process.stdout.isTTY) {
-          p.log.info("Setting up Claude Code status line...");
-          runCcstatusline();
-        }
-      } else {
-        p.log.warn(`Claude tooling setup skipped: ${toolingResult.warning}`);
+      // Status line setup (interactive terminals only)
+      if (process.stdout.isTTY) {
+        p.log.info("Setting up Claude Code status line...");
+        runCcstatusline();
       }
 
       // Build MCP env var notes based on selections
