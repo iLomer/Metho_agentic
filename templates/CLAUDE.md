@@ -39,6 +39,7 @@ The board files in `ai/tasks/` are the single source of truth for task state, in
 ```
 ## [slice-NNN] -- Title
 **Epic:** ENN | **Size:** XS/S/M/L | **Depends on:** slice-NNN or none
+**Model:** haiku / sonnet / opus     (optional)
 **Needs:** slice-NNN, slice-NNN   (optional)
 **Blocks:** slice-NNN, slice-NNN  (optional)
 
@@ -51,11 +52,22 @@ The board files in `ai/tasks/` are the single source of truth for task state, in
 
 `Needs` must all be in `tasks-done.md` before the task starts; `Blocks` lists tasks waiting on this one. `meto ready` reads both.
 
+### Model routing
+
+`@meto-pm` sets a slice's `Model` from this table, and the meto mod launches the building agent on it. A slice without the line runs on the agent's default (`sonnet`). Edit the table to match your plan and budget.
+
+| Work | Model |
+|---|---|
+| Database schema, migrations, auth, access rules, payments | `opus` |
+| Feature code | `sonnet` |
+| Copy, labels, config values, docs | `haiku` |
+
 ### meto mod (`.claude/skills/meto/`)
 
 Claude Code loads it automatically, and it enforces the rules above:
 - `/meto-board` shows the board and session in a side pane; `/meto-slice [count]` reserves the next free slice IDs, checked against origin
 - It refuses an epic agent that is already running, shares files with a running one, or needs a slice still in progress
+- It launches `@meto-developer` and the epic agents on the model their next slice asks for (see Model routing)
 - It refuses an edit outside the agent's files (see the Writes column above; an epic agent's domain is in `ai/swarm/domain-map.md`), and a separate message from a meto agent
 
 ## Handoff and memory
@@ -67,7 +79,7 @@ Claude Code loads it automatically, and it enforces the rules above:
 
 - Tests come first: one failing test per acceptance criterion, then the implementation.
 - A task is done only after its verification commands ran in the current session, with the output pasted into the task block.
-- Done criteria: `ai/workflows/definition-of-done.md`. Code rules: `ai/workflows/code-guidelines.md`.
+- Done criteria: `ai/workflows/definition-of-done.md`. Code rules: `ai/workflows/code-guidelines.md`; stack rules in `.claude/rules/` load when a matching file is touched.
 
 ## Commit Format
 

@@ -33,6 +33,7 @@ import {
 } from "./swarm.js";
 import { runCcstatusline } from "./init/setup-claude-tooling.js";
 import { generateClaudeSettings } from "./scaffold/claude-settings.js";
+import { generateStackRules, STACK_RULES_PATH } from "./scaffold/stack-rules.js";
 import { generateMcpConfig } from "./scaffold/mcp-config.js";
 import type { McpSelection } from "./scaffold/mcp-config.js";
 import { runCompact } from "./compact/run-compact.js";
@@ -87,6 +88,7 @@ function printHelp(): void {
       "  daemon start      Start the local agent dispatcher (WebSocket server)",
       "  doctor            Check methodology health of the current project",
       "  status            Show swarm progress dashboard (reads SWARM_AWARENESS.md)",
+      "  status --json     Print the swarm state as JSON (read by the /meto-swarm workflow)",
       "",
       "Options:",
       "  --help, -h        Show this help message",
@@ -333,6 +335,12 @@ async function main(): Promise<void> {
           relativePath: ".claude/settings.json",
           content: claudeSettingsContent,
         });
+      }
+
+      // Path-scoped stack rules: loaded by Claude Code when a matching file is touched
+      const stackRules = generateStackRules(brief.techStack);
+      if (stackRules !== undefined) {
+        renderedFiles.push({ relativePath: STACK_RULES_PATH, content: stackRules });
       }
 
       // Add .mcp.json if any MCP integrations were selected

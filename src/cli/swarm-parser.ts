@@ -18,7 +18,7 @@ export interface SwarmEpic {
   id: string;
   name: string;
   agent: string;
-  status: "not-started" | "on-track" | "blocked" | "complete";
+  status: "not-started" | "on-track" | "blocked" | "testing-ready" | "complete";
   tasksDone: number;
   blocker: string;
 }
@@ -61,6 +61,7 @@ const VALID_EPIC_STATUSES = new Set([
   "not-started",
   "on-track",
   "blocked",
+  "testing-ready",
   "complete",
 ]);
 

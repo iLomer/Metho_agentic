@@ -56,6 +56,8 @@ export function parseSlices(md: string): Slice[] {
     if (epic?.[1]) current.epic = epic[1]
     const size = line.match(/\*\*Size:\*\*\s*(XS|S|M|L)\b/)
     if (size?.[1]) current.size = size[1]
+    const model = line.match(/\*\*Model:\*\*\s*(haiku|sonnet|opus|fable)\b/i)
+    if (model?.[1]) current.model = model[1].toLowerCase()
     const needs = line.match(/\*\*Needs:\*\*\s*(.*)$/)
     if (needs?.[1] !== undefined) current.needs = needs[1].match(SLICE_REF) ?? []
   }
@@ -196,6 +198,35 @@ export function roleOf(agentType: string | undefined): string | undefined {
 export function mayRoleWrite(file: string, role: string): boolean {
   const own = [...(ROLE_PATHS[role] ?? []), `.claude/agent-memory/meto-${role}/`]
   return own.some(root => matchesPath(root, normalize(file)))
+}
+
+/** Model tiers, weakest first. A slice with no `Model` line leaves the agent's own default. */
+const MODEL_RANK = ['haiku', 'sonnet', 'opus', 'fable']
+
+/** Narrows a parsed model name to what the Agent tool accepts. */
+export function isAgentModel(model: string | undefined): model is 'haiku' | 'sonnet' | 'opus' | 'fable' {
+  return model !== undefined && MODEL_RANK.includes(model)
+}
+
+/** The most capable model any of `slices` asks for, if one does. */
+export function strongestModel(slices: Slice[]): string | undefined {
+  const ranked = slices.map(s => MODEL_RANK.indexOf(s.model ?? '')).filter(rank => rank !== -1)
+  return ranked.length === 0 ? undefined : MODEL_RANK[Math.max(...ranked)]
+}
+
+/**
+ * The model the next run of an agent should use, from the board.
+ *
+ * The developer takes the top todo slice whose `Needs` are done, so it gets
+ * that slice's model. An epic agent works through its epic's todo slices in
+ * one run, so it gets the most capable model any of them asks for.
+ */
+export function modelFor(agentType: string | undefined, todo: Slice[], done: Slice[]): string | undefined {
+  const epicId = epicOf(agentType)
+  if (epicId !== undefined) return strongestModel(todo.filter(s => s.epic === epicId))
+  if (!/(?:^|:)meto-developer$/.test(agentType ?? '')) return undefined
+  const doneIds = new Set(done.map(s => s.id))
+  return todo.find(s => s.needs.every(id => doneIds.has(id)))?.model
 }
 
 /** Todo slices of `epicId` that need a slice still in progress or testing. */

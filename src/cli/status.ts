@@ -2,6 +2,7 @@ import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { findProjectRoot } from "./doctor.js";
+import { readSwarmState } from "./swarm-state.js";
 import { parseSwarmAwareness } from "./swarm-parser.js";
 import type { SwarmState, SwarmEpic } from "./swarm-parser.js";
 
@@ -59,6 +60,9 @@ function displayEpics(epics: SwarmEpic[]): void {
         break;
       case "blocked":
         p.log.error(line);
+        break;
+      case "testing-ready":
+        p.log.info(line);
         break;
       case "not-started":
         p.log.warning(line);
@@ -132,6 +136,17 @@ export function displayDashboard(state: SwarmState): void {
  * and displays the dashboard.
  */
 export async function runStatus(): Promise<void> {
+  // --json: the state as one JSON object and nothing else, for the /meto-swarm workflow
+  if (process.argv.slice(3).includes("--json")) {
+    const root = await findProjectRoot(process.cwd());
+    if (root === undefined || !(await swarmFileExists(root))) {
+      process.stdout.write(JSON.stringify({ error: "not a swarm-mode meto project" }) + "\n");
+      process.exit(1);
+    }
+    process.stdout.write(JSON.stringify(await readSwarmState(root), null, 2) + "\n");
+    return;
+  }
+
   p.intro("meto-cli status");
 
   const projectRoot = await findProjectRoot(process.cwd());

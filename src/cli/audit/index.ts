@@ -1,5 +1,5 @@
 import { readdir, stat, writeFile, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import * as p from "@clack/prompts";
 import { AUDIT_BLUEPRINT } from "./blueprint.js";
 import { detectStack } from "./detect-stack.js";
@@ -10,6 +10,7 @@ import {
   getFailedResults,
 } from "./scanner.js";
 import { fixLayer, fixLayerTwo, fixLayerThree } from "./fixer.js";
+import { generateStackRules, STACK_RULES_PATH } from "../scaffold/stack-rules.js";
 import {
   extractLastSlices,
   buildRubricChecks,
@@ -155,6 +156,14 @@ function buildAuditTokenMap(
 /**
  * Checks whether the given path is a directory.
  */
+async function isFile(filePath: string): Promise<boolean> {
+  try {
+    return (await stat(filePath)).isFile();
+  } catch {
+    return false;
+  }
+}
+
 async function isDirectory(dirPath: string): Promise<boolean> {
   try {
     const stats = await stat(dirPath);
@@ -350,6 +359,21 @@ export async function runAudit(): Promise<LayerScanResult[]> {
       allLayerResults.push(scanResult);
       // Layer 0 is informational — its failures never gate Layer 1
       previousLayerPassed = layer.id === 0 ? true : layerPassed(scanResult);
+    }
+  }
+
+  // Stack rules: offered once the agents are in place and the stack is a known preset
+  const stackRules = generateStackRules(detected.stack);
+  const stackRulesPath = join(projectDir, STACK_RULES_PATH);
+  if (previousLayerPassed && stackRules !== undefined && !(await isFile(stackRulesPath))) {
+    const shouldCreate = await p.confirm({
+      message: `Create ${STACK_RULES_PATH}? (${detected.label} rules, loaded when an agent touches a matching file)`,
+      initialValue: true,
+    });
+    if (!p.isCancel(shouldCreate) && shouldCreate) {
+      await mkdir(dirname(stackRulesPath), { recursive: true });
+      await writeFile(stackRulesPath, stackRules, "utf-8");
+      p.log.success(`Created ${STACK_RULES_PATH}`);
     }
   }
 

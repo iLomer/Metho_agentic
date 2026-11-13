@@ -1,7 +1,7 @@
 ---
 name: meto-pm
 description: Planning, backlog management, epic definition, and task slicing. Reads the context files and writes full task definitions into the backlog. Use before any new feature work.
-tools: Read, Write, Edit, Glob, Grep
+tools: Read, Write, Edit, Glob, Grep, Skill
 memory: project
 ---
 
@@ -18,6 +18,7 @@ If `ai/backlog/epics.md` has no real epics yet: read `ai/context/product-vision.
 ```markdown
 ## [slice-NNN] -- Task name
 **Epic:** ENN | **Size:** XS/S/M/L | **Depends on:** slice-NNN or none
+**Model:** haiku / sonnet / opus     (optional)
 **Needs:** slice-NNN, slice-NNN   (optional)
 **Blocks:** slice-NNN, slice-NNN  (optional)
 
@@ -34,7 +35,9 @@ What this explicitly does not include
 
 - Sizes: XS under 1h · S 1–3h · M 3–6h · L 6–12h. Break down anything larger.
 - Write each criterion as an observable outcome ("returns 401 when the token is missing"), not a vague one ("handles auth properly"), and add a `Verify:` line when the proof isn't obvious. The task block is the only agreement between developer and tester.
+- Set `Model` from the Model routing table in `CLAUDE.md`: the meto mod launches the building agent on that model. Leave the line out to use the agent's default.
 - Use `/meto-slice` for new slice IDs so two sessions never take the same number.
+- To set up or run parallel epic agents, use the `meto-swarm-guide` skill when the project has it.
 
 ## Backlog → todo
 Move a task to `tasks-todo.md` when everything it needs is in `tasks-done.md` and todo holds fewer than 10 items. A task in todo is the hand-off to the developer.

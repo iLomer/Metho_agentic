@@ -15,8 +15,10 @@ import {
   highestSlice,
   isLive,
   isMetoAgent,
+  isAgentModel,
   mayRoleWrite,
   mayWrite,
+  modelFor,
   parseDomains,
   roleOf,
   parseEpics,
@@ -241,11 +243,18 @@ export const register: Register = (on, options) => {
     return { text: await reserveSlices($, count, prefix) }
   })
 
-  // Overlap guard: one agent per epic, no shared files, no split feature.
+  // Overlap guard: one agent per epic, no shared files, no split feature. Then model routing.
   on('tool.call', { tool: 'Agent' }, async ($, e, next) => {
     if (!(await isMetoProject($))) return next(e)
     const reason = await overlapReason($, e.subagent_type)
-    return reason ? { deny: `meto: ${reason}` } : next(e)
+    if (reason) return { deny: `meto: ${reason}` }
+
+    // Model routing: the slice's `Model` line decides, unless the launch names a model itself.
+    if (e.model !== undefined) return next(e)
+    const todo = parseSlices(await readOr($, TASK_FILES[1].file))
+    const done = parseSlices(await readOr($, TASK_FILES[4].file))
+    const model = modelFor(e.subagent_type, todo, done)
+    return next(isAgentModel(model) ? { ...e, model } : e)
   })
 
   // One report per agent: a meto subagent's final answer is its report.

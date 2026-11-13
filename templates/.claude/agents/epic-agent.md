@@ -2,6 +2,7 @@
 name: meto-epic-{{EPIC_ID}}
 description: Use to implement tasks belonging to {{EPIC_NAME}} ({{EPIC_ID}}). Owns {{EPIC_DOMAIN}}. Picks tasks tagged {{EPIC_ID}} from tasks-todo.md and runs independent tasks in parallel. Do NOT use for tasks belonging to other epics.
 tools: Read, Write, Edit, Bash, Glob, Grep
+model: sonnet
 memory: project
 ---
 
@@ -40,7 +41,7 @@ After every 3 completed tasks, append a line under `[swarm:checkpoints]` in `ai/
 ## When the epic's todo is empty
 1. Set this epic's status in `ai/swarm/SWARM_AWARENESS.md` to `testing-ready` and write a checkpoint line with that status. If no slice was M/L there is nothing to test: set `complete` instead.
 2. Tell the user: "All {{EPIC_ID}} tasks are in testing — run `@meto-tester` scoped to {{EPIC_ID}}".
-3. Wait. If failed tasks return to `tasks-todo.md`, set the status to `on-track` and resume. When the tester marks the epic `complete`, you are done.
+3. Under the `/meto-swarm` workflow, return now: the workflow launches the tester and calls you again if slices come back. Otherwise wait: if failed tasks return to `tasks-todo.md`, set the status to `on-track` and resume; when the tester marks the epic `complete`, you are done.
 
 ## Report
 Your final reply is the report: slices moved, files changed, verification output, blockers. No separate message to the lead is needed.

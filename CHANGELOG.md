@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.24.0] - 2026-11-14
+
+### Added
+
+- `/meto-swarm` workflow (`.claude/workflows/meto-swarm.js`, swarm mode): a script reads the swarm state, launches the epic agents that share no files, runs the tester per epic, and repeats; supports a dry run, an epic filter and a round limit
+- `meto-cli status --json`: the swarm state as JSON, read by the workflow
+- Model routing: an optional `Model` line per slice, a routing table in `CLAUDE.md`, and the mod (0.4.0) launches the developer or epic agent on that model
+- `.claude/rules/stack.md`: stack rules scoped with `paths:`, loaded when an agent touches a matching file
+- Skills: `meto-rubric` (tester scoring, with `code-review` on L slices) and `meto-swarm-guide` (swarm mode)
+- `audit --upgrade` adds the skills, the workflow and the stack rules to existing projects; `audit` checks for the rubric skill and offers the stack rules
+
+### Changed
+
+- Developer, tester, epic and community agents default to `model: sonnet`; tester and PM can invoke skills
+- `code-guidelines.md` points at the stack rules instead of repeating them
+
+### Fixed
+
+- `meto-cli status` now recognises the `testing-ready` epic status instead of showing it as `not-started`
+
+### Removed
+
+- `ai/workflows/swarm-workflow.md` and `ai/rubric/README.md`, replaced by the two skills
+
 ## [0.23.0] - 2026-11-13
 
 ### Added

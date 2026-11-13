@@ -270,6 +270,33 @@ describe("planUpgrade", () => {
     expect(await readFile(join(dir, "CLAUDE.md"), "utf-8")).toContain("An API for small shops.");
   });
 
+  it("adds the rubric skill, and the swarm files only to a swarm project", async () => {
+    const sprint = new Map((await planUpgrade(dir)).map((a) => [a.path, a]));
+    expect(sprint.get(".claude/skills/meto-rubric/SKILL.md")?.kind).toBe("add");
+    expect(sprint.has(".claude/workflows/meto-swarm.js")).toBe(false);
+    expect(sprint.has(".claude/skills/meto-swarm-guide/SKILL.md")).toBe(false);
+    // No manifest to detect a stack from, so no stack rules are offered
+    expect(sprint.has(".claude/rules/stack.md")).toBe(false);
+
+    await put("ai/swarm/SWARM_AWARENESS.md", "# SWARM_AWARENESS\n");
+    await put("ai/workflows/swarm-workflow.md", "# Swarm Workflow\n");
+    const swarm = new Map((await planUpgrade(dir)).map((a) => [a.path, a]));
+    expect(swarm.get(".claude/workflows/meto-swarm.js")?.kind).toBe("add");
+    expect(swarm.get(".claude/skills/meto-swarm-guide/SKILL.md")?.kind).toBe("add");
+    expect(swarm.get("ai/workflows/swarm-workflow.md")?.kind).toBe("remove");
+  });
+
+  it("adds stack rules when the stack is recognised and leaves existing ones alone", async () => {
+    await put("go.mod", "module example.com/shop\n\ngo 1.22\n");
+    const rules = (await planUpgrade(dir)).find((a) => a.path === ".claude/rules/stack.md");
+    expect(rules?.kind).toBe("add");
+    expect(rules?.content).toContain('"**/*.go"');
+
+    await put(".claude/rules/stack.md", "# my own rules\n");
+    const again = await planUpgrade(dir);
+    expect(again.some((a) => a.path === ".claude/rules/stack.md")).toBe(false);
+  });
+
   it("leaves a filled-in handoff alone", async () => {
     await put("ai/handoff/current.md", "# Handoff\n\n**Active slice:** slice-004 — in-testing\n");
     const actions = await planUpgrade(dir);

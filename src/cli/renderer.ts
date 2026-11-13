@@ -41,12 +41,9 @@ export function buildWorkflowSessionStart(workflowMode: WorkflowMode): string {
     "",
     "This project uses swarm mode: the main session orchestrates and the epic agents write the code, each inside its own domain. Implementing a task in the main session bypasses the domain guard, so delegate it instead.",
     "",
-    "At the start of a session:",
-    "1. Read `ai/swarm/SWARM_AWARENESS.md` for each epic's status and `ai/swarm/domain-map.md` for who owns which files",
-    "2. For each epic that is `not-started` or `on-track`, launch `@meto-epic-[id]`, as long as its next slices share no files and no feature with an epic already running. A feature that crosses epics goes to one agent while the others wait",
-    "3. For each epic that is `testing-ready`, launch `@meto-tester` scoped to that epic",
+    "Run `/meto-swarm` to build: the workflow reads the swarm state, launches the epic agents that share no files, tests each epic that reaches `testing-ready`, and repeats. Ask for a dry run to see the plan without launching anything.",
     "",
-    "Call `@meto-pm` when the backlog needs planning. `npx meto-cli status` prints swarm progress at any time.",
+    "The `meto-swarm-guide` skill covers setting up a swarm, launching agents by hand, and resolving file conflicts. Call `@meto-pm` when the backlog needs planning. `npx meto-cli status` prints swarm progress at any time.",
   ].join("\n");
 }
 
@@ -68,12 +65,13 @@ export function buildWorkflowDailyWorkflow(workflowMode: WorkflowMode): string {
 
   return [
     "```",
+    "/meto-swarm           build and test: the workflow launches the agents below",
     "@meto-epic-[id]       build: one agent per epic, inside its domain",
     "@meto-tester          validate: when an epic is testing-ready",
     "npx meto-cli status   swarm progress at any time",
     "```",
     "",
-    "Epic agents commit after each task. See `ai/workflows/swarm-workflow.md` for the full rhythm.",
+    "Epic agents commit after each task. The `meto-swarm-guide` skill has the full rhythm.",
   ].join("\n");
 }
 
@@ -254,7 +252,8 @@ export function resolveTemplatesDir(): string {
  */
 const SWARM_ONLY_PATHS = [
   "ai/swarm/",
-  "ai/workflows/swarm-workflow.md",
+  ".claude/skills/meto-swarm-guide/",
+  ".claude/workflows/",
 ];
 
 /**

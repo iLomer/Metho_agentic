@@ -9,6 +9,8 @@ import {
   highestSlice,
   isMetoAgent,
   mayRoleWrite,
+  modelFor,
+  strongestModel,
   mayWrite,
   parseDomains,
   roleOf,
@@ -134,6 +136,36 @@ test('lets an epic agent write its domain and the board only', () => {
   expect(mayWrite('.claude/agent-memory/meto-epic-E2/MEMORY.md', owns, 'E2')).toBe(true)
   expect(mayWrite('src/shared/x.ts', owns, 'E2')).toBe(false)
   expect(mayWrite('package.json', owns, 'E2')).toBe(false)
+})
+
+test('routes each agent to the model its slices ask for', () => {
+  const todo = parseSlices(`## [slice-020] -- Rename button label
+**Epic:** E1 | **Size:** XS | **Depends on:** none
+**Model:** haiku
+**Needs:** slice-019
+
+## [slice-021] -- Add RLS policy for profiles
+**Epic:** E2 | **Size:** M | **Depends on:** none
+**Model:** Opus
+
+## [slice-022] -- Profile form
+**Epic:** E2 | **Size:** M | **Depends on:** none
+**Model:** sonnet
+
+## [slice-023] -- Footer copy
+**Epic:** E3 | **Size:** XS | **Depends on:** none`)
+  expect(todo.map(s => s.model)).toEqual(['haiku', 'opus', 'sonnet', undefined])
+
+  // The developer gets the model of the top slice it can start
+  expect(modelFor('meto-developer', todo, [])).toBe('opus')
+  expect(modelFor('meto-developer', todo, parseSlices('## [slice-019] -- Done'))).toBe('haiku')
+  // An epic agent gets the most capable model its epic's slices ask for
+  expect(modelFor('meto-epic-E2', todo, [])).toBe('opus')
+  expect(modelFor('meto-epic-E1', todo, [])).toBe('haiku')
+  // No Model line, or an agent that does not build: the agent's own default stays
+  expect(modelFor('meto-epic-E3', todo, [])).toBeUndefined()
+  expect(modelFor('meto-tester', todo, [])).toBeUndefined()
+  expect(strongestModel([])).toBeUndefined()
 })
 
 test('keeps the pm, tester and community agents out of source code', () => {

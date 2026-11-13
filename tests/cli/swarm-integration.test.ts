@@ -153,7 +153,10 @@ describe("meto-cli init -- swarm mode (integration)", () => {
     const swarmFiles = [
       "ai/swarm/SWARM_AWARENESS.md",
       "ai/swarm/domain-map.md",
-      "ai/workflows/swarm-workflow.md",
+      ".claude/workflows/meto-swarm.js",
+      ".claude/skills/meto-swarm-guide/SKILL.md",
+      ".claude/skills/meto-rubric/SKILL.md",
+      ".claude/rules/stack.md",
     ];
 
     for (const filePath of swarmFiles) {

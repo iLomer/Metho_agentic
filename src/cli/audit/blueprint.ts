@@ -298,6 +298,14 @@ const LAYER_2_EXPECTATIONS: BlueprintExpectation[] = [
     layer: 2,
     fixable: true,
   },
+  {
+    id: "L2-rubric-skill",
+    description: "Rubric skill for the tester agent",
+    checkType: "file-exists",
+    path: ".claude/skills/meto-rubric/SKILL.md",
+    layer: 2,
+    fixable: true,
+  },
 ];
 
 // ---------------------------------------------------------------------------

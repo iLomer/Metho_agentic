@@ -364,12 +364,17 @@ describe("renderTemplates", () => {
   it("excludes swarm files when workflow mode is sprint", async () => {
     const swarmDir = join(tempDir, "ai", "swarm");
     const workflowDir = join(tempDir, "ai", "workflows");
+    const scriptDir = join(tempDir, ".claude", "workflows");
+    const guideDir = join(tempDir, ".claude", "skills", "meto-swarm-guide");
     await mkdir(swarmDir, { recursive: true });
     await mkdir(workflowDir, { recursive: true });
+    await mkdir(scriptDir, { recursive: true });
+    await mkdir(guideDir, { recursive: true });
     await writeFile(join(tempDir, "CLAUDE.md"), "# Project", "utf-8");
     await writeFile(join(swarmDir, "SWARM_AWARENESS.md"), "swarm", "utf-8");
     await writeFile(join(swarmDir, "domain-map.md"), "domains", "utf-8");
-    await writeFile(join(workflowDir, "swarm-workflow.md"), "workflow", "utf-8");
+    await writeFile(join(scriptDir, "meto-swarm.js"), "workflow", "utf-8");
+    await writeFile(join(guideDir, "SKILL.md"), "guide", "utf-8");
     await writeFile(join(workflowDir, "commit-conventions.md"), "commits", "utf-8");
 
     const rendered = await renderTemplates(tempDir, {}, "sprint");
@@ -379,18 +384,24 @@ describe("renderTemplates", () => {
     expect(paths).toContain("ai/workflows/commit-conventions.md");
     expect(paths).not.toContain("ai/swarm/SWARM_AWARENESS.md");
     expect(paths).not.toContain("ai/swarm/domain-map.md");
-    expect(paths).not.toContain("ai/workflows/swarm-workflow.md");
+    expect(paths).not.toContain(".claude/workflows/meto-swarm.js");
+    expect(paths).not.toContain(".claude/skills/meto-swarm-guide/SKILL.md");
   });
 
   it("includes swarm files when workflow mode is swarm", async () => {
     const swarmDir = join(tempDir, "ai", "swarm");
     const workflowDir = join(tempDir, "ai", "workflows");
+    const scriptDir = join(tempDir, ".claude", "workflows");
+    const guideDir = join(tempDir, ".claude", "skills", "meto-swarm-guide");
     await mkdir(swarmDir, { recursive: true });
     await mkdir(workflowDir, { recursive: true });
+    await mkdir(scriptDir, { recursive: true });
+    await mkdir(guideDir, { recursive: true });
     await writeFile(join(tempDir, "CLAUDE.md"), "# Project", "utf-8");
     await writeFile(join(swarmDir, "SWARM_AWARENESS.md"), "swarm", "utf-8");
     await writeFile(join(swarmDir, "domain-map.md"), "domains", "utf-8");
-    await writeFile(join(workflowDir, "swarm-workflow.md"), "workflow", "utf-8");
+    await writeFile(join(scriptDir, "meto-swarm.js"), "workflow", "utf-8");
+    await writeFile(join(guideDir, "SKILL.md"), "guide", "utf-8");
 
     const rendered = await renderTemplates(tempDir, {}, "swarm");
 
@@ -398,7 +409,8 @@ describe("renderTemplates", () => {
     expect(paths).toContain("CLAUDE.md");
     expect(paths).toContain("ai/swarm/SWARM_AWARENESS.md");
     expect(paths).toContain("ai/swarm/domain-map.md");
-    expect(paths).toContain("ai/workflows/swarm-workflow.md");
+    expect(paths).toContain(".claude/workflows/meto-swarm.js");
+    expect(paths).toContain(".claude/skills/meto-swarm-guide/SKILL.md");
   });
 
   it("excludes epic-agent.md base template in both modes", async () => {

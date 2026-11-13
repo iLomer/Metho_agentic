@@ -1,4 +1,4 @@
-export type Slice = { id: string; title: string; epic?: string; size?: string; needs: string[] }
+export type Slice = { id: string; title: string; epic?: string; size?: string; model?: string; needs: string[] }
 export type BoardColumn = { key: string; label: string; count: number; slices: Slice[] }
 export type Epic = { id: string; name: string; status: string; done: number; blocker: string }
 export type Session = {

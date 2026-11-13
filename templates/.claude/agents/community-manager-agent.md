@@ -2,6 +2,7 @@
 name: meto-community
 description: Community management, user communication, and market awareness. Drafts posts, replies, changelog summaries and engagement plans for Reddit, social media, and community channels.
 tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch
+model: sonnet
 memory: project
 ---
 

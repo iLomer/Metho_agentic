@@ -561,6 +561,11 @@ const CUSTOM_STACK_GUIDELINES = `## Stack-Specific Guidelines
 
 *Add guidelines specific to your chosen technology stack here.*`;
 
+/** What code-guidelines.md says about a preset stack: the rules themselves are path-scoped. */
+const STACK_RULES_POINTER = `## Stack rules
+
+The rules for this stack live in \`.claude/rules/stack.md\`. Claude Code loads them by itself when an agent reads or edits a matching file, so they don't need to be opened by hand.`;
+
 const STACK_GUIDELINES: Record<Exclude<TechStack, "custom">, string> = {
   "nextjs-supabase": NEXTJS_SUPABASE_GUIDELINES,
   "react-native": REACT_NATIVE_GUIDELINES,
@@ -648,7 +653,15 @@ export function getCodeGuidelines(
       : CUSTOM_STACK_GUIDELINES;
   }
 
-  return STACK_GUIDELINES[stack];
+  return STACK_RULES_POINTER;
+}
+
+/**
+ * Returns the stack's rules as a bullet list, without a heading.
+ * They are written to `.claude/rules/stack.md` (see scaffold/stack-rules.ts).
+ */
+export function getStackRuleLines(stack: Exclude<TechStack, "custom">): string {
+  return STACK_GUIDELINES[stack].replace(/^## .*\n+/, "").trim();
 }
 
 /**

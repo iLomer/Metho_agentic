@@ -20,6 +20,8 @@ import {
   resolveTemplatesDir,
 } from "../renderer.js";
 import type { WorkflowMode } from "../types.js";
+import { generateStackRules, STACK_RULES_PATH } from "../scaffold/stack-rules.js";
+import { detectStack } from "./detect-stack.js";
 import { METO_MOD_DIR } from "./mod-install.js";
 import { cleanMemory, upgradeSettings } from "./upgrade-content.js";
 
@@ -27,7 +29,7 @@ import { cleanMemory, upgradeSettings } from "./upgrade-content.js";
 export interface UpgradeAction {
   /** Project-relative path, forward slashes */
   path: string;
-  kind: "replace" | "merge" | "clean" | "remove";
+  kind: "add" | "replace" | "merge" | "clean" | "remove";
   /** Why, shown to the user */
   description: string;
   content: string | undefined;
@@ -44,15 +46,27 @@ const AGENT_FILES = [
 /** Other meto documents with no project content. */
 const STATIC_FILES = [
   "ai/workflows/commit-conventions.md",
-  "ai/workflows/swarm-workflow.md",
-  "ai/rubric/README.md",
   "ai/rubric/tester-rubric.md",
+];
+
+/** Folders meto owns entirely: every template file is installed or replaced. */
+const OWNED_DIRS = [
+  { dir: METO_MOD_DIR, description: "current meto mod" },
+  { dir: ".claude/skills/meto-rubric", description: "rubric skill for @meto-tester" },
+];
+
+/** The same, for projects in swarm mode. */
+const OWNED_SWARM_DIRS = [
+  { dir: ".claude/skills/meto-swarm-guide", description: "swarm guide skill" },
+  { dir: ".claude/workflows", description: "/meto-swarm workflow" },
 ];
 
 /** Documents older scaffolds shipped that the current methodology no longer uses. */
 const OBSOLETE_FILES = [
   "ai/workflows/session-checkpoint.md",
   "ai/handoff/README.md",
+  "ai/rubric/README.md",
+  "ai/workflows/swarm-workflow.md",
 ];
 
 const EPIC_TEMPLATE = ".claude/agents/epic-agent.md";
@@ -226,13 +240,31 @@ export async function planUpgrade(
     }
   }
 
-  // The mod: every file, including ones a newer version added
-  for (const file of await listFiles(join(templatesDir, METO_MOD_DIR))) {
-    const path = relative(templatesDir, file).replace(/\\/g, "/");
-    const source = await readFile(file, "utf-8");
-    const current = await project(path);
-    if (current === undefined || !sameText(current, source)) {
-      actions.push({ path, kind: "replace", description: "current meto mod", content: source });
+  // Folders meto owns: every file, including ones a newer version added
+  for (const { dir, description } of [...OWNED_DIRS, ...(isSwarm ? OWNED_SWARM_DIRS : [])]) {
+    for (const file of await listFiles(join(templatesDir, dir))) {
+      const path = relative(templatesDir, file).replace(/\\/g, "/");
+      const source = await readFile(file, "utf-8");
+      const current = await project(path);
+      if (current === undefined) {
+        actions.push({ path, kind: "add", description, content: source });
+      } else if (!sameText(current, source)) {
+        actions.push({ path, kind: "replace", description, content: source });
+      }
+    }
+  }
+
+  // Stack rules: added when the stack is a known preset and the project has none
+  if ((await project(STACK_RULES_PATH)) === undefined) {
+    const detected = await detectStack(projectDir);
+    const rules = generateStackRules(detected.stack);
+    if (rules !== undefined) {
+      actions.push({
+        path: STACK_RULES_PATH,
+        kind: "add",
+        description: `${detected.label} rules, loaded when an agent touches a matching file`,
+        content: rules,
+      });
     }
   }
 
@@ -296,6 +328,7 @@ export async function applyUpgradeAction(projectDir: string, action: UpgradeActi
 }
 
 const KIND_LABEL: Record<UpgradeAction["kind"], string> = {
+  add: "add    ",
   replace: "replace",
   merge: "merge  ",
   clean: "clean  ",
