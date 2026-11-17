@@ -34,8 +34,8 @@ instructions: |
      - branch: agent/drift-watcher/<today's date as YYYY-MM-DD>
      - files: the full updated content of each changed file, never a diff or a fragment
      - body: one line per change that names the file, what changed and the source link that shows why
-     - touch only files under templates/. If a change outside templates/ is truly needed, include it
-       and say why in the body.
+     - touch only files under templates/. If a change outside templates/ is needed, do not make it:
+       describe it in the pull request body instead.
   6. If nothing is outdated, finish with exactly: No outdated templates.
   7. Stay within the turn budget: you have 25 turns in total. Batch your reads, and do not re-read files.
 
