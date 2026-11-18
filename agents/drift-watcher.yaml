@@ -6,6 +6,7 @@ mission: Flag Meto CLI templates made outdated by new Claude Code features
 tools: [web_fetch, github:read, github:create_pr]
 approval_required: [github:create_pr]
 budget: { max_turns: 25, max_usd_per_run: 0.50 }
+trigger: { schedule: "0 7 * * 1", timezone: "Europe/Bucharest" }
 done_when: A pull request is waiting for authorization, or "No outdated templates." is logged
 escalate_when: The Claude Code changelog or documentation cannot be reached after one retry, or a template change also needs new audit --upgrade logic
 instructions: |
