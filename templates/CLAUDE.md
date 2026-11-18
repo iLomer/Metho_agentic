@@ -96,3 +96,4 @@ chore(scope): description [bootstrap]
 
 ## Code Conventions
 {{CODE_CONVENTIONS}}
+<!-- Checked by the Drift Watcher -->
