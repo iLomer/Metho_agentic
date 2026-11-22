@@ -4,6 +4,7 @@ import { readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir, platform } from "node:os";
 import { fileURLToPath } from "node:url";
+import { answerPrompts } from "../helpers/answer-prompts.js";
 
 const CURRENT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const PROJECT_ROOT = join(CURRENT_DIR, "..", "..");
@@ -18,36 +19,6 @@ const MOCK_CLAUDE_ERR_DIR = join(CURRENT_DIR, "..", "fixtures", "mock-claude-err
 
 /** Carriage return -- what terminals send when the user presses Enter. */
 const CR = "\r";
-
-/** Delay between sending answers to give clack time to render each prompt. */
-const PROMPT_DELAY_MS = 500;
-
-/**
- * Sends a sequence of answers to a child process's stdin with delays.
- */
-function sendAnswersSequentially(
-  stdin: NodeJS.WritableStream,
-  answers: string[],
-): Promise<void> {
-  return new Promise((resolve) => {
-    let index = 0;
-
-    function sendNext(): void {
-      if (index >= answers.length) {
-        resolve();
-        return;
-      }
-
-      setTimeout(() => {
-        stdin.write(answers[index]);
-        index++;
-        sendNext();
-      }, PROMPT_DELAY_MS);
-    }
-
-    sendNext();
-  });
-}
 
 /**
  * Spawns the CLI with a custom PATH that includes the fixtures directory.
@@ -88,7 +59,7 @@ function runCliWithMockClaude(
       resolve({ code, stdout, stderr });
     });
 
-    sendAnswersSequentially(child.stdin, answers).catch(reject);
+    answerPrompts(child, answers).catch(reject);
   });
 }
 
