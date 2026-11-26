@@ -8,6 +8,8 @@ import {
   parseShortstat,
   highestSlice,
   isMetoAgent,
+  leadEditsFrom,
+  ownerOf,
   mayRoleWrite,
   modelFor,
   strongestModel,
@@ -229,4 +231,24 @@ test('reads git diff --shortstat', () => {
   expect(parseShortstat(' 3 files changed, 10 insertions(+), 2 deletions(-)')).toEqual({ added: 10, removed: 2 })
   expect(parseShortstat(' 1 file changed, 1 deletion(-)')).toEqual({ added: 0, removed: 1 })
   expect(parseShortstat('')).toEqual({ added: 0, removed: 0 })
+})
+
+test('finds the epic whose domain holds a file, for the swarm lead guard', () => {
+  const domains = { E1: { owns: ['src/auth', 'supabase/migrations/*_e1_*'], shared: ['src/types'] }, E2: { owns: ['src/share'], shared: [] } }
+  expect(ownerOf('src/auth/login.ts', domains)).toBe('E1')
+  expect(ownerOf('supabase/migrations/20261001_e1_users.sql', domains)).toBe('E1')
+  expect(ownerOf('./src/share/link.ts', domains)).toBe('E2')
+  // Shared files, the board and files no epic owns stay the main session's to edit
+  expect(ownerOf('src/types/database.ts', domains)).toBeUndefined()
+  expect(ownerOf('ai/tasks/tasks-todo.md', domains)).toBeUndefined()
+  expect(ownerOf('README.md', domains)).toBeUndefined()
+  // A sprint project has no domains, so nothing is ever owned
+  expect(ownerOf('src/auth/login.ts', {})).toBeUndefined()
+})
+
+test('refuses main-session edits unless the option says warn or allow', () => {
+  expect(leadEditsFrom(undefined)).toBe('refuse')
+  expect(leadEditsFrom('nonsense')).toBe('refuse')
+  expect(leadEditsFrom('warn')).toBe('warn')
+  expect(leadEditsFrom('allow')).toBe('allow')
 })

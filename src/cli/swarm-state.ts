@@ -38,6 +38,11 @@ export interface SwarmEpicState {
 export interface SwarmStateJson {
   project: string;
   epics: SwarmEpicState[];
+  /**
+   * Slice ids that belong to no epic agent: no `Epic` line, or an epic that
+   * is not in the swarm table. The workflow hands these to `@meto-developer`.
+   */
+  unowned: { todo: string[]; inTesting: string[] };
 }
 
 const MODEL_RANK = ["haiku", "sonnet", "opus", "fable"];
@@ -60,7 +65,8 @@ export function parseBoardSlices(md: string): BoardSlice[] {
     }
     const epic = line.match(/\*\*Epic:\*\*\s*([A-Za-z0-9_-]+)/);
     if (epic?.[1] !== undefined) {
-      current.epic = epic[1];
+      // `Epic: none` marks a slice no epic owns
+      current.epic = /^none$/i.test(epic[1]) ? undefined : epic[1];
     }
     const model = line.match(/\*\*Model:\*\*\s*(haiku|sonnet|opus|fable)\b/i);
     if (model?.[1] !== undefined) {
@@ -131,9 +137,13 @@ export function buildSwarmState(files: {
   const inProgress = parseBoardSlices(files.inProgress);
   const inTesting = parseBoardSlices(files.inTesting);
   const openIds = new Set([...inProgress, ...inTesting].map((s) => s.id));
+  const epicIds = new Set(swarm.epics.map((e) => e.id));
+  const unowned = (slices: BoardSlice[]): string[] =>
+    slices.filter((s) => s.epic === undefined || !epicIds.has(s.epic)).map((s) => s.id);
 
   return {
     project: swarm.meta.projectName,
+    unowned: { todo: unowned(todo), inTesting: unowned(inTesting) },
     epics: swarm.epics.map((epic) => {
       const mine = todo.filter((s) => s.epic === epic.id);
       return {

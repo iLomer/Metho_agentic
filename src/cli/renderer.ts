@@ -41,7 +41,11 @@ export function buildWorkflowSessionStart(workflowMode: WorkflowMode): string {
     "",
     "This project uses swarm mode: the main session orchestrates and the epic agents write the code, each inside its own domain. Implementing a task in the main session bypasses the domain guard, so delegate it instead.",
     "",
-    "Run `/meto-swarm` to build: the workflow reads the swarm state, launches the epic agents that share no files, tests each epic that reaches `testing-ready`, and repeats. Ask for a dry run to see the plan without launching anything.",
+    "Every change to the code goes through `/meto-swarm`, also a small one and also long after the first backlog is built:",
+    "- `/meto-swarm <what you want>` for new work: `@meto-pm` slices it into the board and assigns each slice to an epic, then the agents build it.",
+    "- `/meto-swarm` alone builds what is already in `tasks-todo.md`.",
+    "",
+    "Each run first repairs the swarm files (an agent for every epic, no epic left `complete` with slices waiting), launches the epic agents that share no files, hands slices no epic owns to `@meto-developer`, tests what reaches testing, and repeats. Ask for a dry run to see the plan without launching anything. The meto mod refuses a main-session edit inside an epic's domain.",
     "",
     "The `meto-swarm-guide` skill covers setting up a swarm, launching agents by hand, and resolving file conflicts. Call `@meto-pm` when the backlog needs planning. `npx meto-cli status` prints swarm progress at any time.",
   ].join("\n");
@@ -65,8 +69,9 @@ export function buildWorkflowDailyWorkflow(workflowMode: WorkflowMode): string {
 
   return [
     "```",
-    "/meto-swarm           build and test: the workflow launches the agents below",
+    "/meto-swarm [request] plan a request if one is given, then build and test: the workflow launches the agents below",
     "@meto-epic-[id]       build: one agent per epic, inside its domain",
+    "@meto-developer       build: slices no epic owns, one at a time",
     "@meto-tester          validate: when an epic is testing-ready",
     "npx meto-cli status   swarm progress at any time",
     "```",
@@ -95,6 +100,7 @@ export function buildWorkflowAgentsSection(
       1,
       1,
       "| `@meto-epic-[id]` | One per epic: its domain in `ai/swarm/domain-map.md`, plus the board |",
+      "| `@meto-developer` | Slices with `Epic: none`: files no single epic owns, plus the board |",
     );
   }
 

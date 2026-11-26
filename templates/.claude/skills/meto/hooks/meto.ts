@@ -53,7 +53,8 @@ export function parseSlices(md: string): Slice[] {
     if (!current) continue
 
     const epic = line.match(/\*\*Epic:\*\*\s*([A-Za-z0-9_-]+)/)
-    if (epic?.[1]) current.epic = epic[1]
+    // `Epic: none` marks a slice no epic owns
+    if (epic?.[1]) current.epic = /^none$/i.test(epic[1]) ? undefined : epic[1]
     const size = line.match(/\*\*Size:\*\*\s*(XS|S|M|L)\b/)
     if (size?.[1]) current.size = size[1]
     const model = line.match(/\*\*Model:\*\*\s*(haiku|sonnet|opus|fable)\b/i)
@@ -179,6 +180,19 @@ export function mayWrite(file: string, owns: string[], epicId: string): boolean 
   const path = normalize(file)
   const own = [...owns, ...BOARD_PATHS, `.claude/agent-memory/meto-epic-${epicId}/`]
   return own.some(root => matchesPath(root, path))
+}
+
+/** The epic whose domain holds `file` (relative to the project root), if one does. */
+export function ownerOf(file: string, domains: Record<string, Domain>): string | undefined {
+  const path = normalize(file)
+  return Object.keys(domains).find(id => (domains[id]?.owns ?? []).some(root => matchesPath(root, path)))
+}
+
+/** How the main session's own edits inside an epic's domain are treated in a swarm project. */
+export type LeadEdits = 'refuse' | 'warn' | 'allow'
+
+export function leadEditsFrom(option: unknown): LeadEdits {
+  return option === 'warn' || option === 'allow' ? option : 'refuse'
 }
 
 /** What the agents that never write source code may write. The developer is not listed: it writes anywhere. */

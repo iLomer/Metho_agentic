@@ -1,6 +1,6 @@
 /**
- * `meto-cli audit --upgrade`: brings the meto-owned files of an existing
- * project up to the current templates.
+ * The version half of `meto-cli repair` (also reached as `audit --upgrade`):
+ * brings the meto-owned files of an existing project up to the current templates.
  *
  * The normal audit never overwrites a file, so a project scaffolded by an
  * older meto-cli keeps its old agent definitions and CLAUDE.md. The upgrade
@@ -11,7 +11,6 @@
 
 import { readdir, readFile, rm, writeFile, mkdir } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
-import * as p from "@clack/prompts";
 import {
   buildWorkflowAgentsSection,
   buildWorkflowDailyWorkflow,
@@ -325,80 +324,4 @@ export async function applyUpgradeAction(projectDir: string, action: UpgradeActi
   }
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, action.content, "utf-8");
-}
-
-const KIND_LABEL: Record<UpgradeAction["kind"], string> = {
-  add: "add    ",
-  replace: "replace",
-  merge: "merge  ",
-  clean: "clean  ",
-  remove: "remove ",
-};
-
-/**
- * Interactive entry point for `meto-cli audit --upgrade`.
- *
- * @param assumeYes - apply every change without asking (`--yes`)
- * @returns the number of changes applied
- */
-export async function runUpgrade(projectDir: string, assumeYes: boolean): Promise<number> {
-  if ((await readOrUndefined(join(projectDir, "CLAUDE.md"))) === undefined) {
-    p.log.error("No CLAUDE.md here. Run `meto-cli audit` first to install meto in this project.");
-    return 0;
-  }
-
-  const actions = await planUpgrade(projectDir);
-  if (actions.length === 0) {
-    p.log.success("Already up to date with this version of meto-cli.");
-    return 0;
-  }
-
-  p.note(
-    actions.map((a) => `${KIND_LABEL[a.kind]}  ${a.path}\n         ${a.description}`).join("\n"),
-    `${actions.length} file${actions.length === 1 ? "" : "s"} to upgrade`,
-  );
-  p.log.info(
-    "The board, context files, definition of done, code guidelines and a filled-in handoff are not touched. Commit first: git keeps the previous versions.",
-  );
-
-  let mode: "all" | "each" = "all";
-  if (!assumeYes) {
-    const choice = await p.select({
-      message: "Apply these changes?",
-      options: [
-        { value: "all" as const, label: "Apply all" },
-        { value: "each" as const, label: "Ask for each file" },
-        { value: "none" as const, label: "Cancel" },
-      ],
-    });
-    if (p.isCancel(choice) || choice === "none") {
-      p.log.info("Nothing changed.");
-      return 0;
-    }
-    mode = choice;
-  }
-
-  let applied = 0;
-  for (const action of actions) {
-    if (mode === "each") {
-      const ok = await p.confirm({
-        message: `${KIND_LABEL[action.kind].trim()} ${action.path}? (${action.description})`,
-        initialValue: true,
-      });
-      if (p.isCancel(ok) || !ok) {
-        p.log.info(`Skipped ${action.path}`);
-        continue;
-      }
-    }
-    try {
-      await applyUpgradeAction(projectDir, action);
-      applied++;
-    } catch (err: unknown) {
-      const reason = err instanceof Error ? err.message : "Unknown error";
-      p.log.error(`Failed on ${action.path}: ${reason}`);
-    }
-  }
-
-  p.log.success(`Upgraded ${applied} of ${actions.length} file${actions.length === 1 ? "" : "s"}.`);
-  return applied;
 }

@@ -21,7 +21,7 @@ import {
 } from "./rubric-display.js";
 import type { LayerScanResult } from "./scanner.js";
 import type { RubricSliceResult } from "./rubric-check.js";
-import { runUpgrade } from "./upgrade.js";
+import { repairProject } from "../repair/index.js";
 import type { TokenMap } from "../renderer.js";
 import { getCodeGuidelines, getDefinitionOfDone } from "../stacks.js";
 
@@ -103,7 +103,7 @@ function printAuditHelp(): void {
       "Options:",
       "  --help, -h    Show this help message",
       "  --rubric      Also check the last 5 completed slices for rubric score files",
-      "  --upgrade     Bring meto's own files (agents, CLAUDE.md sections, mod, hooks) up to this version",
+      "  --upgrade     The same as `meto-cli repair`: bring meto's own files up to this version and repair the swarm files",
       "  --yes         With --upgrade: apply every change without asking",
     ].join("\n"),
     "Help",
@@ -272,7 +272,8 @@ export async function runAudit(): Promise<LayerScanResult[]> {
   }
 
   if (args.includes("--upgrade")) {
-    await runUpgrade(projectDir, args.includes("--yes"));
+    // The same as `meto-cli repair`, kept under its older name
+    await repairProject(projectDir, { check: false, yes: args.includes("--yes"), swarmOnly: false });
     p.outro("Run `meto-cli audit` to check the result.");
     return [];
   }

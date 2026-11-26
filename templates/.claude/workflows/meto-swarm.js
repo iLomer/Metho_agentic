@@ -1,10 +1,11 @@
 export const meta = {
   name: 'meto-swarm',
-  description: 'Run the swarm: launch the epic agents that share no files, test finished epics, repeat until every epic is complete or blocked',
-  whenToUse: 'In a swarm-mode meto project, to build the epics listed in ai/swarm/SWARM_AWARENESS.md. Args: { dryRun: true } only prints the plan; { epics: ["E1","E2"] } limits the run; { maxRounds: 3 } caps the rounds (default 6).',
+  description: 'Run the swarm: plan a request if one is given, launch the epic agents that share no files, test finished epics, repeat until every epic is complete or blocked',
+  whenToUse: 'In a swarm-mode meto project, to build what is in ai/tasks/tasks-todo.md, or to plan and build a new request. Args: a plain sentence, or { request: "add a logout button" }, is planned by the PM first; { dryRun: true } only prints the plan; { epics: ["E1","E2"] } limits the run; { maxRounds: 3 } caps the rounds (default 6).',
   phases: [
-    { title: 'Read', detail: 'swarm state from meto-cli status --json' },
-    { title: 'Build', detail: 'one epic agent per epic, non-overlapping epics in parallel' },
+    { title: 'Plan', detail: 'the PM slices a request into the board, when one is given' },
+    { title: 'Read', detail: 'meto-cli repair --swarm, then the swarm state from meto-cli status --json' },
+    { title: 'Build', detail: 'one epic agent per epic, non-overlapping epics in parallel; then the developer for slices no epic owns' },
     { title: 'Test', detail: 'the tester, one epic at a time' },
   ],
 }
@@ -13,6 +14,8 @@ export const meta = {
 // domain map. The agents only read state, build, and test.
 
 const options = args && typeof args === 'object' ? args : {}
+// `/meto-swarm add a logout button` arrives as a plain string
+const request = typeof args === 'string' ? args.trim() : typeof options.request === 'string' ? options.request.trim() : ''
 const dryRun = options.dryRun === true
 const only = Array.isArray(options.epics) ? options.epics : null
 const maxRounds = Number.isInteger(options.maxRounds) && options.maxRounds > 0 ? options.maxRounds : 6
@@ -22,6 +25,14 @@ const STATE_SCHEMA = {
   required: ['epics'],
   properties: {
     error: { type: 'string' },
+    repair: { type: 'string', description: 'one line: what the repair command changed, "nothing", or "unavailable: <why>"' },
+    unowned: {
+      type: 'object',
+      properties: {
+        todo: { type: 'array', items: { type: 'string' } },
+        inTesting: { type: 'array', items: { type: 'string' } },
+      },
+    },
     epics: {
       type: 'array',
       items: {
@@ -105,14 +116,36 @@ function pickNonOverlapping(epics) {
 }
 
 async function readState(round) {
+  // Repair first: it gives a new epic its agent and table row, and reopens an epic
+  // that was complete before new slices arrived. A dry run only checks.
+  const repair = dryRun ? 'npx meto-cli repair --swarm --check' : 'npx meto-cli repair --swarm --yes'
   return agent(
-    'Run `npx meto-cli status --json` in the project root and return the JSON it prints, unchanged. ' +
-      'If the command fails, return {"error": "<the error text>", "epics": []}. Read and report only: change no file.',
+    `In the project root, run \`${repair}\` first. Put one line about it in "repair": what it changed, "nothing", ` +
+      'or "unavailable: <why>" if the command fails or does not exist (an older meto-cli has no repair). Carry on either way. ' +
+      'Then run `npx meto-cli status --json` and return the JSON it prints, unchanged apart from the added "repair" field. ' +
+      'If that command fails, return {"error": "<the error text>", "epics": []}. Run only these two commands and edit no file yourself.',
     { label: `read swarm state (round ${round})`, phase: 'Read', model: 'haiku', effort: 'low', schema: STATE_SCHEMA },
   )
 }
 
-const summary = { rounds: 0, built: [], tested: [], held: [], outsideDomain: [], stopped: '' }
+const summary = { rounds: 0, planned: '', repair: [], built: [], tested: [], held: [], outsideDomain: [], stopped: '' }
+
+// Plan: a request becomes slices on the board before anything is built.
+if (request !== '' && !dryRun) {
+  const plan = await agent(
+    `Plan this request for a swarm-mode project: "${request}". ` +
+      'Write it as slices in ai/tasks/tasks-todo.md, in the task format, small enough to build one at a time. ' +
+      'Tag each slice with the epic whose domain in ai/swarm/domain-map.md holds the files it will change. ' +
+      'If no epic fits, add an epic to ai/backlog/epics.md and its row, with the paths it owns, to the Epic Domains table of ai/swarm/domain-map.md. ' +
+      'A slice that must change files of several epics, or shared files such as package.json, gets no Epic line: the developer builds those one at a time. ' +
+      'Do not build anything. Reply with the slice ids you wrote and the epic of each.',
+    { agentType: 'meto-pm', label: 'plan the request', phase: 'Plan' },
+  )
+  summary.planned = typeof plan === 'string' ? plan : plan ? JSON.stringify(plan) : 'the PM returned nothing'
+}
+
+// The unowned slices the developer was last given: asked again only when the list changes
+let lastSerial = ''
 
 for (let round = 1; round <= maxRounds; round++) {
   const state = await readState(round)
@@ -121,7 +154,16 @@ for (let round = 1; round <= maxRounds; round++) {
     break
   }
 
+  if (state.repair && state.repair !== 'nothing') {
+    summary.repair.push(`round ${round}: ${state.repair}`)
+    log(`Repair: ${state.repair}`)
+  }
+
   const wanted = state.epics.filter(e => !only || only.includes(e.id))
+  // Slices no epic agent owns. Left alone when the run is limited to named epics.
+  const unowned = only ? { todo: [], inTesting: [] } : { todo: state.unowned?.todo ?? [], inTesting: state.unowned?.inTesting ?? [] }
+  const serialKey = unowned.todo.join(',')
+  const serial = serialKey !== '' && serialKey !== lastSerial ? unowned.todo : []
   const buildable = wanted.filter(
     e => (e.status === 'not-started' || e.status === 'on-track') && e.todo > 0 && e.waitingOn.length === 0,
   )
@@ -131,10 +173,16 @@ for (let round = 1; round <= maxRounds; round++) {
   const { picked, held } = pickNonOverlapping(buildable)
   const testable = wanted.filter(e => e.status === 'testing-ready' || (e.inTesting > 0 && e.todo === 0))
   summary.held = [...held, ...waiting]
+  if (serialKey !== '' && serial.length === 0) {
+    summary.held.push({ id: unowned.todo.join(', '), reason: 'no epic, and the developer could not move them last round' })
+  }
 
   if (dryRun) {
     return {
       dryRun: true,
+      ...(request !== '' ? { request: 'not planned in a dry run: run without dryRun to have the PM slice it' } : {}),
+      repair: state.repair ?? '',
+      wouldBuildSerially: serial,
       wouldBuild: picked.map(e => ({ id: e.id, model: MODELS.includes(e.model) ? e.model : 'agent default', todo: e.todo })),
       wouldTest: testable.map(e => e.id),
       held: summary.held,
@@ -143,14 +191,21 @@ for (let round = 1; round <= maxRounds; round++) {
     }
   }
 
-  if (picked.length === 0 && testable.length === 0) {
+  if (picked.length === 0 && testable.length === 0 && serial.length === 0 && unowned.inTesting.length === 0) {
     const open = wanted.filter(e => e.status !== 'complete')
-    summary.stopped = open.length === 0 ? 'every epic is complete' : 'nothing can run: the remaining epics are blocked, held or waiting'
+    summary.stopped =
+      open.length === 0 && unowned.todo.length === 0
+        ? 'every epic is complete'
+        : 'nothing can run: the remaining epics are blocked, held or waiting'
     break
   }
 
   summary.rounds = round
-  log(`Round ${round}: building ${picked.map(e => e.id).join(', ') || 'nothing'}; testing ${testable.map(e => e.id).join(', ') || 'nothing'}`)
+  log(
+    `Round ${round}: building ${picked.map(e => e.id).join(', ') || 'nothing'}` +
+      (serial.length > 0 ? `, then ${serial.join(', ')} with the developer` : '') +
+      `; testing ${testable.map(e => e.id).join(', ') || 'nothing'}`,
+  )
 
   // Build: the tester must see every epic's result, so this is a barrier.
   const builds = await parallel(
@@ -177,6 +232,24 @@ for (let round = 1; round <= maxRounds; round++) {
     if (outside.length > 0) summary.outsideDomain.push({ id: build.epic.id, files: outside })
   }
 
+  // Serial lane: slices no epic owns, built by the developer once the epic agents
+  // are back, so it never edits a file an epic agent is working in.
+  let serialToTest = unowned.inTesting.length > 0
+  if (serial.length > 0) {
+    lastSerial = serialKey
+    const result = await agent(
+      `Build these slices from ai/tasks/tasks-todo.md, one at a time, as your instructions describe: ${serial.join(', ')}. ` +
+        'They belong to no epic, so no epic agent will take them. Skip a slice whose Needs are not done yet. ' +
+        'Report every file you changed, with paths relative to the project root.',
+      { agentType: 'meto-developer', label: `build ${serial.join(', ')}`, phase: 'Build', schema: BUILD_SCHEMA },
+    )
+    if (result) {
+      summary.built.push({ id: 'no epic', status: result.status, slices: result.slicesMoved, blocker: result.blocker })
+      if (result.slicesMoved.length > 0) lastSerial = ''
+      if (result.status === 'testing-ready') serialToTest = true
+    }
+  }
+
   // Test: one epic at a time, because the tester writes the board.
   const justFinished = builds
     .filter(Boolean)
@@ -190,6 +263,15 @@ for (let round = 1; round <= maxRounds; round++) {
       { agentType: 'meto-tester', label: `test ${epic.id}`, phase: 'Test', schema: TEST_SCHEMA },
     )
     if (result) summary.tested.push({ id: epic.id, passed: result.passed, failed: result.failed })
+  }
+
+  if (serialToTest) {
+    const result = await agent(
+      'Validate the slices in ai/tasks/tasks-in-testing.md that carry no Epic line, or an epic that is not in ai/swarm/SWARM_AWARENESS.md, ' +
+        'as your instructions describe. Leave the slices of the epics alone.',
+      { agentType: 'meto-tester', label: 'test slices with no epic', phase: 'Test', schema: TEST_SCHEMA },
+    )
+    if (result) summary.tested.push({ id: 'no epic', passed: result.passed, failed: result.failed })
   }
 
   if (round === maxRounds) summary.stopped = `reached the limit of ${maxRounds} round${maxRounds === 1 ? '' : 's'}`

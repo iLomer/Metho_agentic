@@ -69,6 +69,7 @@ Claude Code loads it automatically, and it enforces the rules above:
 - It refuses an epic agent that is already running, shares files with a running one, or needs a slice still in progress
 - It launches `@meto-developer` and the epic agents on the model their next slice asks for (see Model routing)
 - It refuses an edit outside the agent's files (see the Writes column above; an epic agent's domain is in `ai/swarm/domain-map.md`), and a separate message from a meto agent
+- In a swarm project it refuses a main-session edit inside an epic's domain, so the change goes through `/meto-swarm`. The mod option `leadEdits` relaxes this to `warn` or `allow`
 
 ## Handoff and memory
 

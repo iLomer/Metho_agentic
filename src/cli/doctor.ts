@@ -95,7 +95,7 @@ export async function runDoctor(): Promise<void> {
   if (exitCode === 0) {
     p.outro("All checks passed.");
   } else {
-    p.outro("Some checks failed. Review the issues above.");
+    p.outro("Some checks failed. Run `meto-cli repair` to fix what meto can fix, then review the rest.");
   }
 
   if (exitCode !== 0) {
