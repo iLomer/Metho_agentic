@@ -15,6 +15,8 @@ import {
   highestSlice,
   isLive,
   isMetoAgent,
+  leadEditsFrom,
+  ownerOf,
   isAgentModel,
   mayRoleWrite,
   mayWrite,
@@ -194,6 +196,7 @@ async function reserveSlices($: EngineInterface, count: number, prefix: string):
 export const register: Register = (on, options) => {
   const defaultPrefix = typeof options.idPrefix === 'string' && options.idPrefix !== '' ? options.idPrefix : 'slice'
   const showSwarmBand = options.swarmBand === true
+  const leadEdits = leadEditsFrom(options.leadEdits)
 
   on('session.start', async ($, e, next) => {
     const result = await next(e)
@@ -277,8 +280,22 @@ export const register: Register = (on, options) => {
 
     const caller = await callerOf($, e.agentId)
     const epicId = epicOf(caller?.type)
+    const domains = parseDomains(await readOr($, DOMAIN_FILE))
+
+    // Lead guard: in a swarm the main session orchestrates. A file inside an epic's
+    // domain is that epic agent's to change, or two writers end up in one file.
+    const owner = e.agentId === undefined && leadEdits !== 'allow' ? ownerOf(path, domains) : undefined
+    if (owner !== undefined && leadEdits === 'refuse') {
+      return {
+        deny:
+          `meto: ${path} belongs to ${owner} (${DOMAIN_FILE}), and in swarm mode the epic agents write the code. ` +
+          `Run /meto-swarm with the change you want, or launch @meto-epic-${owner}; do not make the edit another way. ` +
+          'If the user wants the main session to edit directly, they set the meto mod option leadEdits to "warn" or "allow".',
+      }
+    }
+
     if (epicId !== undefined) {
-      const domain = parseDomains(await readOr($, DOMAIN_FILE))[epicId]
+      const domain = domains[epicId]
       if (domain !== undefined && !mayWrite(path, [...domain.owns, ...domain.shared], epicId)) {
         return {
           deny: `meto: ${path} is outside meto-epic-${epicId}'s domain in ${DOMAIN_FILE}. Log the conflict in ${SWARM_FILE}, set your status to blocked, and stop.`,
@@ -298,6 +315,10 @@ export const register: Register = (on, options) => {
     if (ran.deny === undefined && ran.isError !== true) {
       if (path !== HANDOFF_FILE) await $.state.set(IS_TOUCHED, true)
       await refresh($)
+      if (owner !== undefined) {
+        const note = `meto: ${path} belongs to ${owner}. In swarm mode that epic's agent normally makes this change: use /meto-swarm for anything beyond a small fix.`
+        return { ...ran, context: [...(ran.context ?? []), note] }
+      }
     }
     return ran
   })

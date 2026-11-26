@@ -90,8 +90,12 @@ describe("meto-swarm workflow", () => {
 
     expect(calls).toHaveLength(1);
     expect(isRead(calls[0])).toBe(true);
+    // A dry run checks what repair would change, and writes nothing
+    expect(calls[0].prompt).toContain("npx meto-cli repair --swarm --check");
     expect(result).toEqual({
       dryRun: true,
+      repair: "",
+      wouldBuildSerially: [],
       wouldBuild: [{ id: "E1", model: "opus", todo: 2 }],
       wouldTest: ["E4"],
       held: [
@@ -164,5 +168,99 @@ describe("meto-swarm workflow", () => {
     const stuck = await runWorkflow(undefined, () => ({ epics: [epic("E1", { status: "blocked" })] }));
     expect((stuck.result as { stopped: string }).stopped).toContain("nothing can run");
     expect(stuck.calls).toHaveLength(1);
+  });
+
+  const built = { status: "on-track", slicesMoved: ["slice-001"], filesChanged: [], blocker: "none" };
+
+  it("repairs the swarm files before it reads the state, every round", async () => {
+    const { calls } = await runWorkflow({ maxRounds: 2 }, (call) => (isRead(call) ? { epics: [epic("E1")] } : built));
+    const reads = calls.filter(isRead);
+
+    expect(reads).toHaveLength(2);
+    for (const read of reads) {
+      expect(read.prompt).toContain("npx meto-cli repair --swarm --yes");
+      expect(read.prompt.indexOf("repair --swarm")).toBeLessThan(read.prompt.indexOf("status --json"));
+    }
+  });
+
+  it("carries on when repair is unavailable, and says so", async () => {
+    const { result, calls } = await runWorkflow({ maxRounds: 1 }, (call) =>
+      isRead(call) ? { repair: "unavailable: unknown command", epics: [epic("E1")] } : built,
+    );
+
+    expect(calls.filter((c) => c.opts.phase === "Build").map((c) => c.opts.agentType)).toEqual(["meto-epic-E1"]);
+    expect((result as { repair: string[] }).repair).toEqual(["round 1: unavailable: unknown command"]);
+  });
+
+  it("has the PM plan a request before the first round", async () => {
+    for (const args of [{ request: "add a logout button", maxRounds: 1 }, "add a logout button"]) {
+      let reads = 0;
+      const { result, calls } = await runWorkflow(args, (call) => {
+        if (call.opts.phase === "Plan") return "slice-020 (E1)";
+        if (isRead(call)) return reads++ === 0 ? { epics: [epic("E1")] } : { epics: [epic("E1", { status: "complete", todo: 0 })] };
+        return built;
+      });
+
+      expect(calls[0].opts).toMatchObject({ agentType: "meto-pm", phase: "Plan" });
+      expect(calls[0].prompt).toContain("add a logout button");
+      expect(isRead(calls[1])).toBe(true);
+      expect((result as { planned: string }).planned).toBe("slice-020 (E1)");
+    }
+  });
+
+  it("does not plan a request in a dry run", async () => {
+    const { result, calls } = await runWorkflow({ request: "add a logout button", dryRun: true }, () => ({ epics: [] }));
+
+    expect(calls.some((c) => c.opts.phase === "Plan")).toBe(false);
+    expect((result as { request: string }).request).toContain("not planned in a dry run");
+  });
+
+  it("gives slices no epic owns to the developer after the epic agents, then tests them", async () => {
+    let reads = 0;
+    const { result, calls } = await runWorkflow(undefined, (call) => {
+      if (isRead(call)) {
+        return reads++ === 0
+          ? { epics: [epic("E1")], unowned: { todo: ["slice-030", "slice-031"], inTesting: [] } }
+          : { epics: [epic("E1", { status: "complete", todo: 0 })], unowned: { todo: [], inTesting: [] } };
+      }
+      if (call.opts.agentType === "meto-developer") return { ...built, status: "testing-ready", slicesMoved: ["slice-030", "slice-031"] };
+      if (call.opts.phase === "Build") return built;
+      return { passed: ["slice-030"], failed: [] };
+    });
+
+    const order = calls.filter((c) => !isRead(c)).map((c) => c.opts.agentType);
+    expect(order).toEqual(["meto-epic-E1", "meto-developer", "meto-tester"]);
+    expect(calls.find((c) => c.opts.agentType === "meto-developer")?.prompt).toContain("slice-030, slice-031");
+    expect(calls.find((c) => c.opts.agentType === "meto-tester")?.prompt).toContain("no Epic line");
+    expect((result as { stopped: string }).stopped).toBe("every epic is complete");
+  });
+
+  it("runs the developer when every epic is complete but unowned slices remain", async () => {
+    let reads = 0;
+    const done = [epic("E1", { status: "complete", todo: 0 })];
+    const { calls } = await runWorkflow(undefined, (call) => {
+      if (isRead(call)) return { epics: done, unowned: { todo: reads++ === 0 ? ["slice-040"] : [], inTesting: [] } };
+      return built;
+    });
+
+    expect(calls.filter((c) => !isRead(c)).map((c) => c.opts.agentType)).toEqual(["meto-developer"]);
+  });
+
+  it("does not hand the developer the same unmovable slices twice", async () => {
+    const { result, calls } = await runWorkflow({ maxRounds: 4 }, (call) => {
+      if (isRead(call)) return { epics: [], unowned: { todo: ["slice-050"], inTesting: [] } };
+      return { status: "blocked", slicesMoved: [], filesChanged: [], blocker: "needs slice-049" };
+    });
+
+    expect(calls.filter((c) => c.opts.agentType === "meto-developer")).toHaveLength(1);
+    expect((result as { stopped: string }).stopped).toContain("nothing can run");
+  });
+
+  it("leaves unowned slices alone when the run is limited to named epics", async () => {
+    const { calls } = await runWorkflow({ epics: ["E1"], maxRounds: 1 }, (call) =>
+      isRead(call) ? { epics: [epic("E1")], unowned: { todo: ["slice-060"], inTesting: [] } } : built,
+    );
+
+    expect(calls.some((c) => c.opts.agentType === "meto-developer")).toBe(false);
   });
 });

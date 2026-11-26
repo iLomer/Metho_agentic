@@ -144,9 +144,9 @@ Layer 3 — Governance              not reached
 
 Each missing item offers a fix — create the file from Meto's templates, never overwriting existing content. Run it repeatedly to ratchet your project up one layer at a time.
 
-### Upgrading an older scaffold
+### Repairing and upgrading a project
 
-The audit never overwrites a file, so a project scaffolded by an older Meto keeps its old agent definitions. `meto-cli audit --upgrade` lists what it would change, then asks:
+The audit never overwrites a file, so a project scaffolded by an older Meto keeps its old agent definitions, and a swarm project drifts as epics and slices are added. `meto-cli repair` (also reached as `meto-cli audit --upgrade`) lists what it would change, then asks:
 
 | What | How it is upgraded |
 |---|---|
@@ -157,7 +157,19 @@ The audit never overwrites a file, so a project scaffolded by an older Meto keep
 | Agent `MEMORY.md` files | Only the old checklist boilerplate is removed; what the agents wrote stays |
 | `session-checkpoint.md`, `ai/handoff/README.md`, `ai/rubric/README.md`, `swarm-workflow.md` | Removed -- replaced by the hooks and skills |
 
-The board, context files, definition of done, code guidelines and a filled-in handoff are never touched. Running it again when everything is current changes nothing.
+| A missing board column, a missing `ai/swarm/domain-map.md` | Added |
+| Swarm: an epic in `epics.md` with no agent or no row in `SWARM_AWARENESS.md` | The agent and memory file are created, the row is added |
+| Swarm: an epic marked `complete` with slices in todo, in progress or in testing | Set back to `on-track` or `testing-ready` |
+| Swarm: an epic agent whose domain differs from `domain-map.md` | Re-rendered with the domain from the map |
+
+What only you can settle is reported and never written: an epic with slices to build and no domain, a slice tagged with an epic that does not exist, a slice ID in two columns.
+
+The slices on the board, context files, definition of done, code guidelines and a filled-in handoff are never touched. Running it again when everything is current changes nothing.
+
+- `meto-cli repair --check` writes nothing and exits 1 when something needs repair
+- `meto-cli repair --yes` applies without asking
+- `meto-cli repair --swarm` does only the swarm repairs; `/meto-swarm` runs it before every round
+- `meto-cli status` adds one line when repair has something to fix
 
 The audit also **auto-detects your tech stack** from `package.json`, `go.mod`, `pyproject.toml`, `pubspec.yaml`, or `Cargo.toml` to provide stack-specific templates.
 
@@ -324,6 +336,7 @@ Every project ships with the **meto mod** in `.claude/skills/meto/` -- a Claude 
 |---|---|---|
 | `idPrefix` | `slice` | Prefix for `/meto-slice`. Give each person their own (`Lom_Slice`) so two people never take the same ID |
 | `swarmBand` | off | Adds a one-line swarm status row above the prompt |
+| `leadEdits` | `refuse` | Swarm projects: what happens when the main session edits a file inside an epic's domain. `refuse` sends the change to `/meto-swarm`, `warn` lets it through with a reminder, `allow` says nothing |
 
 The mod adds nothing around the prompt by default. Existing projects get it with `npx meto-cli audit` (Layer 2), which never overwrites files you have; `npx meto-cli audit --upgrade` replaces an older copy of the mod with the current one. To turn it off, delete `.claude/skills/meto/`.
 
@@ -440,7 +453,8 @@ Meto scaffolds projects ready for Agent Teams out of the box:
 | `meto-cli init --no-ai` | Scaffold using static prompts only, skip AI generation |
 | `meto-cli init --dry-run` | Preview the generated file tree without writing to disk |
 | `meto-cli audit` | Install Meto into an existing project: scan it against the methodology blueprint and fix gaps interactively |
-| `meto-cli audit --upgrade` | Bring Meto's own files in a project up to the installed version (add `--yes` to skip the prompts) |
+| `meto-cli repair` | Check Meto's files in a project and repair them: bring them up to the installed version and put the swarm files back in step with the board (`--check`, `--yes`, `--swarm`) |
+| `meto-cli audit --upgrade` | The same as `meto-cli repair` |
 | `meto-cli audit --rubric` | Check the last 5 completed slices for rubric scores and passing tests |
 | `meto-cli doctor` | Check methodology health of the current project |
 | `meto-cli status` | Show swarm progress dashboard (reads SWARM_AWARENESS.md) |

@@ -22,6 +22,7 @@ import { formatFileTree } from "./tree.js";
 import { runDoctor } from "./doctor.js";
 import { runStatus } from "./status.js";
 import { runAudit } from "./audit/index.js";
+import { runRepair } from "./repair/index.js";
 import { runDaemon } from "../daemon/index.js";
 import { generateWithAI, AIGenerationTimeoutError } from "./ai-generator.js";
 import { parseAIOutput, validateAIContent } from "./ai-parser.js";
@@ -81,7 +82,9 @@ function printHelp(): void {
       "  init --dry-run    Preview files without writing to disk",
       "  init --no-ai      Skip AI generation, use standard prompts",
       "  audit             Install meto in an existing project, or check an installed one",
-      "  audit --upgrade   Bring meto's own files in a project up to this version",
+      "  repair            Check meto's files in a project and repair them (version and swarm)",
+      "  repair --check    Report what repair would change, write nothing",
+      "  audit --upgrade   The same as repair",
       "  compact           Compact tasks-done.md using Claude Haiku summarization",
       "  compact --dry-run Preview tasks that would be compacted without writing",
       "  ready             List unblocked tasks ready to start from tasks-todo.md",
@@ -577,6 +580,11 @@ async function main(): Promise<void> {
 
   if (arg === "audit") {
     await runAudit();
+    return;
+  }
+
+  if (arg === "repair") {
+    await runRepair();
     return;
   }
 

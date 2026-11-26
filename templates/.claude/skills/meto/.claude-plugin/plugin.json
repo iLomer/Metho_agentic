@@ -1,7 +1,7 @@
 {
   "name": "meto",
-  "version": "0.4.0",
-  "description": "Guards and views for meto projects: overlap, domain and role guards, model routing per slice, one report per agent, board pane, swarm band, slice IDs, handoff reminder",
+  "version": "0.5.0",
+  "description": "Guards and views for meto projects: overlap, domain, role and swarm-lead guards, model routing per slice, one report per agent, board pane, swarm band, slice IDs, handoff reminder",
   "types": "./types/index.d.ts",
   "author": {
     "name": "Ionut Lomer"
@@ -12,6 +12,13 @@
       "title": "Slice ID prefix",
       "description": "Prefix /meto-slice uses for new IDs: slice gives slice-173, Lom_Slice gives Lom_Slice-0043. Set your own so two people never take the same ID.",
       "default": "slice"
+    },
+    "leadEdits": {
+      "type": "string",
+      "title": "Main-session edits in a swarm",
+      "description": "In a swarm project, what happens when the main session edits a file inside an epic's domain: refuse sends the change to /meto-swarm, warn lets it through with a reminder, allow says nothing.",
+      "options": ["refuse", "warn", "allow"],
+      "default": "refuse"
     },
     "swarmBand": {
       "type": "boolean",

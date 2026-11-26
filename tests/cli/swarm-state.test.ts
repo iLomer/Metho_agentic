@@ -147,3 +147,36 @@ describe("generateStackRules", () => {
     expect(pointer).not.toContain("Accept interfaces");
   });
 });
+
+describe("unowned slices", () => {
+  it("lists slices with no epic, `Epic: none`, or an epic outside the swarm table", () => {
+    const swarm = [
+      "## [swarm:epics]",
+      "",
+      "| Epic ID | Name | Agent | Status | Tasks Done | Blocker |",
+      "|---|---|---|---|---|---|",
+      "| E1 | Auth | meto-epic-E1 | on-track | 0 | none |",
+      "",
+    ].join("\n");
+    const todo = [
+      "## [slice-001] -- Owned",
+      "**Epic:** E1 | **Size:** S",
+      "",
+      "## [slice-002] -- Shared config",
+      "**Epic:** none | **Size:** S",
+      "",
+      "## [slice-003] -- No epic line",
+      "**Size:** S",
+      "",
+      "## [slice-004] -- Unknown epic",
+      "**Epic:** E9 | **Size:** S",
+      "",
+    ].join("\n");
+    const inTesting = "## [slice-005] -- Cross-cutting\n**Epic:** none | **Size:** M\n";
+
+    const state = buildSwarmState({ swarm, domainMap: "", todo, inProgress: "", inTesting });
+
+    expect(state.unowned).toEqual({ todo: ["slice-002", "slice-003", "slice-004"], inTesting: ["slice-005"] });
+    expect(state.epics[0]?.todo).toBe(1);
+  });
+});

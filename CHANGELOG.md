@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.25.0] - 2026-11-26
+
+### Added
+
+- `meto-cli repair`: checks a project's meto files and repairs them. It includes what `audit --upgrade` did (now an alias) and adds swarm repairs: an agent and a `SWARM_AWARENESS.md` row for every epic in `epics.md`, a `complete` epic with open slices set back to `on-track`, agent domains taken from `domain-map.md`, missing board columns. `--check` writes nothing and exits 1 when something needs repair; `--swarm` does only the swarm part
+- `/meto-swarm <request>`: `@meto-pm` slices the request into the board and assigns each slice to an epic before the agents build
+- `/meto-swarm` serial lane: slices with `Epic: none`, or an epic outside the swarm table, are built by `@meto-developer` after the epic agents and tested separately
+- `meto-cli status --json` lists those slices under `unowned`
+- meto mod 0.5.0: in a swarm project it refuses a main-session edit inside an epic's domain; the `leadEdits` option relaxes this to `warn` or `allow`
+
+### Changed
+
+- `/meto-swarm` runs `meto-cli repair --swarm` before every round, so the swarm keeps working after the first backlog: new epics and new slices for finished epics are picked up without manual setup. With an older meto-cli that has no `repair`, the round says so and continues
+- `meto-cli status` prints one line when `repair` has something to fix; `doctor` points to `repair` when checks fail
+- Epic headings in `epics.md` may use a dash or a colon (`## E1 — Name`, `## E1: Name`) besides `--`
+- `@meto-pm` instructions and the Swarm Mode section of `CLAUDE.md` describe the request-first flow
+
 ## [0.24.0] - 2026-11-14
 
 ### Added

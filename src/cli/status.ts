@@ -3,6 +3,7 @@ import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { findProjectRoot } from "./doctor.js";
 import { readSwarmState } from "./swarm-state.js";
+import { planRepair } from "./repair/index.js";
 import { parseSwarmAwareness } from "./swarm-parser.js";
 import type { SwarmState, SwarmEpic } from "./swarm-parser.js";
 
@@ -174,6 +175,19 @@ export async function runStatus(): Promise<void> {
   const state = parseSwarmAwareness(content);
 
   displayDashboard(state);
+
+  // One line when the project's meto files are out of step; silent otherwise
+  try {
+    const plan = await planRepair(projectRoot, { swarmOnly: false });
+    const count = plan.actions.length + plan.reports.length;
+    if (count > 0) {
+      p.log.warning(
+        `meto-cli repair has ${count} thing${count === 1 ? "" : "s"} to fix here. Run \`npx meto-cli repair --check\` to see them.`,
+      );
+    }
+  } catch {
+    // The dashboard is what was asked for; a failed check adds nothing to it
+  }
 
   p.outro("Status complete.");
 }

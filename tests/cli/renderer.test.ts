@@ -449,7 +449,9 @@ describe("buildWorkflowAgentsSection", () => {
     expect(section).toContain("@meto-pm");
     expect(section).toContain("@meto-tester");
     expect(section).toContain("@meto-epic-[id]");
-    expect(section).not.toContain("@meto-developer");
+    // The developer stays, for the slices no epic owns
+    expect(section).toContain("| `@meto-developer` | Slices with `Epic: none`");
+    expect(section).not.toContain("Source code, config files");
     expect(section).toContain("ai/swarm/domain-map.md");
   });
 });
